@@ -1,0 +1,72 @@
+
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  REVIEWER = 'REVIEWER',
+  FILING_AGENT = 'FILING_AGENT',
+  VIEWER = 'VIEWER'
+}
+
+export enum CaseStatus {
+  NEW = 'NEW',
+  NEEDS_DOCS = 'NEEDS_DOCS',
+  READY_FOR_REVIEW = 'READY_FOR_REVIEW',
+  APPROVED_TO_FILE = 'APPROVED_TO_FILE',
+  FILED = 'FILED',
+  PAID = 'PAID',
+  REJECTED = 'REJECTED'
+}
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+}
+
+export interface JurisdictionRule {
+  id: string;
+  state: string;
+  county: string;
+  claim_deadline_days: number;
+  required_documents: string[];
+  filing_method: string;
+  notes?: string;
+}
+
+export interface Property {
+  id: string;
+  state: string;
+  county: string;
+  parcel_id: string;
+  address: string;
+  tax_sale_date: string;
+  deed_record_date?: string;
+  sale_price: number;
+  total_debt: number;
+  surplus_amount: number;
+  deadline_date: string;
+  status: CaseStatus;
+  assigned_to_user_id?: string;
+  created_at: string;
+}
+
+export interface Document {
+  id: string;
+  property_id: string;
+  filename: string;
+  doc_type: string;
+  extraction_status: 'QUEUED' | 'OCR_DONE' | 'LLM_DONE' | 'READY_FOR_REVIEW' | 'FAILED';
+  extracted_fields: any;
+  verified_by_human: boolean;
+  ocr_text?: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  action: string;
+  metadata: any;
+  created_at: string;
+  actor_email?: string;
+}

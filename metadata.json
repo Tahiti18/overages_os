@@ -1,0 +1,8 @@
+{
+  "name": "Prospector AI - Property Tax Surplus Case Manager",
+  "description": "A production-ready platform for managing property tax overages, featuring AI document extraction, jurisdiction rule engine, and human-in-the-loop verification.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

@@ -68,3 +68,44 @@ export const performSkipTracing = async (ownerName: string, lastKnownAddress: st
 
   return { text, sources };
 };
+
+export const generateClaimPackage = async (property: any, waterfallResults: any) => {
+  const ai = getAIClient();
+  const prompt = `Draft a formal Property Tax Surplus Claim Package for the following case:
+  Address: ${property.address}
+  Parcel ID: ${property.parcel_id}
+  County: ${property.county}, ${property.state}
+  Surplus Amount: $${property.surplus_amount}
+  Net Recovery after Liens: $${waterfallResults.finalSurplus}
+
+  Draft 3 documents:
+  1. A formal 'Letter of Demand' to the County Treasurer.
+  2. A 'Claimant Affidavit' template ready for notarization.
+  3. A 'Final Accounting Statement' detailing the waterfall deduction of liens.
+  
+  Format the response as JSON with keys for each document.`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          demand_letter: { type: Type.STRING },
+          affidavit: { type: Type.STRING },
+          accounting_statement: { type: Type.STRING },
+        },
+        required: ["demand_letter", "affidavit", "accounting_statement"]
+      }
+    }
+  });
+
+  try {
+    return JSON.parse(response.text || "{}");
+  } catch (e) {
+    console.error("Failed to parse claim package", e);
+    return null;
+  }
+};

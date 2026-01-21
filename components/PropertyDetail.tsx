@@ -15,23 +15,25 @@ import {
   InfoIcon,
   ArrowDownIcon,
   SparklesIcon,
-  CalculatorIcon
+  CalculatorIcon,
+  ArchiveIcon
 } from 'lucide-react';
 import { Property, CaseStatus } from '../types';
 import DocumentUpload from './DocumentUpload';
 import SkipTracingHub from './SkipTracingHub';
 import LienWaterfall from './LienWaterfall';
+import SmartDocumentPackager from './SmartDocumentPackager';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'overview' | 'claimants' | 'research' | 'documents' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'claimants' | 'research' | 'documents' | 'audit' | 'packager'>('overview');
   
   // Sync tab with URL if present
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'claimants', 'research', 'documents', 'audit'].includes(tab)) {
+    if (tab && ['overview', 'claimants', 'research', 'documents', 'audit', 'packager'].includes(tab)) {
       setActiveTab(tab as any);
     }
   }, [location]);
@@ -52,10 +54,11 @@ const PropertyDetail: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Waterfall & Overview', icon: CalculatorIcon },
-    { id: 'research', label: 'Research Hub', icon: SparklesIcon },
+    { id: 'overview', label: 'Waterfall', icon: CalculatorIcon },
+    { id: 'research', label: 'Research', icon: SparklesIcon },
+    { id: 'packager', label: 'Packager', icon: ArchiveIcon },
     { id: 'claimants', label: 'Claimants', icon: UserCircleIcon },
-    { id: 'documents', label: 'Documents', icon: FileTextIcon },
+    { id: 'documents', label: 'Docs', icon: FileTextIcon },
     { id: 'audit', label: 'History', icon: HistoryIcon },
   ];
 
@@ -87,7 +90,7 @@ const PropertyDetail: React.FC = () => {
         <div className="flex items-center gap-3">
           <button className="px-6 py-3 text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xl shadow-indigo-200 transition-all flex items-center gap-2">
             <CheckCircleIcon size={18} />
-            Approve Intelligence
+            Finalize Intelligence
           </button>
         </div>
       </div>
@@ -128,7 +131,6 @@ const PropertyDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* Lien Waterfall Component */}
               <LienWaterfall initialSurplus={property.surplus_amount} />
 
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
@@ -154,19 +156,18 @@ const PropertyDetail: React.FC = () => {
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-4">
                     <SparklesIcon size={20} className="text-indigo-400" />
-                    <h4 className="font-black text-xl">Intelligence</h4>
+                    <h4 className="font-black text-xl">Next Milestone</h4>
                   </div>
                   <p className="text-indigo-200 text-xs leading-relaxed mb-8">
-                    Gemini 3.0 Flash is ready to perform skip tracing on the owner of record using Google Search Grounding.
+                    Skip tracing and lien analysis are pending. Once verified, use the Smart Packager to generate final claim forms.
                   </p>
                   <button 
                     onClick={() => setActiveTab('research')}
                     className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-950"
                   >
-                    Launch Research Hub
+                    Go To Research
                   </button>
                 </div>
-                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl"></div>
               </div>
             </div>
           </div>
@@ -174,6 +175,10 @@ const PropertyDetail: React.FC = () => {
 
         {activeTab === 'research' && (
           <SkipTracingHub ownerName="John Doe" address={property.address} />
+        )}
+
+        {activeTab === 'packager' && (
+          <SmartDocumentPackager property={property} waterfallData={{ finalSurplus: 81500 }} />
         )}
 
         {activeTab === 'documents' && (
@@ -184,7 +189,7 @@ const PropertyDetail: React.FC = () => {
           <div className="text-center py-32 bg-white rounded-3xl border border-slate-200">
             <UserCircleIcon size={64} className="mx-auto text-slate-100 mb-4" />
             <h4 className="font-black text-slate-800">No Claimants Found</h4>
-            <p className="text-slate-400 text-sm">Perform skip tracing to identify eligible heirs and relatives.</p>
+            <p className="text-slate-400 text-sm">Research the owner to find eligible heirs.</p>
           </div>
         )}
       </div>

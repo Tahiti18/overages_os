@@ -17,6 +17,7 @@ import WorkflowProtocol from './components/WorkflowProtocol';
 import MarketIntelligence from './components/MarketIntelligence';
 import SubscriptionManager from './components/SubscriptionManager';
 import AffiliatePortal from './components/AffiliatePortal';
+import DatabaseVault from './components/DatabaseVault';
 import { User, UserRole, SubscriptionTier } from './types';
 
 const MOCK_USER: User = {
@@ -63,6 +64,7 @@ const App: React.FC = () => {
           <Route path="/calendar" element={<ComplianceCalendar />} />
           <Route path="/billing" element={<SubscriptionManager user={MOCK_USER} />} />
           <Route path="/affiliate" element={<AffiliatePortal user={MOCK_USER} />} />
+          <Route path="/vault" element={<DatabaseVault />} />
         </Route>
       </Routes>
     </Router>

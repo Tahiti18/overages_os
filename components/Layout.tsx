@@ -22,7 +22,8 @@ import {
   ChevronRightIcon,
   ShieldCheckIcon,
   UnplugIcon,
-  ActivityIcon
+  ActivityIcon,
+  HardDriveIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import LiveAgent from './LiveAgent';
@@ -53,6 +54,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
   const mainNav = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboardIcon, tip: 'Overview of all active surplus recovery cases.' },
+    { label: 'Artifact Vault', path: '/vault', icon: HardDriveIcon, tip: 'Centralized repository for all extracted data and generated forms.' },
     { label: 'Market Intelligence', path: '/intelligence', icon: BarChartIcon, tip: 'Analyze national trends and find high-yield jurisdictions.' },
     { label: 'Workflow Protocol', path: '/workflow', icon: LayersIcon, tip: 'Detailed view of the 5-stage automated recovery pipeline.' },
     { label: 'Rules Engine', path: '/admin/rules', icon: ScaleIcon, roles: [UserRole.ADMIN], tip: 'Configure jurisdiction-specific deadlines and requirements.' },
@@ -97,166 +99,143 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 space-y-8 py-4 custom-scrollbar overflow-x-hidden">
-          {/* Integrity Pulse Indicator */}
-          <div className={`mx-2 p-4 rounded-2xl border-2 flex items-center gap-4 transition-all duration-500 shadow-2xl ${isAiConnected ? 'bg-emerald-500/10 border-emerald-500/30 shadow-emerald-950/60' : 'bg-red-500/10 border-red-500/30 shadow-red-950/60'}`}>
-            <div className="relative flex h-3 w-3">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isAiConnected ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
-              <span className={`relative inline-flex rounded-full h-3 w-3 ${isAiConnected ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-            </div>
-            {!isCollapsed && (
-              <div className="overflow-hidden animate-in fade-in slide-in-from-left-2">
-                <p className={`text-[9px] font-black uppercase tracking-[0.15em] leading-none mb-1 ${isAiConnected ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {isAiConnected ? 'Neural Link: Active' : 'Neural Link: Offline'}
-                </p>
-                <p className="text-[8px] text-slate-300 font-black uppercase tracking-widest truncate opacity-80">
-                  {isAiConnected ? 'Gemini 3.0 Cluster Connected' : 'Waiting for Authentication'}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            {!isCollapsed && <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest px-4 mb-4 animate-in fade-in">Core Terminal</p>}
-            <nav className="space-y-2">
-              {mainNav.filter(item => !item.roles || item.roles.includes(user.role)).map((item) => (
-                <Tooltip key={item.path} content={item.tip} position="right">
-                  <Link
-                    to={item.path}
-                    className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 border-2 ${
-                      location.pathname === item.path 
-                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-2xl shadow-indigo-950/60 translate-x-1.5' 
-                        : 'text-slate-100 border-transparent hover:bg-slate-800 hover:text-white hover:border-white/10 shadow-lg'
-                    } ${isCollapsed ? 'justify-center px-0' : ''}`}
-                  >
-                    <item.icon size={20} className={location.pathname === item.path ? 'text-white' : 'text-indigo-400'} />
-                    {!isCollapsed && <span className="font-black text-[11px] uppercase tracking-widest whitespace-nowrap animate-in slide-in-from-left-2">{item.label}</span>}
-                  </Link>
-                </Tooltip>
-              ))}
-            </nav>
-          </div>
-
-          <div>
-            {!isCollapsed && <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest px-4 mb-4 animate-in fade-in">Account & Revenue</p>}
-            <nav className="space-y-2">
-              {adminNav.map((item) => (
-                <Tooltip key={item.path} content={item.tip} position="right">
-                  <Link
-                    to={item.path}
-                    className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 border-2 ${
-                      location.pathname === item.path 
-                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-2xl shadow-indigo-950/60 translate-x-1.5' 
-                        : 'text-slate-100 border-transparent hover:bg-slate-800 hover:text-white hover:border-white/10 shadow-lg'
-                    } ${isCollapsed ? 'justify-center px-0' : ''}`}
-                  >
-                    <item.icon size={20} className={location.pathname === item.path ? 'text-white' : 'text-indigo-400'} />
-                    {!isCollapsed && <span className="font-black text-[11px] uppercase tracking-widest whitespace-nowrap animate-in slide-in-from-left-2">{item.label}</span>}
-                  </Link>
-                </Tooltip>
-              ))}
-            </nav>
-          </div>
-
-          <div>
-            {!isCollapsed && (
-              <div className="flex items-center justify-between px-4 mb-4 animate-in fade-in">
-                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Autonomous Suite</p>
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.8)] border-2 border-white/20"></div>
-              </div>
-            )}
-            <div className="space-y-3">
-              <Tooltip content="Start a real-time voice consultation with our AI legal expert." position="right">
-                <button 
-                  onClick={() => setIsAgentOpen(true)}
-                  className={`w-full flex items-center gap-4 px-4 py-5 bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl hover:from-indigo-500 hover:to-indigo-700 transition-all shadow-2xl shadow-indigo-950/80 group border-2 border-white/10 hover:scale-[1.02] active:scale-95 ${isCollapsed ? 'justify-center px-0' : ''}`}
-                >
-                  <div className="bg-white/10 p-2.5 rounded-xl shrink-0 shadow-lg ring-1 ring-white/20">
-                    <MicIcon size={20} className="text-white" />
-                  </div>
-                  {!isCollapsed && (
-                    <div className="text-left animate-in slide-in-from-left-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1 text-white">Live Voice</p>
-                      <p className="text-[9px] text-indigo-200 font-black uppercase tracking-tighter opacity-80">AI Expert Consult</p>
-                    </div>
-                  )}
-                </button>
-              </Tooltip>
-
-              {intelligenceSuite.map((tool, idx) => (
-                <Tooltip key={idx} content={tool.tip} position="right">
-                  <Link 
-                    to={tool.path}
-                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 transition-all group hover:-translate-y-1 ${
-                      location.pathname === tool.path 
-                        ? 'bg-slate-800 border-indigo-500/60 shadow-2xl shadow-indigo-500/10' 
-                        : 'bg-slate-900/40 border-white/5 hover:bg-slate-800 hover:border-white/10 shadow-xl'
-                    } ${isCollapsed ? 'justify-center px-0' : ''}`}
-                  >
-                    <div className={`p-2.5 rounded-xl bg-slate-950/80 shrink-0 border border-white/5 shadow-inner ${tool.color}`}>
-                      <tool.icon size={18} />
-                    </div>
-                    {!isCollapsed && (
-                      <div className="text-left animate-in slide-in-from-left-2">
-                        <p className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${location.pathname === tool.path ? 'text-indigo-400' : 'text-slate-100'}`}>{tool.label}</p>
-                        <p className="text-[9px] text-slate-300 font-black uppercase tracking-tighter">{tool.desc}</p>
-                      </div>
-                    )}
-                  </Link>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 border-t-2 border-white/5 mt-auto bg-slate-950 shrink-0 shadow-2xl">
-          <Tooltip content={`Subscription: ${user.subscription?.tier}. Credits: ${user.subscription?.ai_credits_remaining}`} position="right">
-            <div className={`flex items-center gap-4 px-2 cursor-pointer group ${isCollapsed ? 'justify-center px-0' : ''}`}>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black border-2 border-white/10 shadow-2xl group-hover:scale-105 transition-all shrink-0">
-                {user.email[0].toUpperCase()}
+          {/* Integrity Pulse Indicator - Fixed boolean className error on line 103 by using template literal */}
+          <div className={`p-4 rounded-2xl border-2 mb-8 flex items-center justify-between transition-all duration-700 ${isLiveMode ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-slate-900 border-white/5'}`}>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className={`w-2.5 h-2.5 rounded-full ${isLiveMode ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`}></div>
               </div>
               {!isCollapsed && (
-                <div className="overflow-hidden text-left animate-in slide-in-from-left-2">
-                  <p className="text-xs font-black truncate text-white uppercase tracking-tight">{user.email.split('@')[0]}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-                    <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest">{user.subscription?.tier}</p>
-                  </div>
+                <div>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ${isLiveMode ? 'text-emerald-400' : 'text-slate-400'}`}>Integrity Pulse</p>
+                  <p className="text-[10px] font-bold text-white uppercase">{isLiveMode ? 'Live Production' : 'Simulation Mode'}</p>
                 </div>
               )}
             </div>
-          </Tooltip>
+            {!isCollapsed && (
+               <button 
+                 onClick={() => setIsLiveMode(!isLiveMode)}
+                 className={`p-1.5 rounded-lg transition-all ${isLiveMode ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
+               >
+                 <ActivityIcon size={14} />
+               </button>
+            )}
+          </div>
+
+          <nav className="space-y-1">
+            {mainNav.filter(item => !item.roles || item.roles.includes(user.role)).map((item) => (
+              <Tooltip key={item.path} content={item.tip} position="right">
+                <Link
+                  to={item.path}
+                  className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
+                    location.pathname === item.path 
+                      ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' 
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <item.icon size={22} className={location.pathname === item.path ? 'text-white' : 'group-hover:scale-110 transition-transform'} />
+                  {!isCollapsed && <span className="text-sm font-black uppercase tracking-tight">{item.label}</span>}
+                </Link>
+              </Tooltip>
+            ))}
+          </nav>
+
+          <div className="pt-4 pb-2 border-t border-white/5">
+             {!isCollapsed && <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-4">Intelligence Suite</p>}
+             <div className="space-y-1">
+                {intelligenceSuite.map((item) => (
+                  <Tooltip key={item.path} content={item.tip} position="right">
+                    <Link
+                      to={item.path}
+                      className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
+                        location.pathname === item.path 
+                          ? 'bg-white/10 text-white shadow-lg border border-white/5' 
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <item.icon size={22} className={item.color} />
+                      {!isCollapsed && (
+                        <div className="flex flex-col">
+                           <span className="text-sm font-black uppercase tracking-tight leading-none mb-1">{item.label}</span>
+                           <span className="text-[9px] font-bold opacity-50 uppercase tracking-widest">{item.desc}</span>
+                        </div>
+                      )}
+                    </Link>
+                  </Tooltip>
+                ))}
+             </div>
+          </div>
+
+          <nav className="space-y-1 border-t border-white/5 pt-4">
+            {adminNav.map((item) => (
+              <Tooltip key={item.path} content={item.tip} position="right">
+                <Link
+                  to={item.path}
+                  className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
+                    location.pathname === item.path 
+                      ? 'bg-indigo-600 text-white shadow-xl' 
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <item.icon size={22} />
+                  {!isCollapsed && <span className="text-sm font-black uppercase tracking-tight">{item.label}</span>}
+                </Link>
+              </Tooltip>
+            ))}
+          </nav>
+        </div>
+
+        <div className="p-4 mt-auto">
+          <div className={`bg-slate-900 rounded-[2rem] p-4 border border-white/5 flex items-center transition-all ${isCollapsed ? 'justify-center' : 'gap-4'}`}>
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white shrink-0 shadow-lg border-2 border-white/10">
+              {user.email[0].toUpperCase()}
+            </div>
+            {!isCollapsed && (
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-black text-white truncate">{user.email.split('@')[0]}</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{user.role}</p>
+              </div>
+            )}
+            {!isCollapsed && (
+               <button className="p-2 text-slate-600 hover:text-white transition-colors">
+                  <MenuIcon size={18} />
+               </button>
+            )}
+          </div>
         </div>
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <header className="h-24 bg-white border-b-2 border-slate-100 flex items-center justify-between px-10 shrink-0 z-20 shadow-lg">
-          <div className="flex items-center gap-6 w-full max-w-2xl">
-            <Tooltip content="Universal search across all cases, documents, and claimants." position="bottom">
-              <div className="flex items-center bg-slate-50 rounded-2xl px-6 py-4 w-full md:w-[500px] border-2 border-slate-200 focus-within:bg-white focus-within:ring-8 focus-within:ring-indigo-500/5 focus-within:border-indigo-500 transition-all group shadow-xl shadow-inner">
-                <SearchIcon size={20} className="text-slate-500 group-focus-within:text-indigo-600 transition-colors shrink-0" />
-                <input 
-                  type="text" 
-                  placeholder="Query Overage Intelligence..." 
-                  className="bg-transparent border-none focus:ring-0 text-sm font-black ml-4 w-full text-slate-800 placeholder:text-slate-600"
-                />
+        <header className="h-24 bg-white border-b-2 border-slate-100 flex items-center justify-between px-10 shrink-0 z-20">
+           <div className="flex items-center gap-6">
+              <div className="hidden lg:flex items-center gap-3">
+                 <div className={`w-3 h-3 rounded-full ${isAiConnected ? 'bg-emerald-500' : 'bg-rose-500'} shadow-lg animate-pulse`}></div>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">AI Protocol: {isAiConnected ? 'Secure' : 'Disconnected'}</span>
               </div>
-            </Tooltip>
-          </div>
-          
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3 bg-slate-100 p-2 rounded-2xl border-2 border-slate-200 hidden sm:flex shadow-2xl ring-1 ring-white/50">
-               <Tooltip content="Work with test data for training or sandbox testing.">
-                <button onClick={() => setIsLiveMode(false)} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!isLiveMode ? 'bg-white text-indigo-600 shadow-xl border-2 border-indigo-100' : 'text-slate-700 hover:text-slate-900 hover:bg-white/50'}`}>Simulation</button>
-               </Tooltip>
-               <Tooltip content="Connect to live county treasurers and real-time document extraction.">
-                <button onClick={() => setIsLiveMode(true)} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isLiveMode ? 'bg-indigo-600 text-white shadow-2xl border-2 border-indigo-400' : 'text-slate-700 hover:text-slate-900 hover:bg-white/50'}`}>Live Engine</button>
-               </Tooltip>
-            </div>
-          </div>
+           </div>
+
+           <div className="flex items-center gap-4">
+              <Tooltip content="Open the AI voice channel for real-time case consultation.">
+                <button 
+                  onClick={() => setIsAgentOpen(true)}
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center gap-3 hover:bg-indigo-700 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/10"
+                >
+                   <MicIcon size={16} /> Live Agent
+                </button>
+              </Tooltip>
+              <Tooltip content="View the comprehensive user manual and system logic guides.">
+                <button 
+                  onClick={() => setIsGuideOpen(true)}
+                  className="p-3 bg-white text-slate-400 border-2 border-slate-100 rounded-2xl hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-md active:scale-90"
+                >
+                   <SearchIcon size={20} />
+                </button>
+              </Tooltip>
+           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 md:p-10 bg-slate-50/50 custom-scrollbar">
-          <Outlet context={{ user, isLiveMode }} />
+        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/50">
+           <Outlet />
         </div>
       </main>
 
@@ -266,4 +245,5 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   );
 };
 
+// Fixed export default issue to resolve App.tsx import error
 export default Layout;

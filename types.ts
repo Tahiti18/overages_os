@@ -39,6 +39,27 @@ export enum CaseStatus {
   REJECTED = 'REJECTED'
 }
 
+export enum ArtifactType {
+  EXTRACTED_DATA = 'EXTRACTED_DATA',
+  LEGAL_FORM = 'LEGAL_FORM',
+  RESEARCH_DOSSIER = 'RESEARCH_DOSSIER',
+  ORR_LETTER = 'ORR_LETTER',
+  WATERFALL_MODEL = 'WATERFALL_MODEL'
+}
+
+export interface VaultArtifact {
+  id: string;
+  property_id: string;
+  type: ArtifactType;
+  filename: string;
+  created_at: string;
+  created_by: string;
+  version: string;
+  hash: string; // SHA-256 simulation
+  content_preview?: string;
+  is_verified: boolean;
+}
+
 export enum LienType {
   GOVERNMENT = 'GOVERNMENT',
   MORTGAGE_1 = 'MORTGAGE_1',

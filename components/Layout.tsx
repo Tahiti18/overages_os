@@ -195,7 +195,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
         {/* Dynamic Route Content */}
         <div className="flex-1 overflow-auto p-10 bg-slate-50/30">
-          <Outlet />
+          <Outlet context={{ user }} />
         </div>
       </main>
 

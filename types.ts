@@ -53,6 +53,17 @@ export interface JurisdictionRule {
   notes?: string;
 }
 
+export interface Claimant {
+  id: string;
+  name: string;
+  relationship: 'OWNER' | 'HEIR' | 'CORPORATE_ENTITY';
+  is_verified: boolean;
+  verified_at?: string;
+  verified_by_user_id?: string;
+  verified_by_email?: string;
+  contact_info?: string;
+}
+
 export interface Property {
   id: string;
   state: string;
@@ -69,6 +80,7 @@ export interface Property {
   assigned_to_user_id?: string;
   created_at: string;
   liens?: Lien[];
+  claimants?: Claimant[];
 }
 
 export interface Document {

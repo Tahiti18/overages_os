@@ -1,10 +1,11 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-// AI Core v3.7 - Temporal Intelligence Library
+// AI Core v3.8 - Temporal Intelligence & Link Validation Library
 
 /**
  * Scans for surplus lists AND analyzes the historical temporal patterns of the jurisdiction.
+ * Enforces high-fidelity link discovery to prevent 404 redirects.
  */
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -12,19 +13,25 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Perform a deep audit of ${county} County, ${state} surplus list release patterns. 
-      1. Find the official surplus list URL.
-      2. Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.
-      3. CRITICAL: Research the "Temporal Cadence". Does this county update the list monthly, quarterly, or annually after the tax sale? 
-      4. Find the "Last Modified" date of the current list.
-      5. Predict the "Next Expected Update" based on historical sale cycles.`,
+      
+      STEP 1: LINK DISCOVERY & VALIDATION
+      - Identify the DIRECT URL for "Excess Proceeds", "Tax Sale Surplus", or "Unclaimed Funds".
+      - VALIDATION: Prioritize URLs from .gov domains. Avoid legacy paths like /index.asp if a modern service page exists.
+      - If the direct list is behind a MOAT_GATED portal (like a search form), link to the portal entry point.
+      
+      STEP 2: TEMPORAL AUDIT
+      - Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.
+      - Research the "Temporal Cadence": Does this county update the list monthly, quarterly, or annually?
+      - Find the "Last Modified" date of the current list.
+      - Predict the "Next Expected Update" based on historical sale cycles.`,
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Temporal Data Analyst specializing in Government Tax Cycles. Your job is to identify the 'Heartbeat' of county surplus list updates.",
+        systemInstruction: "You are a Temporal Data Analyst and Web Auditor. Your primary goal is to find LIVE, functional URLs for tax surplus records. If you encounter a legacy redirect or a 404-prone path, find the modern equivalent in the 'Tax Collector' or 'Treasurer' directory.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            official_url: { type: Type.STRING },
+            official_url: { type: Type.STRING, description: "The most reliable, direct URL found. Ensure it is not a legacy 404 path." },
             access_type: { type: Type.STRING, description: "OPEN_PDF, HYBRID_WEB, or MOAT_GATED" },
             cadence: { type: Type.STRING, description: "Monthly, Quarterly, Annual, or Ad-hoc" },
             last_updated: { type: Type.STRING, description: "ISO Date or mention from site." },
@@ -38,7 +45,8 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
                 type: Type.OBJECT,
                 properties: {
                   title: { type: Type.STRING },
-                  url: { type: Type.STRING }
+                  url: { type: Type.STRING },
+                  reliability: { type: Type.STRING, description: "VERIFIED_GOV or SEARCH_RESULT" }
                 }
               }
             }

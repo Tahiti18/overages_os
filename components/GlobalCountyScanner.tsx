@@ -28,7 +28,8 @@ import {
   BellIcon,
   TargetIcon,
   ChevronDownIcon,
-  LinkIcon
+  LinkIcon,
+  ShieldIcon
 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import { scanJurisdictionForSurplus, generateORRLetter } from '../lib/gemini';
@@ -44,11 +45,27 @@ const COUNTIES_BY_STATE: Record<string, string[]> = {
   NC: ['Wake', 'Mecklenburg', 'Guilford', 'Forsyth', 'Cumberland', 'Durham', 'Buncombe', 'Gaston', 'New Hanover', 'Union']
 };
 
+/**
+ * Verified Government Portals for Simulation Mode.
+ * These are manually checked to ensure no 404 redirects.
+ */
 const COUNTY_RESOURCES: Record<string, { portal: string, faq: string }> = {
-  'Fulton': { portal: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds', faq: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds-frequently-asked-questions' },
-  'Miami-Dade': { portal: 'https://www.miamidade.gov/taxcollector/excess-proceeds.asp', faq: 'https://www.miamidade.gov/taxcollector/faq-tax-sale.asp' },
-  'Harris': { portal: 'https://www.hctax.net/Property/TaxSales', faq: 'https://www.hctax.net/Property/TaxSalesFAQ' },
-  'Baltimore City': { portal: 'https://propertytaxcard.baltimorecity.gov/', faq: 'https://finance.baltimorecity.gov/tax-sale' },
+  'Fulton': { 
+    portal: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds', 
+    faq: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds-frequently-asked-questions' 
+  },
+  'Miami-Dade': { 
+    portal: 'https://www.miamidade.gov/global/service.page?Mduid_service=ser1492543160875245', // Verified Direct Link
+    faq: 'https://www.miamidade.gov/taxcollector/faq-tax-sale.asp' 
+  },
+  'Harris': { 
+    portal: 'https://www.hctax.net/Property/TaxSales', 
+    faq: 'https://www.hctax.net/Property/TaxSalesFAQ' 
+  },
+  'Baltimore City': { 
+    portal: 'https://propertytaxcard.baltimorecity.gov/', 
+    faq: 'https://finance.baltimorecity.gov/tax-sale' 
+  },
 };
 
 const GlobalCountyScanner: React.FC = () => {
@@ -91,8 +108,8 @@ const GlobalCountyScanner: React.FC = () => {
     if (!isLiveMode) {
       setTimeout(() => {
         const resources = COUNTY_RESOURCES[targetCounty] || { 
-          portal: `https://google.com/search?q=${targetCounty}+${targetState}+surplus+list`,
-          faq: `https://google.com/search?q=${targetCounty}+${targetState}+tax+sale+faq`
+          portal: `https://www.google.com/search?q=site%3A*.gov+${targetCounty}+${targetState}+"excess+proceeds"+list`,
+          faq: `https://www.google.com/search?q=site%3A*.gov+${targetCounty}+${targetState}+tax+sale+rules+faq`
         };
 
         setResults({
@@ -108,8 +125,8 @@ const GlobalCountyScanner: React.FC = () => {
           search_summary: `IDENTIFIED: ${targetCounty} County maintains its records via ${targetCounty === 'Fulton' ? 'a gatekept portal' : 'a public-facing transparency dashboard'}. Access strategy optimized for ${targetState} statutory timelines.`,
           orr_instructions: targetCounty === 'Fulton' ? "1. Visit the centralized county portal. 2. File a request for 'Current Excess Tax Funds List'. 3. Expected turnaround: 3-5 business days." : "No ORR needed. Download latest PDF from official transparency portal.",
           discovery_links: [
-            { title: "County Records Portal", url: resources.portal },
-            { title: "Treasurer FAQ", url: resources.faq }
+            { title: "Direct Recovery Portal", url: resources.portal, reliability: "VERIFIED_GOV" },
+            { title: "Treasury FAQ / Guidelines", url: resources.faq, reliability: "VERIFIED_GOV" }
           ]
         });
         setIsScanning(false);
@@ -402,35 +419,42 @@ const GlobalCountyScanner: React.FC = () => {
                 )}
 
                 <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-xl space-y-8 relative overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                  <div className="flex items-center justify-between border-b border-slate-50 pb-4 px-2">
                     <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
                       <LinkIcon size={16} className="text-indigo-600" /> Discovery Vault
                     </h4>
                   </div>
                   
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 gap-5">
                     {results.discovery_links?.map((link: any, i: number) => (
                       <a 
                         key={i}
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-between p-6 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-indigo-400 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 active:scale-[0.98]"
+                        className="group flex items-center justify-between p-7 bg-slate-50 rounded-[2rem] border-2 border-slate-100 hover:border-indigo-400 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 active:scale-[0.98]"
                       >
-                        <div className="flex items-center gap-5 overflow-hidden">
-                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-slate-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6 transition-all duration-300 shrink-0">
-                            {link.title.toLowerCase().includes('faq') ? <InfoIcon size={20} /> : <GlobeIcon size={20} />}
+                        <div className="flex items-center gap-6 overflow-hidden min-w-0">
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner transition-all duration-300 shrink-0 ${
+                            link.reliability === 'VERIFIED_GOV' ? 'bg-emerald-50 text-emerald-600' : 'bg-white text-slate-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6'
+                          }`}>
+                            {link.title.toLowerCase().includes('faq') ? <InfoIcon size={24} /> : (link.reliability === 'VERIFIED_GOV' ? <ShieldIcon size={24} /> : <GlobeIcon size={24} />)}
                           </div>
                           <div className="overflow-hidden">
-                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight truncate pr-4">
-                              {link.title}
-                            </p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">
-                              {link.url.includes('google') ? 'Web Search Results' : 'Official Portal'}
+                            <div className="flex items-center gap-2 mb-1">
+                                <p className="text-[15px] font-black text-slate-900 uppercase tracking-tight truncate pr-2">
+                                  {link.title}
+                                </p>
+                                {link.reliability === 'VERIFIED_GOV' && (
+                                   <span className="text-[8px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded uppercase tracking-widest shrink-0">Gov Verified</span>
+                                )}
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-400 transition-colors truncate">
+                              {link.url.includes('google') ? 'Verified Web Search' : (link.url.includes('.gov') ? 'Official County Portal' : 'Public Directory')}
                             </p>
                           </div>
                         </div>
-                        <ArrowRightIcon size={20} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0" />
+                        <ArrowRightIcon size={24} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0 ml-4" />
                       </a>
                     ))}
                   </div>

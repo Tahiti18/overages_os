@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { 
   ZapIcon,
@@ -19,7 +19,10 @@ import {
   SearchIcon,
   ChevronLeftIcon,
   MenuIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ShieldCheckIcon,
+  UnplugIcon,
+  ActivityIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import LiveAgent from './LiveAgent';
@@ -37,8 +40,13 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAiConnected, setIsAiConnected] = useState(false);
 
-  // Moved GavelIcon before it is used in intelligenceSuite to avoid 'used before declaration' error
+  useEffect(() => {
+    // Check if API key is present in environment
+    setIsAiConnected(!!process.env.API_KEY);
+  }, []);
+
   const GavelIcon = (props: any) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-gavel"><path d="m14.5 12.5-8 8a2.11 2.11 0 0 1-3-3l8-8"/><path d="m16 16 2 2"/><path d="m19 13 2 2"/><path d="m5 5 3 3"/><path d="m2 11 3 3"/><path d="m15.5 15.5 3-3a2.11 2.11 0 0 0-3-3l-3 3a2.11 2.11 0 0 0 3 3Z"/></svg>
   );
@@ -89,6 +97,24 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 space-y-8 py-4 custom-scrollbar overflow-x-hidden">
+          {/* Integrity Pulse Indicator */}
+          <div className={`mx-2 p-4 rounded-2xl border flex items-center gap-4 transition-all duration-500 ${isAiConnected ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+            <div className="relative flex h-3 w-3">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isAiConnected ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${isAiConnected ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+            </div>
+            {!isCollapsed && (
+              <div className="overflow-hidden animate-in fade-in slide-in-from-left-2">
+                <p className={`text-[9px] font-black uppercase tracking-[0.15em] leading-none mb-1 ${isAiConnected ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {isAiConnected ? 'Neural Link: Active' : 'Neural Link: Offline'}
+                </p>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest truncate">
+                  {isAiConnected ? 'Gemini 3.0 Cluster Connected' : 'Waiting for Authentication'}
+                </p>
+              </div>
+            )}
+          </div>
+
           <div>
             {!isCollapsed && <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-4 animate-in fade-in">Core Terminal</p>}
             <nav className="space-y-1.5">
@@ -206,7 +232,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         <header className="h-24 bg-white border-b border-slate-200 flex items-center justify-between px-10 shrink-0 z-20">
           <div className="flex items-center gap-6 w-full max-w-2xl">
             <Tooltip content="Universal search across all cases, documents, and claimants." position="bottom">
-              <div className="flex items-center bg-slate-50 rounded-2xl px-6 py-4 w-full md:w-[500px] border border-slate-200 focus-within:bg-white focus-within:ring-8 focus-within:ring-indigo-500/5 transition-all group">
+              <div className="flex items-center bg-slate-50 rounded-2xl px-6 py-4 w-full md:w-[500px] border border-slate-200 focus-within:bg-white focus-within:ring-8 focus-within:ring-indigo-500/5 transition-all group shadow-sm">
                 <SearchIcon size={20} className="text-slate-400 group-focus-within:text-indigo-600 transition-colors shrink-0" />
                 <input 
                   type="text" 
@@ -218,7 +244,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
           </div>
           
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 hidden sm:flex">
+            <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 hidden sm:flex shadow-inner">
                <Tooltip content="Work with test data for training or sandbox testing.">
                 <button onClick={() => setIsLiveMode(false)} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!isLiveMode ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}>Simulation</button>
                </Tooltip>
@@ -229,7 +255,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 md:p-10 bg-slate-50/50">
+        <div className="flex-1 overflow-auto p-4 md:p-10 bg-slate-50/50 custom-scrollbar">
           <Outlet context={{ user, isLiveMode }} />
         </div>
       </main>

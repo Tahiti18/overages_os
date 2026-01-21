@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { ScaleIcon, PlusIcon, EditIcon, Trash2Icon, SearchIcon } from 'lucide-react';
 import { JurisdictionRule } from '../types';
+import Tooltip from './Tooltip';
 
 const JurisdictionRules: React.FC = () => {
-  // Fix: Added attorney_required property to match JurisdictionRule interface
   const [rules, setRules] = useState<JurisdictionRule[]>([
     {
       id: 'r1',
@@ -35,18 +35,22 @@ const JurisdictionRules: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-800">Jurisdiction Rules</h2>
           <p className="text-slate-500">Configure claim deadlines and document requirements per county.</p>
         </div>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
-          <PlusIcon size={18} />
-          Create Rule
-        </button>
+        <Tooltip content="Define a new set of compliance rules for a specific state or county.">
+          <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
+            <PlusIcon size={18} />
+            Create Rule
+          </button>
+        </Tooltip>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm w-full max-w-sm">
-            <SearchIcon size={16} className="text-slate-400" />
-            <input type="text" placeholder="Filter by State or County..." className="text-sm bg-transparent border-none focus:ring-0 w-full" />
-          </div>
+          <Tooltip content="Search the rule database by state or county name.">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm w-full max-w-sm">
+              <SearchIcon size={16} className="text-slate-400" />
+              <input type="text" placeholder="Filter by State or County..." className="text-sm bg-transparent border-none focus:ring-0 w-full" />
+            </div>
+          </Tooltip>
         </div>
 
         <div className="overflow-x-auto">
@@ -83,8 +87,12 @@ const JurisdictionRules: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><EditIcon size={18} /></button>
-                      <button className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2Icon size={18} /></button>
+                      <Tooltip content="Modify deadline, documentation, or filing method requirements.">
+                        <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><EditIcon size={18} /></button>
+                      </Tooltip>
+                      <Tooltip content="Permanently remove this jurisdiction from the rules engine.">
+                        <button className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2Icon size={18} /></button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>

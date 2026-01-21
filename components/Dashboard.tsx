@@ -257,13 +257,15 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                         </Tooltip>
                       </td>
                       <td className="px-8 py-6 text-center" onClick={() => navigate(`/properties/${p.id}`)}>
-                        <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
-                          p.risk_level === 'LOW' ? 'bg-green-50 text-green-700 border-green-200' :
-                          p.risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                          'bg-red-50 text-red-700 border-red-200'
-                        }`}>
-                          {p.risk_level} Risk
-                        </span>
+                        <Tooltip content={`Risk assessed as ${p.risk_level} based on lien depth and owner location status.`}>
+                          <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
+                            p.risk_level === 'LOW' ? 'bg-green-50 text-green-700 border-green-200' :
+                            p.risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-red-50 text-red-700 border-red-200'
+                          }`}>
+                            {p.risk_level} Risk
+                          </span>
+                        </Tooltip>
                       </td>
                       <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
                         <p className="text-sm font-black text-indigo-600">${p.surplus_amount.toLocaleString()}</p>

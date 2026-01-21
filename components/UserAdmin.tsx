@@ -9,6 +9,7 @@ import {
   PlusIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
+import Tooltip from './Tooltip';
 
 const UserAdmin: React.FC = () => {
   const [users] = useState<User[]>([
@@ -34,10 +35,12 @@ const UserAdmin: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-800">User Management</h2>
           <p className="text-slate-500">Manage your team's access levels and active accounts.</p>
         </div>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
-          <PlusIcon size={18} />
-          Invite Member
-        </button>
+        <Tooltip content="Send an invitation link to a new team member.">
+          <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
+            <PlusIcon size={18} />
+            Invite Member
+          </button>
+        </Tooltip>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -68,9 +71,11 @@ const UserAdmin: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-8 py-5">
-                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border uppercase tracking-wider ${getRoleBadge(user.role)}`}>
-                    {user.role}
-                  </span>
+                  <Tooltip content={`User is assigned the ${user.role} role with specific resource access.`}>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border uppercase tracking-wider cursor-help ${getRoleBadge(user.role)}`}>
+                      {user.role}
+                    </span>
+                  </Tooltip>
                 </td>
                 <td className="px-8 py-5">
                   {user.is_active ? (
@@ -89,9 +94,11 @@ const UserAdmin: React.FC = () => {
                   Today, 9:14 AM
                 </td>
                 <td className="px-8 py-5 text-right">
-                  <button className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition-all">
-                    <MoreVerticalIcon size={18} />
-                  </button>
+                  <Tooltip content="Edit user profile, change role, or deactivate account.">
+                    <button className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                      <MoreVerticalIcon size={18} />
+                    </button>
+                  </Tooltip>
                 </td>
               </tr>
             ))}

@@ -11,6 +11,7 @@ import {
   PlusCircleIcon
 } from 'lucide-react';
 import { CaseStatus } from '../types';
+import Tooltip from './Tooltip';
 
 const PropertyForm: React.FC = () => {
   const navigate = useNavigate();
@@ -44,12 +45,14 @@ const PropertyForm: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-800">New Surplus Case</h2>
           <p className="text-slate-500 text-sm">Manually input property details to start the recovery workflow.</p>
         </div>
-        <button 
-          onClick={() => navigate('/')}
-          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-        >
-          <XIcon size={24} />
-        </button>
+        <Tooltip content="Discard changes and return to the main dashboard.">
+          <button 
+            onClick={() => navigate('/')}
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+          >
+            <XIcon size={24} />
+          </button>
+        </Tooltip>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -165,20 +168,24 @@ const PropertyForm: React.FC = () => {
         </div>
 
         <div className="p-6 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
-          <button 
-            type="button" 
-            onClick={() => navigate('/')}
-            className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit"
-            className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
-          >
-            <SaveIcon size={18} />
-            Initialize Case
-          </button>
+          <Tooltip content="Cancel and return to the dashboard. No data will be saved.">
+            <button 
+              type="button" 
+              onClick={() => navigate('/')}
+              className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+            >
+              Cancel
+            </button>
+          </Tooltip>
+          <Tooltip content="Commit this property record to the database and initiate the discovery pipeline.">
+            <button 
+              type="submit"
+              className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
+            >
+              <SaveIcon size={18} />
+              Initialize Case
+            </button>
+          </Tooltip>
         </div>
       </form>
     </div>

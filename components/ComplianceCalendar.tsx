@@ -14,6 +14,7 @@ import {
   ArrowUpRightIcon
 } from 'lucide-react';
 import { Property, CaseStatus } from '../types';
+import Tooltip from './Tooltip';
 
 // Mock data integration (In a real app, this would come from a context or API)
 const MOCK_PROPERTIES: Property[] = [
@@ -94,11 +95,15 @@ const ComplianceCalendar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-           <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors"><ChevronLeftIcon size={20} /></button>
+           <Tooltip content="Previous Month">
+            <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors"><ChevronLeftIcon size={20} /></button>
+           </Tooltip>
            <div className="text-sm font-black uppercase tracking-widest min-w-[160px] text-center">
              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
            </div>
-           <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors"><ChevronRightIcon size={20} /></button>
+           <Tooltip content="Next Month">
+            <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors"><ChevronRightIcon size={20} /></button>
+           </Tooltip>
         </div>
       </div>
 
@@ -109,18 +114,19 @@ const ComplianceCalendar: React.FC = () => {
              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Filters</h3>
              <div className="space-y-2">
                 {['ALL', 'GA', 'FL', 'TX'].map(st => (
-                  <button 
-                    key={st}
-                    onClick={() => setFilterState(st)}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                      filterState === st 
-                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' 
-                        : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-indigo-300'
-                    }`}
-                  >
-                    <span className="text-[11px] font-black uppercase tracking-widest">{st === 'ALL' ? 'All Jurisdictions' : `${st} Records`}</span>
-                    {filterState === st && <ArrowUpRightIcon size={14} />}
-                  </button>
+                  <Tooltip key={st} content={`View claim deadlines specifically for ${st === 'ALL' ? 'all active jurisdictions' : st}.`}>
+                    <button 
+                      onClick={() => setFilterState(st)}
+                      className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                        filterState === st 
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' 
+                          : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-indigo-300'
+                      }`}
+                    >
+                      <span className="text-[11px] font-black uppercase tracking-widest">{st === 'ALL' ? 'All Jurisdictions' : `${st} Records`}</span>
+                      {filterState === st && <ArrowUpRightIcon size={14} />}
+                    </button>
+                  </Tooltip>
                 ))}
              </div>
           </div>
@@ -137,9 +143,11 @@ const ComplianceCalendar: React.FC = () => {
                       <p className="text-2xl font-black">2 Cases</p>
                    </div>
                 </div>
-                <button className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950">
-                   Generate Risk Report
-                </button>
+                <Tooltip content="Generate a detailed report of all cases approaching their statutory claim deadline.">
+                  <button className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950">
+                    Generate Risk Report
+                  </button>
+                </Tooltip>
              </div>
              <div className="absolute -right-10 -bottom-10 opacity-10 group-hover:scale-110 transition-transform duration-700">
                 <CalendarIcon size={120} />
@@ -173,17 +181,18 @@ const ComplianceCalendar: React.FC = () => {
                     
                     <div className="mt-2 space-y-1">
                       {dayEvents.map(event => (
-                        <button
-                          key={event.id}
-                          onClick={() => navigate(`/properties/${event.id}`)}
-                          className="w-full text-left p-1.5 bg-indigo-50 border border-indigo-100 rounded-lg group/item hover:bg-indigo-600 hover:text-white transition-all overflow-hidden"
-                        >
-                          <div className="flex items-center gap-1">
-                            <div className="w-1 h-1 rounded-full bg-indigo-600 group-hover/item:bg-white"></div>
-                            <span className="text-[8px] font-black uppercase truncate tracking-tighter">{event.address}</span>
-                          </div>
-                          <p className="text-[7px] font-bold opacity-60 truncate">${event.surplus_amount.toLocaleString()}</p>
-                        </button>
+                        <Tooltip key={event.id} content={`Statutory deadline for surplus recovery: ${event.address}`}>
+                          <button
+                            onClick={() => navigate(`/properties/${event.id}`)}
+                            className="w-full text-left p-1.5 bg-indigo-50 border border-indigo-100 rounded-lg group/item hover:bg-indigo-600 hover:text-white transition-all overflow-hidden"
+                          >
+                            <div className="flex items-center gap-1">
+                              <div className="w-1 h-1 rounded-full bg-indigo-600 group-hover/item:bg-white"></div>
+                              <span className="text-[8px] font-black uppercase truncate tracking-tighter">{event.address}</span>
+                            </div>
+                            <p className="text-[7px] font-bold opacity-60 truncate">${event.surplus_amount.toLocaleString()}</p>
+                          </button>
+                        </Tooltip>
                       ))}
                     </div>
                   </div>
@@ -218,12 +227,14 @@ const ComplianceCalendar: React.FC = () => {
                           <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Deadline Date</p>
                           <p className="text-sm font-black text-red-600">{p.deadline_date}</p>
                        </div>
-                       <button 
-                         onClick={() => navigate(`/properties/${p.id}`)}
-                         className="p-3 bg-white text-slate-400 hover:text-indigo-600 rounded-xl border border-slate-200 hover:border-indigo-600 transition-all shadow-sm"
-                        >
-                          <ArrowUpRightIcon size={20} />
-                       </button>
+                       <Tooltip content="Open case file and begin document assembly before the deadline expires.">
+                        <button 
+                          onClick={() => navigate(`/properties/${p.id}`)}
+                          className="p-3 bg-white text-slate-400 hover:text-indigo-600 rounded-xl border border-slate-200 hover:border-indigo-600 transition-all shadow-sm"
+                          >
+                            <ArrowUpRightIcon size={20} />
+                        </button>
+                       </Tooltip>
                     </div>
                   </div>
                 ))}

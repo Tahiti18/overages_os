@@ -21,6 +21,7 @@ import {
   GlobeIcon
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import Tooltip from './Tooltip';
 
 // Enhanced SPI (Surplus Profitability Index) Matrix
 const NATIONAL_RANKINGS = [
@@ -97,27 +98,33 @@ const MarketIntelligence: React.FC = () => {
 
       {/* Primary Intelligence Navigation */}
       <div className="flex bg-white rounded-[2rem] border-2 border-slate-100 p-2 shadow-sm">
-        <button 
-          onClick={() => setActiveTab('ranking')}
-          className={`flex-1 py-5 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === 'ranking' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-50'}`}
-        >
-          <TrendingUpIcon size={18} />
-          National Leaderboard
-        </button>
-        <button 
-          onClick={() => setActiveTab('md_deepdive')}
-          className={`flex-1 py-5 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === 'md_deepdive' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-50'}`}
-        >
-          <GavelIcon size={18} />
-          Maryland Deep-Dive
-        </button>
-        <button 
-          onClick={() => setActiveTab('schedules')}
-          className={`flex-1 py-5 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === 'schedules' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-50'}`}
-        >
-          <CalendarIcon size={18} />
-          Live Auction Feeds
-        </button>
+        <Tooltip content="Rank the top 50 states by surplus availability and legal difficulty." position="bottom">
+          <button 
+            onClick={() => setActiveTab('ranking')}
+            className={`flex-1 py-5 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === 'ranking' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-50'}`}
+          >
+            <TrendingUpIcon size={18} />
+            National Leaderboard
+          </button>
+        </Tooltip>
+        <Tooltip content="Analyze the Maryland judicial barrier and why it protects professional margins." position="bottom">
+          <button 
+            onClick={() => setActiveTab('md_deepdive')}
+            className={`flex-1 py-5 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === 'md_deepdive' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-50'}`}
+          >
+            <GavelIcon size={18} />
+            Maryland Deep-Dive
+          </button>
+        </Tooltip>
+        <Tooltip content="Real-time scan of upcoming tax sale auctions via Gemini Grounding Search." position="bottom">
+          <button 
+            onClick={() => setActiveTab('schedules')}
+            className={`flex-1 py-5 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === 'schedules' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-50'}`}
+          >
+            <CalendarIcon size={18} />
+            Live Auction Feeds
+          </button>
+        </Tooltip>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -147,9 +154,11 @@ const MarketIntelligence: React.FC = () => {
                       </div>
                       <div>
                         <h4 className="text-2xl font-black text-slate-900 tracking-tight mb-1">{item.name}</h4>
-                        <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${item.friction === 'LOW' ? 'bg-emerald-100 text-emerald-700' : item.friction === 'MED' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
-                          {item.friction} Friction
-                        </span>
+                        <Tooltip content={`Friction level indicates the difficulty of claim recovery in ${item.name}.`}>
+                          <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest cursor-help ${item.friction === 'LOW' ? 'bg-emerald-100 text-emerald-700' : item.friction === 'MED' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+                            {item.friction} Friction
+                          </span>
+                        </Tooltip>
                       </div>
                     </div>
 
@@ -226,9 +235,11 @@ const MarketIntelligence: React.FC = () => {
                             <div className="h-full bg-indigo-500 w-[65%]"></div>
                          </div>
                       </div>
-                      <button className="w-full py-3 bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
-                        Scan Latest Lists
-                      </button>
+                      <Tooltip content={`Initiate a deep scan of the latest overage lists for ${county} County.`}>
+                        <button className="w-full py-3 bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
+                          Scan Latest Lists
+                        </button>
+                      </Tooltip>
                    </div>
                  ))}
                </div>
@@ -246,14 +257,16 @@ const MarketIntelligence: React.FC = () => {
                     <p className="text-indigo-100 font-bold text-lg max-w-2xl leading-relaxed">
                       We use <span className="text-white font-black underline underline-offset-4">Gemini 3.0 Flash</span> with real-time Google Grounding to scour Treasurer sites for the next batch of overage lists.
                     </p>
-                    <button 
-                      onClick={fetchUpcomingSchedules}
-                      disabled={isSearchingSchedules}
-                      className="px-12 py-5 bg-white text-indigo-600 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-indigo-950/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
-                    >
-                      {isSearchingSchedules ? <RefreshCwIcon size={20} className="animate-spin" /> : <ZapIcon size={20} fill="currentColor" />}
-                      {isSearchingSchedules ? 'Syncing National Calendars...' : 'Scan Upcoming Releases'}
-                    </button>
+                    <Tooltip content="Launch the AI grounding engine to find upcoming auction dates.">
+                      <button 
+                        onClick={fetchUpcomingSchedules}
+                        disabled={isSearchingSchedules}
+                        className="px-12 py-5 bg-white text-indigo-600 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-indigo-950/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                      >
+                        {isSearchingSchedules ? <RefreshCwIcon size={20} className="animate-spin" /> : <ZapIcon size={20} fill="currentColor" />}
+                        {isSearchingSchedules ? 'Syncing National Calendars...' : 'Scan Upcoming Releases'}
+                      </button>
+                    </Tooltip>
                   </div>
                   <div className="absolute -right-10 -bottom-10 opacity-10 rotate-12 group-hover:scale-110 transition-all duration-1000">
                     <CalendarIcon size={250} />
@@ -323,13 +336,15 @@ const MarketIntelligence: React.FC = () => {
                 <p className="text-slate-400 text-sm font-medium leading-relaxed">
                    Florida HB 141 has updated the <span className="text-white font-black underline">Excess Proceeds Distribution</span> waterfall. Junior liens now have 120 days to file before owner eligibility is finalized.
                 </p>
-                <button className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950/50 hover:bg-indigo-500 transition-all flex items-center justify-center gap-2">
-                   View Regulation <ArrowUpRightIcon size={14} />
-                </button>
+                <Tooltip content="Read the full legislative text and its impact on recovery logic.">
+                  <button className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950/50 hover:bg-indigo-500 transition-all flex items-center justify-center gap-2">
+                    View Regulation <ArrowUpRightIcon size={14} />
+                  </button>
+                </Tooltip>
              </div>
           </div>
 
-          <div className="bg-slate-50 p-10 rounded-[3rem] border-2 border-slate-100 text-center space-y-6">
+          <div className="bg-slate-50 p-10 rounded-[3rem] border-2 border-slate-100 text-center space-y-6 cursor-help">
              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-sm border border-slate-100">
                 <Building2Icon size={32} className="text-indigo-400" />
              </div>

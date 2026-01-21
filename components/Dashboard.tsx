@@ -149,9 +149,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
               Proprietary yielding engine active. Analyzing <span className="text-indigo-400 font-bold">124</span> potential recoveries for jurisdiction-specific compliance.
             </p>
           </div>
-          <button onClick={() => navigate('/properties/new')} className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:shadow-2xl hover:scale-[1.02] transition-all flex items-center gap-3 border border-slate-200 shadow-xl shadow-indigo-950/20">
-             <PlusCircleIcon size={20} className="text-indigo-600" /> New Intake
-          </button>
+          <Tooltip content="Launch the manual intake wizard for a new overage record.">
+            <button onClick={() => navigate('/properties/new')} className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:shadow-2xl hover:scale-[1.02] transition-all flex items-center gap-3 border border-slate-200 shadow-xl shadow-indigo-950/20">
+              <PlusCircleIcon size={20} className="text-indigo-600" /> New Intake
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -161,7 +163,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {stats.map((stat, i) => (
               <Tooltip key={i} content={stat.tip}>
-                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-start justify-between group hover:border-indigo-400 transition-all hover:shadow-xl hover:-translate-y-1 h-full">
+                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-start justify-between group hover:border-indigo-400 transition-all hover:shadow-xl hover:-translate-y-1 h-full cursor-default">
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{stat.label}</p>
                     <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</h3>
@@ -176,11 +178,17 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 tracking-tight uppercase">Pipeline <span className="text-slate-400">({filteredProperties.length})</span></h2>
               <div className="flex items-center gap-4">
-                 <div className="relative w-80">
-                    <SearchIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Search addresses or APNs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm" />
-                 </div>
-                 <button className="bg-white px-6 py-3 rounded-2xl border border-slate-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:border-indigo-400 transition-all shadow-sm"><FilterIcon size={14}/> Engine Filters</button>
+                 <Tooltip content="Filter the pipeline by specific address components or Parcel IDs.">
+                   <div className="relative w-80">
+                      <SearchIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input type="text" placeholder="Search addresses or APNs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm" />
+                   </div>
+                 </Tooltip>
+                 <Tooltip content="Access advanced filtering options for debt ratios and risk levels.">
+                  <button className="bg-white px-6 py-3 rounded-2xl border border-slate-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:border-indigo-400 transition-all shadow-sm">
+                    <FilterIcon size={14}/> Engine Filters
+                  </button>
+                 </Tooltip>
               </div>
             </div>
 
@@ -190,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                   <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                     <th className="px-8 py-6">
                       <Tooltip content="System-generated priority based on debt ratios, jurisdiction difficulty, and claimant clarity.">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 cursor-help">
                           Intelligence Rank <InfoIcon size={10} className="text-slate-300" />
                         </div>
                       </Tooltip>
@@ -262,12 +270,14 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                         <p className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Est. Payout: {p.est_payout_days} Days</p>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <button 
-                          onClick={() => navigate(`/properties/${p.id}`)}
-                          className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all shadow-sm"
-                        >
-                          <ArrowRightIcon size={18} />
-                        </button>
+                        <Tooltip content="Open full case file and intelligence details.">
+                          <button 
+                            onClick={() => navigate(`/properties/${p.id}`)}
+                            className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all shadow-sm"
+                          >
+                            <ArrowRightIcon size={18} />
+                          </button>
+                        </Tooltip>
                       </td>
                     </tr>
                   ))}
@@ -294,7 +304,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                    <span>Verification Speed</span>
                    <span className="text-slate-900">2.4 Days</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                    <div className="h-full bg-indigo-600 w-[85%] rounded-full"></div>
                 </div>
               </div>
@@ -303,7 +313,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                    <span>Conversion Rate</span>
                    <span className="text-slate-900">42%</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                    <div className="h-full bg-emerald-500 w-[42%] rounded-full"></div>
                 </div>
               </div>
@@ -312,7 +322,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                    <span>Avg. Case Lifecycle</span>
                    <span className="text-slate-900">128 Days</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                    <div className="h-full bg-amber-500 w-[60%] rounded-full"></div>
                 </div>
               </div>
@@ -328,9 +338,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                 <p className="text-indigo-100 text-xs leading-relaxed opacity-80">
                    Based on current GA and FL trends, Q4 surplus volume is expected to rise by 18%. Update rules to prioritize FL-Miami records.
                 </p>
-                <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950/50 hover:bg-indigo-50 transition-all">
-                   Run Full Simulation
-                </button>
+                <Tooltip content="Launch a predictive modeling session for future surplus volumes.">
+                  <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950/50 hover:bg-indigo-50 transition-all">
+                    Run Full Simulation
+                  </button>
+                </Tooltip>
              </div>
              <div className="absolute -bottom-10 -right-10 opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
                 <TrendingUpIcon size={120} />

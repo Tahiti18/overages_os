@@ -81,13 +81,13 @@ const PropertyDetail: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Waterfall', icon: CalculatorIcon },
-    { id: 'research', label: 'Research', icon: SparklesIcon },
-    { id: 'claimants', label: 'Claimants', icon: UserCircleIcon },
-    { id: 'outreach', label: 'Outreach', icon: MessageSquareIcon },
-    { id: 'packager', label: 'Packager', icon: ArchiveIcon },
-    { id: 'documents', label: 'Docs', icon: FileTextIcon },
-    { id: 'audit', label: 'Audit Log', icon: ListChecksIcon },
+    { id: 'overview', label: 'Waterfall', icon: CalculatorIcon, tip: 'Analyze financial logic and senior lien deductions.' },
+    { id: 'research', label: 'Research', icon: SparklesIcon, tip: 'AI-powered skip tracing and social verification.' },
+    { id: 'claimants', label: 'Claimants', icon: UserCircleIcon, tip: 'Manage owner/heir verification and contact info.' },
+    { id: 'outreach', label: 'Outreach', icon: MessageSquareIcon, tip: 'Generate personalized recovery notices and scripts.' },
+    { id: 'packager', label: 'Packager', icon: ArchiveIcon, tip: 'Assemble final claim affidavits and demand letters.' },
+    { id: 'documents', label: 'Docs', icon: FileTextIcon, tip: 'Repository for deeds, IDs, and tax bill artifacts.' },
+    { id: 'audit', label: 'Audit Log', icon: ListChecksIcon, tip: 'Historical trail of all system and human actions.' },
   ];
 
   const handleOutreachGen = async () => {
@@ -164,29 +164,44 @@ const PropertyDetail: React.FC = () => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link to="/" className="p-3 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm"><ChevronLeftIcon size={20} /></Link>
+          <Tooltip content="Return to the main case pipeline dashboard.">
+            <Link to="/" className="p-3 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
+              <ChevronLeftIcon size={20} />
+            </Link>
+          </Tooltip>
           <div>
             <h2 className="text-2xl font-black text-slate-900">{property.address}</h2>
             <div className="flex items-center gap-3 mt-1">
               <p className="text-slate-400 text-sm font-mono uppercase">ID: {property.parcel_id} • Priority: {property.priority_score || 92}</p>
-              <div className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${
-                property.status === CaseStatus.READY_FOR_REVIEW ? 'bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm animate-pulse' : 'bg-slate-100 text-slate-500 border-slate-200'
-              }`}>
-                {property.status.replace(/_/g, ' ')}
-              </div>
+              <Tooltip content="The current stage of this case in the automated recovery lifecycle.">
+                <div className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all cursor-help ${
+                  property.status === CaseStatus.READY_FOR_REVIEW ? 'bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm animate-pulse' : 'bg-slate-100 text-slate-500 border-slate-200'
+                }`}>
+                  {property.status.replace(/_/g, ' ')}
+                </div>
+              </Tooltip>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-6 py-3 text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xl shadow-indigo-200 transition-all flex items-center gap-2"><CheckCircleIcon size={18} /> Finalize Intelligence</button>
+          <Tooltip content="Authoritatively lock in the intelligence findings for this record.">
+            <button className="px-6 py-3 text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xl shadow-indigo-200 transition-all flex items-center gap-2">
+              <CheckCircleIcon size={18} /> Finalize Intelligence
+            </button>
+          </Tooltip>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 flex items-center gap-8 px-8 overflow-x-auto shadow-sm">
         {tabs.map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex items-center gap-2 py-5 border-b-4 font-black text-[11px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-            <tab.icon size={16} /> {tab.label}
-          </button>
+          <Tooltip key={tab.id} content={tab.tip}>
+            <button 
+              onClick={() => setActiveTab(tab.id as any)} 
+              className={`flex items-center gap-2 py-5 border-b-4 font-black text-[11px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            >
+              <tab.icon size={16} /> {tab.label}
+            </button>
+          </Tooltip>
         ))}
       </div>
 
@@ -258,14 +273,18 @@ const PropertyDetail: React.FC = () => {
                               <p className="text-xs text-slate-700 leading-relaxed font-medium">{c.verification_rationale}</p>
                            </div>
                            <div className="flex items-center gap-4">
-                              <div className="p-4 bg-white rounded-2xl border border-slate-200 flex-1 text-center">
-                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Match Rating</p>
-                                 <p className="text-xl font-black text-indigo-600">{(c.confidence_score || 0) * 100}%</p>
-                              </div>
-                              <div className="p-4 bg-white rounded-2xl border border-slate-200 flex-1 text-center">
-                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Risk Profile</p>
-                                 <p className="text-xl font-black text-green-600">LOW</p>
-                              </div>
+                              <Tooltip content="The statistical probability that this claimant is the true legal owner based on artifact matching.">
+                                <div className="p-4 bg-white rounded-2xl border border-slate-200 flex-1 text-center cursor-help">
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Match Rating</p>
+                                  <p className="text-xl font-black text-indigo-600">{(c.confidence_score || 0) * 100}%</p>
+                                </div>
+                              </Tooltip>
+                              <Tooltip content="The perceived difficulty of recovery based on jurisdictional precedent.">
+                                <div className="p-4 bg-white rounded-2xl border border-slate-200 flex-1 text-center cursor-help">
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Risk Profile</p>
+                                  <p className="text-xl font-black text-green-600">LOW</p>
+                                </div>
+                              </Tooltip>
                            </div>
                         </div>
                      </div>
@@ -332,9 +351,11 @@ const PropertyDetail: React.FC = () => {
                       </div>
                       <p className="text-indigo-200 text-sm leading-relaxed mb-8">Generate high-conversion, legally compliant outreach materials grounded in deep skip-tracing findings.</p>
                       {!outreachData && (
-                        <button onClick={handleOutreachGen} disabled={outreachLoading} className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-950 flex items-center gap-2">
-                          {outreachLoading ? <Loader2Icon className="animate-spin" size={16}/> : <Wand2Icon size={16}/>} Generate Personalized Copy
-                        </button>
+                        <Tooltip content="Ask Gemini to draft personalized recovery notices based on skip-trace dossier findings.">
+                          <button onClick={handleOutreachGen} disabled={outreachLoading} className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-950 flex items-center gap-2">
+                            {outreachLoading ? <Loader2Icon className="animate-spin" size={16}/> : <Wand2Icon size={16}/>} Generate Personalized Copy
+                          </button>
+                        </Tooltip>
                       )}
                    </div>
                 </div>
@@ -346,7 +367,9 @@ const PropertyDetail: React.FC = () => {
                   <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-4">
                      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                         <h5 className="font-black text-slate-800 flex items-center gap-2 uppercase text-[10px] tracking-widest"><MailIcon size={14} className="text-indigo-600"/> Direct Mail Artifact</h5>
-                        <button className="p-2 text-slate-400 hover:text-indigo-600"><CopyIcon size={16}/></button>
+                        <Tooltip content="Copy drafted letter content to clipboard.">
+                          <button className="p-2 text-slate-400 hover:text-indigo-600"><CopyIcon size={16}/></button>
+                        </Tooltip>
                      </div>
                      <div className="font-serif text-sm text-slate-700 leading-relaxed whitespace-pre-wrap p-4 bg-slate-50 rounded-2xl border border-slate-100">{outreachData.direct_mail}</div>
                   </div>
@@ -354,7 +377,9 @@ const PropertyDetail: React.FC = () => {
                     <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-4">
                        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                           <h5 className="font-black text-slate-800 flex items-center gap-2 uppercase text-[10px] tracking-widest"><MessageSquareIcon size={14} className="text-indigo-600"/> SMS Protocol</h5>
-                          <button className="p-2 text-slate-400 hover:text-indigo-600"><CopyIcon size={16}/></button>
+                          <Tooltip content="Copy drafted SMS script.">
+                            <button className="p-2 text-slate-400 hover:text-indigo-600"><CopyIcon size={16}/></button>
+                          </Tooltip>
                        </div>
                        <div className="text-xs font-bold text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 italic">"{outreachData.sms_script}"</div>
                     </div>

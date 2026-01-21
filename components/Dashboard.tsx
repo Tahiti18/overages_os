@@ -16,7 +16,8 @@ import {
   UserPlusIcon,
   SearchIcon,
   ChevronDownIcon,
-  UserIcon
+  DatabaseIcon,
+  UnplugIcon
 } from 'lucide-react';
 import { Property, CaseStatus, User, UserRole } from '../types';
 import Tooltip from './Tooltip';
@@ -92,10 +93,10 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>(INITIAL_PROPERTIES);
-  const [filterStatus, setFilterStatus] = useState<CaseStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ minSurplus: '', maxSurplus: '' });
 
+  // FINANCIAL STATS: Zeroed in Live Mode unless real data is added
   const stats = [
     { label: 'Active Pipeline', value: isLiveMode ? '$0' : '$735,000', icon: TrendingUpIcon, color: 'text-indigo-600', bg: 'bg-indigo-50', tip: 'Total estimated gross surplus for all active cases in the system.' },
     { label: 'High Yield (90+)', value: isLiveMode ? '0' : '12 Cases', icon: SparklesIcon, color: 'text-amber-600', bg: 'bg-amber-50', tip: 'Cases with an Intelligence Rank over 90, indicating highest recovery probability.' },
@@ -104,14 +105,15 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
   ];
 
   const filteredProperties = useMemo(() => {
+    // CRITICAL: Return empty array for Live Mode until real data ingestion is implemented
     if (isLiveMode) return [];
+    
     return properties.filter(p => {
-      if (filterStatus !== 'ALL' && p.status !== filterStatus) return false;
       if (searchQuery && !p.address.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filters.minSurplus && p.surplus_amount < Number(filters.minSurplus)) return false;
       return true;
     }).sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
-  }, [filterStatus, filters, searchQuery, isLiveMode, properties]);
+  }, [searchQuery, filters, isLiveMode, properties]);
 
   const handleAssignChange = (propertyId: string, userId: string) => {
     setProperties(prev => prev.map(p => 
@@ -135,18 +137,24 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       {/* Top Intelligence Banner */}
-      <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group border border-white/5">
+      <div className={`rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group border border-white/5 transition-all duration-700 ${isLiveMode ? 'bg-slate-950 ring-2 ring-indigo-500/20' : 'bg-slate-900'}`}>
         <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform duration-1000">
-           <ZapIcon size={160} fill="white" />
+           {isLiveMode ? <DatabaseIcon size={160} fill="white" /> : <ZapIcon size={160} fill="white" />}
         </div>
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">AI Core v3.0 Connected</span>
-              <h2 className="text-4xl font-black tracking-tighter">Recovery Intelligence</h2>
+              <span className={`text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${isLiveMode ? 'bg-emerald-600 shadow-lg shadow-emerald-500/20' : 'bg-indigo-600'}`}>
+                {isLiveMode ? 'Live Engine Synchronized' : 'AI Core v3.0 Connected'}
+              </span>
+              <h2 className="text-4xl font-black tracking-tighter">
+                {isLiveMode ? 'Production Terminal' : 'Recovery Intelligence'}
+              </h2>
             </div>
             <p className="text-slate-400 text-lg max-w-xl font-medium leading-relaxed">
-              Proprietary yielding engine active. Analyzing <span className="text-indigo-400 font-bold">124</span> potential recoveries for jurisdiction-specific compliance.
+              {isLiveMode 
+                ? 'Standing by for live data ingestion. Connect your first County Treasurer feed or perform a Manual Intake.' 
+                : 'Proprietary yielding engine active. Analyzing simulation records for jurisdictional compliance training.'}
             </p>
           </div>
           <Tooltip content="Launch the manual intake wizard for a new overage record.">
@@ -176,7 +184,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
 
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 tracking-tight uppercase">Pipeline <span className="text-slate-400">({filteredProperties.length})</span></h2>
+              <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 tracking-tight uppercase">
+                {isLiveMode ? 'Active Production Feed' : 'Pipeline'} 
+                <span className="text-slate-400">({filteredProperties.length})</span>
+              </h2>
               <div className="flex items-center gap-4">
                  <Tooltip content="Filter the pipeline by specific address components or Parcel IDs.">
                    <div className="relative w-80">
@@ -184,80 +195,64 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                       <input type="text" placeholder="Search addresses or APNs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm" />
                    </div>
                  </Tooltip>
-                 <Tooltip content="Access advanced filtering options for debt ratios and risk levels.">
-                  <button className="bg-white px-6 py-3 rounded-2xl border border-slate-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:border-indigo-400 transition-all shadow-sm">
-                    <FilterIcon size={14}/> Engine Filters
-                  </button>
-                 </Tooltip>
               </div>
             </div>
 
             <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                    <th className="px-8 py-6">
-                      <Tooltip content="System-generated priority based on debt ratios, jurisdiction difficulty, and claimant clarity.">
-                        <div className="flex items-center gap-1 cursor-help">
-                          Intelligence Rank <InfoIcon size={10} className="text-slate-300" />
-                        </div>
-                      </Tooltip>
-                    </th>
-                    <th className="px-8 py-6">Property Context</th>
-                    <th className="px-8 py-6">Assignee</th>
-                    <th className="px-8 py-6 text-center">Risk Level</th>
-                    <th className="px-8 py-6">Est. Net Recovery</th>
-                    <th className="px-8 py-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredProperties.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
-                      <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shadow-inner border ${p.priority_score! > 85 ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                            {p.priority_score}
+              {filteredProperties.length > 0 ? (
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                      <th className="px-8 py-6">Intelligence Rank</th>
+                      <th className="px-8 py-6">Property Context</th>
+                      <th className="px-8 py-6">Assignee</th>
+                      <th className="px-8 py-6 text-center">Risk Level</th>
+                      <th className="px-8 py-6">Est. Net Recovery</th>
+                      <th className="px-8 py-6 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredProperties.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                        <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shadow-inner border ${p.priority_score! > 85 ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                              {p.priority_score}
+                            </div>
                           </div>
-                          {p.priority_score! > 90 && <SparklesIcon size={14} className="text-amber-500 animate-pulse" />}
-                        </div>
-                      </td>
-                      <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
-                        <div>
-                          <p className="text-sm font-black text-slate-900 leading-tight">{p.address}</p>
-                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{p.parcel_id} • {p.county}, {p.state}</p>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <Tooltip content="Assign this case to a team member for verification and recovery processing.">
-                          <div className="relative group/assignee">
-                            <div className="flex items-center gap-3 p-2 rounded-2xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border transition-all ${p.assigned_to_user_id ? 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-sm' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
-                                {p.assigned_to_user_id ? getUserInitials(p.assigned_to_user_id) : <UserPlusIcon size={12} />}
-                              </div>
-                              <div className="flex flex-col">
-                                <p className="text-[11px] font-black text-slate-800 leading-none mb-1">{getUserName(p.assigned_to_user_id)}</p>
-                                <select 
-                                  className="absolute inset-0 opacity-0 cursor-pointer w-full"
-                                  value={p.assigned_to_user_id || 'unassigned'}
-                                  onChange={(e) => handleAssignChange(p.id, e.target.value)}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <option value="unassigned">Unassigned</option>
-                                  {TEAM_MEMBERS.map(member => (
-                                    <option key={member.id} value={member.id}>{member.email.split('@')[0]}</option>
-                                  ))}
-                                </select>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Reassign</span>
-                                  <ChevronDownIcon size={8} className="text-slate-300" />
+                        </td>
+                        <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
+                          <div>
+                            <p className="text-sm font-black text-slate-900 leading-tight">{p.address}</p>
+                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{p.parcel_id} • {p.county}, {p.state}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <Tooltip content="Assign this case to a team member for verification.">
+                            <div className="relative group/assignee">
+                              <div className="flex items-center gap-3 p-2 rounded-2xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border transition-all ${p.assigned_to_user_id ? 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-sm' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                                  {p.assigned_to_user_id ? getUserInitials(p.assigned_to_user_id) : <UserPlusIcon size={12} />}
+                                </div>
+                                <div className="flex flex-col">
+                                  <p className="text-[11px] font-black text-slate-800 leading-none mb-1">{getUserName(p.assigned_to_user_id)}</p>
+                                  <select 
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                                    value={p.assigned_to_user_id || 'unassigned'}
+                                    onChange={(e) => handleAssignChange(p.id, e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <option value="unassigned">Unassigned</option>
+                                    {TEAM_MEMBERS.map(member => (
+                                      <option key={member.id} value={member.id}>{member.email.split('@')[0]}</option>
+                                    ))}
+                                  </select>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </Tooltip>
-                      </td>
-                      <td className="px-8 py-6 text-center" onClick={() => navigate(`/properties/${p.id}`)}>
-                        <Tooltip content={`Risk assessed as ${p.risk_level} based on lien depth and owner location status.`}>
+                          </Tooltip>
+                        </td>
+                        <td className="px-8 py-6 text-center" onClick={() => navigate(`/properties/${p.id}`)}>
                           <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
                             p.risk_level === 'LOW' ? 'bg-green-50 text-green-700 border-green-200' :
                             p.risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -265,26 +260,41 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                           }`}>
                             {p.risk_level} Risk
                           </span>
-                        </Tooltip>
-                      </td>
-                      <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
-                        <p className="text-sm font-black text-indigo-600">${p.surplus_amount.toLocaleString()}</p>
-                        <p className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Est. Payout: {p.est_payout_days} Days</p>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <Tooltip content="Open full case file and intelligence details.">
+                        </td>
+                        <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
+                          <p className="text-sm font-black text-indigo-600">${p.surplus_amount.toLocaleString()}</p>
+                          <p className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Est. Payout: {p.est_payout_days} Days</p>
+                        </td>
+                        <td className="px-8 py-6 text-right">
                           <button 
                             onClick={() => navigate(`/properties/${p.id}`)}
                             className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all shadow-sm"
                           >
                             <ArrowRightIcon size={18} />
                           </button>
-                        </Tooltip>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="py-32 text-center flex flex-col items-center justify-center space-y-6">
+                   <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-200 border border-slate-100 shadow-inner">
+                      <UnplugIcon size={40} />
+                   </div>
+                   <div className="space-y-2">
+                      <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">No Live Records Found</h3>
+                      <p className="text-slate-400 font-medium text-sm max-w-sm mx-auto">
+                        Your production pipeline is clean. Initialize a <span className="text-indigo-600 font-bold">New Intake</span> or connect a county treasurer feed to begin recovery.
+                      </p>
+                   </div>
+                   {isLiveMode && (
+                     <button onClick={() => navigate('/properties/new')} className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center gap-2">
+                       <PlusCircleIcon size={16} /> Start First Intake
+                     </button>
+                   )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -294,60 +304,50 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
           <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h4 className="font-black text-slate-900 text-xs uppercase tracking-widest flex items-center gap-2">
-                <BarChart3Icon size={16} className="text-indigo-600" /> Recovery Velocity
+                <BarChart3Icon size={16} className="text-indigo-600" /> {isLiveMode ? 'Production' : 'Recovery'} Velocity
               </h4>
               <span className="text-[10px] font-bold text-green-600 flex items-center gap-1">
-                <TrendingUpIcon size={10} /> +12%
+                <TrendingUpIcon size={10} /> {isLiveMode ? '0%' : '+12%'}
               </span>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
                    <span>Verification Speed</span>
-                   <span className="text-slate-900">2.4 Days</span>
+                   <span className="text-slate-900">{isLiveMode ? 'N/A' : '2.4 Days'}</span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                   <div className="h-full bg-indigo-600 w-[85%] rounded-full"></div>
+                   <div className={`h-full bg-indigo-600 rounded-full transition-all duration-1000 ${isLiveMode ? 'w-0' : 'w-[85%]'}`}></div>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
                    <span>Conversion Rate</span>
-                   <span className="text-slate-900">42%</span>
+                   <span className="text-slate-900">{isLiveMode ? '0%' : '42%'}</span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                   <div className="h-full bg-emerald-500 w-[42%] rounded-full"></div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
-                   <span>Avg. Case Lifecycle</span>
-                   <span className="text-slate-900">128 Days</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                   <div className="h-full bg-amber-500 w-[60%] rounded-full"></div>
+                   <div className={`h-full bg-emerald-500 rounded-full transition-all duration-1000 ${isLiveMode ? 'w-0' : 'w-[42%]'}`}></div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-indigo-600 p-8 rounded-[2rem] text-white shadow-2xl relative overflow-hidden group">
+          <div className={`p-8 rounded-[2rem] text-white shadow-2xl relative overflow-hidden group transition-colors duration-700 ${isLiveMode ? 'bg-slate-900 border border-white/10' : 'bg-indigo-600'}`}>
              <div className="relative z-10 space-y-4">
                 <div className="flex items-center gap-2">
                    <ActivityIcon size={18} className="text-indigo-200" />
                    <h4 className="font-black text-sm uppercase">Forecasting Hub</h4>
                 </div>
                 <p className="text-indigo-100 text-xs leading-relaxed opacity-80">
-                   Based on current GA and FL trends, Q4 surplus volume is expected to rise by 18%. Update rules to prioritize FL-Miami records.
+                   {isLiveMode 
+                    ? 'Standing by for first live case. Once 5+ records are active, predictive modeling will activate.' 
+                    : 'Based on current GA and FL trends, Q4 surplus volume is expected to rise by 18%.'}
                 </p>
-                <Tooltip content="Launch a predictive modeling session for future surplus volumes.">
-                  <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950/50 hover:bg-indigo-50 transition-all">
-                    Run Full Simulation
+                <Tooltip content="Launch a predictive modeling session.">
+                  <button className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isLiveMode ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-white text-indigo-600 hover:bg-indigo-50'}`}>
+                    {isLiveMode ? 'Initialize Forecaster' : 'Run Full Simulation'}
                   </button>
                 </Tooltip>
-             </div>
-             <div className="absolute -bottom-10 -right-10 opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
-                <TrendingUpIcon size={120} />
              </div>
           </div>
         </div>

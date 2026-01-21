@@ -10,8 +10,11 @@ import {
   ZapIcon,
   ArrowRightIcon,
   CheckCircle2Icon,
-  AlertCircleIcon
+  AlertCircleIcon,
+  DatabaseIcon
 } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import { User } from '../types';
 
 const STAGES = [
   {
@@ -67,41 +70,46 @@ const STAGES = [
 ];
 
 const WorkflowProtocol: React.FC = () => {
+  const { isLiveMode } = useOutletContext<{ isLiveMode: boolean }>();
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-             <div className="p-3 bg-indigo-950 text-indigo-400 rounded-2xl shadow-xl border border-indigo-500/30">
-               <ZapIcon size={24} />
+             <div className={`p-3 rounded-2xl shadow-xl border ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30' : 'bg-indigo-950 text-indigo-400 border-indigo-500/30'}`}>
+               {isLiveMode ? <DatabaseIcon size={24} /> : <ZapIcon size={24} />}
              </div>
-             <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Mission Roadmap</h2>
+             <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
+               {isLiveMode ? 'Production Protocol' : 'Mission Roadmap'}
+             </h2>
           </div>
           <p className="text-slate-500 font-bold max-w-2xl leading-relaxed text-lg">
-            A strategic A-to-Z command view of our surplus recovery pipeline. Every stage is optimized by AI and verified by humans.
+            {isLiveMode 
+              ? 'Real-time monitoring of your verified production pipeline. No simulated leads are displayed here.' 
+              : 'A strategic A-to-Z command view of our surplus recovery pipeline. Simulation data active.'}
           </p>
         </div>
         
         <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-100 shadow-xl flex items-center gap-6">
            <div className="text-center px-4 border-r border-slate-100">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Cycle</p>
-              <p className="text-xl font-black text-slate-900">128d</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cycle Time</p>
+              <p className="text-xl font-black text-slate-900">{isLiveMode ? 'N/A' : '128d'}</p>
            </div>
            <div className="text-center px-4">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Efficiency</p>
-              <p className="text-xl font-black text-emerald-600">+18%</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Live Loads</p>
+              <p className={`text-xl font-black ${isLiveMode ? 'text-emerald-600' : 'text-indigo-600'}`}>{isLiveMode ? '0' : '195'}</p>
            </div>
         </div>
       </div>
 
       <div className="relative">
-        {/* Connection Line */}
         <div className="absolute left-10 top-10 bottom-10 w-1 bg-slate-200 rounded-full hidden lg:block"></div>
 
         <div className="space-y-8">
           {STAGES.map((stage, idx) => (
             <div key={stage.id} className="relative flex flex-col lg:flex-row gap-10 group">
-              <div className={`w-20 h-20 rounded-[2rem] ${stage.color} text-white flex items-center justify-center shrink-0 z-10 shadow-2xl transition-all group-hover:scale-110 group-hover:rotate-6`}>
+              <div className={`w-20 h-20 rounded-[2rem] text-white flex items-center justify-center shrink-0 z-10 shadow-2xl transition-all group-hover:scale-110 group-hover:rotate-6 ${isLiveMode ? 'bg-slate-950 border border-emerald-500/30' : stage.color}`}>
                 <stage.icon size={32} strokeWidth={2.5} />
               </div>
               
@@ -111,13 +119,17 @@ const WorkflowProtocol: React.FC = () => {
                        <div className="flex items-center gap-3 mb-2">
                           <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Stage 0{idx + 1}</span>
                           <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                          <span className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.2em]">{stage.indicator}</span>
+                          <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${isLiveMode ? 'text-emerald-500' : 'text-indigo-500'}`}>
+                            {isLiveMode ? 'LIVE PRODUCTION' : stage.indicator}
+                          </span>
                        </div>
                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{stage.title}</h3>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl flex items-center gap-4">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Leads</p>
-                       <p className="text-2xl font-black text-slate-900">{stage.count}</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Units</p>
+                       <p className={`text-2xl font-black ${isLiveMode ? 'text-slate-300' : 'text-slate-900'}`}>
+                         {isLiveMode ? '0' : stage.count}
+                       </p>
                     </div>
                  </div>
 
@@ -133,42 +145,10 @@ const WorkflowProtocol: React.FC = () => {
                       </div>
                     ))}
                  </div>
-
-                 <div className="mt-10 pt-8 border-t border-slate-50 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                       <AlertCircleIcon size={16} className="text-indigo-400" />
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compliant Protocol active</span>
-                    </div>
-                    <button className="flex items-center gap-2 text-indigo-600 font-black text-[11px] uppercase tracking-widest hover:translate-x-2 transition-all">
-                       Examine Tactical View <ArrowRightIcon size={16} />
-                    </button>
-                 </div>
               </div>
             </div>
           ))}
         </div>
-      </div>
-      
-      {/* Footer Simulation Mode */}
-      <div className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden text-center space-y-6">
-         <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-            <h4 className="text-2xl font-black uppercase tracking-tight">Need a Strategy Drill?</h4>
-            <p className="text-slate-400 font-medium text-lg leading-relaxed">
-               Launch the "Live Voice Agent" to walk through this workflow with an AI specialist who can explain the A-to-Z legal logic of any jurisdiction.
-            </p>
-            <div className="pt-4">
-               <button className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-500/30 hover:bg-indigo-500 transition-all active:scale-95 flex items-center gap-3 mx-auto">
-                 <ZapIcon size={20} fill="white" /> Launch AI Command Consult
-               </button>
-            </div>
-         </div>
-         <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
-            <div className="grid grid-cols-12 h-full">
-               {Array.from({ length: 48 }).map((_, i) => (
-                 <div key={i} className="border border-white/20 aspect-square"></div>
-               ))}
-            </div>
-         </div>
       </div>
     </div>
   );

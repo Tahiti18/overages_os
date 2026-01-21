@@ -16,6 +16,26 @@ export enum CaseStatus {
   REJECTED = 'REJECTED'
 }
 
+export enum LienType {
+  GOVERNMENT = 'GOVERNMENT',
+  MORTGAGE_1 = 'MORTGAGE_1',
+  MORTGAGE_2 = 'MORTGAGE_2',
+  HOA = 'HOA',
+  JUDGMENT = 'JUDGMENT',
+  MECHANIC = 'MECHANIC',
+  OTHER = 'OTHER'
+}
+
+export interface Lien {
+  id: string;
+  type: LienType;
+  description: string;
+  amount: number;
+  priority: number;
+  status?: 'PAID' | 'PARTIAL' | 'UNPAID';
+  satisfied_amount?: number;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -48,6 +68,7 @@ export interface Property {
   status: CaseStatus;
   assigned_to_user_id?: string;
   created_at: string;
+  liens?: Lien[];
 }
 
 export interface Document {

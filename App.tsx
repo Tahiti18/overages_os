@@ -41,7 +41,8 @@ const MOCK_USER: User = {
 };
 
 const App: React.FC = () => {
-  const [isLiveMode, setIsLiveMode] = useState(false);
+  // Defaulting to Live Engine (true) as requested for the impressive 'clean slate' start
+  const [isLiveMode, setIsLiveMode] = useState(true);
 
   return (
     <Router>

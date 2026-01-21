@@ -14,10 +14,16 @@ import {
   FileTextIcon,
   ArrowRightIcon,
   DownloadIcon,
-  ZapIcon
+  ZapIcon,
+  LockIcon,
+  ShieldCheckIcon,
+  InfoIcon,
+  XIcon,
+  FileIcon,
+  CopyIcon
 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
-import { scanJurisdictionForSurplus } from '../lib/gemini';
+import { scanJurisdictionForSurplus, generateORRLetter } from '../lib/gemini';
 import Tooltip from './Tooltip';
 
 const GlobalCountyScanner: React.FC = () => {
@@ -25,26 +31,31 @@ const GlobalCountyScanner: React.FC = () => {
   const [targetState, setTargetState] = useState('GA');
   const [targetCounty, setTargetCounty] = useState('Fulton');
   const [isScanning, setIsScanning] = useState(false);
+  const [isGeneratingORR, setIsGeneratingORR] = useState(false);
   const [results, setResults] = useState<any | null>(null);
+  const [orrLetter, setOrrLetter] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleScan = async () => {
     setIsScanning(true);
     setError(null);
     setResults(null);
+    setOrrLetter(null);
 
     // Simulation Data for Non-Live Mode
     if (!isLiveMode) {
       setTimeout(() => {
         setResults({
           official_url: `https://www.${targetCounty.toLowerCase()}county.gov/treasurer/excess-proceeds`,
-          data_format: "PDF / Web Table",
+          access_type: "MOAT_GATED",
+          data_format: "Manual Portal / ORR",
           last_updated_mention: "Q1 2025",
           treasurer_contact: "treasurer-info@fultoncounty.gov",
-          search_summary: `IDENTIFIED: ${targetCounty} County maintains a rolling surplus list. Current statutory policy requires a 12-month waiting period before distribution to owners. Junior lienholders have priority for the first 120 days.`,
+          search_summary: `IDENTIFIED: ${targetCounty} County maintains a gatekept surplus list. Direct public URLs often return 404/Removed to discourage scraping. Access requires a formal Open Records Request (ORR) via the county centralized portal. This represents a HIGH MOAT jurisdiction.`,
+          orr_instructions: "1. Visit the centralized county portal. 2. File a request for 'Current Excess Tax Funds List'. 3. Expected turnaround: 3-5 business days.",
           discovery_links: [
-            { title: "2024 Surplus List PDF", url: "#" },
-            { title: "Tax Sale Rules & Regulations", url: "#" }
+            { title: "County Open Records Portal", url: "https://fultoncountyga.gov/open-records" },
+            { title: "Treasurer FAQ (Surplus Mention)", url: "#" }
           ]
         });
         setIsScanning(false);
@@ -60,6 +71,18 @@ const GlobalCountyScanner: React.FC = () => {
       console.error(err);
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const handleGenerateORR = async () => {
+    setIsGeneratingORR(true);
+    try {
+      const letter = await generateORRLetter(targetState, targetCounty, results?.treasurer_contact || "County Treasurer");
+      setOrrLetter(letter);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGeneratingORR(false);
     }
   };
 
@@ -141,40 +164,26 @@ const GlobalCountyScanner: React.FC = () => {
         </div>
       </div>
 
-      {/* Scanning Visualization */}
-      {isScanning && (
-        <div className="py-24 flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-500">
-           <div className="relative w-48 h-48">
-              <div className="absolute inset-0 bg-indigo-500/10 rounded-full animate-ping"></div>
-              <div className="absolute inset-4 bg-indigo-500/20 rounded-full animate-pulse"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                 <GlobeIcon size={64} className="text-indigo-600 animate-bounce" />
-              </div>
-           </div>
-           <div className="text-center space-y-2">
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Bypassing Web Caches...</h3>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">AI Scout is identifying current .PDF and .XLSX assets</p>
-           </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-10 bg-red-50 border-2 border-red-100 rounded-[3rem] flex items-center gap-8 text-red-700 animate-in zoom-in duration-300">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-xl border border-red-100">
-            <ShieldAlertIcon size={32} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1">Scout Intelligence Error</p>
-            <p className="text-lg font-bold leading-relaxed">{error}</p>
-          </div>
-        </div>
-      )}
-
       {/* Discovery Results */}
       {results && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8 duration-700">
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-white rounded-[3.5rem] border-2 border-slate-100 p-12 shadow-sm space-y-10 relative overflow-hidden">
+               {/* Moat Banner */}
+               {results.access_type === 'MOAT_GATED' && (
+                 <div className="p-8 bg-amber-50 border-2 border-amber-200 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
+                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-amber-600 shadow-xl border border-amber-100 shrink-0">
+                       <LockIcon size={32} />
+                    </div>
+                    <div>
+                       <h4 className="text-xl font-black text-amber-900 uppercase tracking-tight italic">Strategic Moat Detected</h4>
+                       <p className="text-sm text-amber-800 font-bold leading-relaxed opacity-80">
+                         This jurisdiction has removed public lists to prevent scraping. **This reduces competition by 90%.** Accessing this data requires a manual strike.
+                       </p>
+                    </div>
+                 </div>
+               )}
+
                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-50 pb-8">
                   <div className="flex items-center gap-6">
                     <div className={`w-20 h-20 rounded-[1.75rem] text-white flex items-center justify-center font-black text-3xl shadow-2xl relative rotate-3 transition-transform ${isLiveMode ? 'bg-emerald-950' : 'bg-slate-950'}`}>
@@ -184,11 +193,11 @@ const GlobalCountyScanner: React.FC = () => {
                       <h4 className="text-3xl font-black text-slate-900 tracking-tight">{targetCounty} County</h4>
                       <div className="flex items-center gap-2 mt-1">
                         <CheckCircle2Icon size={14} className="text-emerald-500" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Surplus Data Verified</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Surplus Protocol Verified</span>
                       </div>
                     </div>
                   </div>
-                  <Tooltip content="Launch the official data portal identified by the AI scout.">
+                  <Tooltip content="Launch the official portal or instructions identified by the AI scout.">
                     <a 
                       href={results.official_url} 
                       target="_blank" 
@@ -211,14 +220,33 @@ const GlobalCountyScanner: React.FC = () => {
                   </div>
                </div>
 
+               {results.orr_instructions && (
+                 <div className="space-y-6">
+                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
+                      <FileTextIcon size={16} className="text-indigo-600" /> ORR Strike Plan
+                    </h5>
+                    <div className="bg-indigo-50/50 p-8 rounded-[2rem] border-2 border-indigo-100/50 space-y-6">
+                       <p className="text-xs font-bold text-indigo-900 leading-relaxed uppercase tracking-widest italic">{results.orr_instructions}</p>
+                       <button 
+                        onClick={handleGenerateORR}
+                        disabled={isGeneratingORR}
+                        className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                       >
+                         {isGeneratingORR ? <Loader2Icon size={20} className="animate-spin" /> : <FileIcon size={20} />}
+                         {isGeneratingORR ? 'Drafting Request...' : 'Generate Open Records Letter'}
+                       </button>
+                    </div>
+                 </div>
+               )}
+
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-sm">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Data Format</p>
-                    <p className="text-lg font-black text-slate-900">{results.data_format}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Access Tier</p>
+                    <p className={`text-lg font-black ${results.access_type === 'MOAT_GATED' ? 'text-amber-600' : 'text-emerald-600'}`}>{results.access_type.replace('_', ' ')}</p>
                   </div>
                   <div className="p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-sm">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Freshness</p>
-                    <p className="text-lg font-black text-slate-900">{results.last_updated_mention}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Format Type</p>
+                    <p className="text-lg font-black text-slate-900">{results.data_format}</p>
                   </div>
                   <div className="p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-sm">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lead Contact</p>
@@ -229,6 +257,30 @@ const GlobalCountyScanner: React.FC = () => {
           </div>
 
           <div className="space-y-8">
+            {/* ORR Letter Preview if generated */}
+            {orrLetter && (
+              <div className="bg-slate-900 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden animate-in slide-in-from-right-8 duration-500">
+                 <div className="relative z-10 space-y-6">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                       <h4 className="font-black text-xs uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                         <ShieldCheckIcon size={16} /> ORR Draft v1.0
+                       </h4>
+                       <button onClick={() => setOrrLetter(null)} className="p-1 hover:text-red-400 transition-colors"><XIcon size={16} /></button>
+                    </div>
+                    <div className="space-y-4">
+                       <p className="text-[10px] font-bold text-slate-500 uppercase">Subject: {orrLetter.subject}</p>
+                       <div className="text-[11px] leading-relaxed font-mono opacity-80 h-64 overflow-y-auto custom-scrollbar bg-white/5 p-4 rounded-xl">
+                          {orrLetter.letter_body}
+                       </div>
+                       <p className="text-[9px] text-indigo-300 italic">Governed by: {orrLetter.statute_reference}</p>
+                    </div>
+                    <button className="w-full py-4 bg-white text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
+                       <CopyIcon size={16} /> Copy to Clipboard
+                    </button>
+                 </div>
+              </div>
+            )}
+
             <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-sm space-y-8">
               <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
                 <FileTextIcon size={16} className="text-indigo-600" /> Grounding Sources
@@ -254,15 +306,44 @@ const GlobalCountyScanner: React.FC = () => {
               </div>
 
               <div className="p-6 bg-indigo-50 border border-indigo-100 rounded-[2rem] space-y-3">
-                <p className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Next Phase</p>
+                <p className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Strike Intelligence</p>
                 <p className="text-xs text-indigo-700 font-medium leading-relaxed">
-                  Download the discovered list and upload it to the <span className="font-black">Smart Intake</span> terminal to begin bulk OCR extraction.
+                  The discovery of a 404 page for direct lists confirms that this county has <strong>high recovery potential</strong> due to data friction. 
                 </p>
-                <button className="w-full py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 mt-2">
-                  Launch Bulk Intake
-                </button>
+                <div className="pt-4 flex items-center gap-3">
+                   <InfoIcon size={16} className="text-indigo-400" />
+                   <p className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">Filing ORR recommended</p>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isScanning && (
+        <div className="py-24 flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-500">
+           <div className="relative w-48 h-48">
+              <div className="absolute inset-0 bg-indigo-500/10 rounded-full animate-ping"></div>
+              <div className="absolute inset-4 bg-indigo-500/20 rounded-full animate-pulse"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                 <GlobeIcon size={64} className="text-indigo-600 animate-bounce" />
+              </div>
+           </div>
+           <div className="text-center space-y-2">
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Bypassing Web Caches...</h3>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">AI Scout is identifying Moats and Access Portals</p>
+           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="p-10 bg-red-50 border-2 border-red-100 rounded-[3rem] flex items-center gap-8 text-red-700 animate-in zoom-in duration-300">
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-xl border border-red-100">
+            <ShieldAlertIcon size={32} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1">Scout Intelligence Error</p>
+            <p className="text-lg font-bold leading-relaxed">{error}</p>
           </div>
         </div>
       )}

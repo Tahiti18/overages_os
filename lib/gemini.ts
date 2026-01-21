@@ -1,29 +1,37 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-// AI Core v3.5 - Central Intelligence Library
+// AI Core v3.6 - Central Intelligence Library
 
 /**
  * Scans the web for raw surplus/excess proceeds lists for a specific jurisdiction.
+ * Updated to detect "Moats" - jurisdictional barriers that reduce competition.
  */
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Find the official URL for the most recent "Property Tax Surplus List", "Excess Proceeds List", or "Tax Sale Overages" for ${county} County, ${state}. Identify if the list is available as a PDF or Excel download. Also find the contact information for the County Treasurer or Clerk responsible for these funds.`,
+      contents: `Find the official URL for the "Property Tax Surplus List" or "Excess Proceeds" for ${county} County, ${state}. 
+      CRITICAL: Determine if the list is hidden behind a "Moat" (e.g., requires an Open Records Request/ORR, is 404/Removed, or requires in-person inspection).
+      Find the Treasurer contact and the specific portal URL for filing an Open Records Request if no direct list exists.`,
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Jurisdictional Data Scout. Your goal is to find the exact landing page or file URL where surplus funds are listed by the government.",
+        systemInstruction: "You are a Jurisdictional Data Scout. You find raw data sources. If a list is hidden or requires an ORR, flag it as a 'MOAT'.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
             official_url: { type: Type.STRING },
-            data_format: { type: Type.STRING, description: "PDF, Excel, Web Table, or Unknown" },
+            access_type: { 
+              type: Type.STRING, 
+              description: "OPEN_ACCESS (direct download), HYBRID (web table), or MOAT_GATED (ORR required / gatekept)" 
+            },
+            data_format: { type: Type.STRING },
             last_updated_mention: { type: Type.STRING },
             treasurer_contact: { type: Type.STRING },
             search_summary: { type: Type.STRING },
+            orr_instructions: { type: Type.STRING, description: "Steps to file an Open Records Request if the list is gated." },
             discovery_links: { 
               type: Type.ARRAY, 
               items: { 
@@ -35,7 +43,7 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
               }
             }
           },
-          required: ["official_url", "data_format", "search_summary"]
+          required: ["official_url", "access_type", "search_summary"]
         },
       },
     });
@@ -44,6 +52,33 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
     console.error("Jurisdiction Scan Error:", error);
     throw error;
   }
+};
+
+/**
+ * Generates a formal Open Records Request (ORR) letter for a specific county.
+ */
+export const generateORRLetter = async (state: string, county: string, treasurerContact: string) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-pro-preview",
+      contents: `Generate a formal, legally-worded Open Records Request (ORR) or Freedom of Information Act (FOIA) letter addressed to the ${county} County Treasurer/Tax Commissioner in ${state}. Request the current list of "Property Tax Sale Excess Proceeds" or "Surplus Funds" including Parcel IDs and surplus amounts.`,
+      config: {
+        systemInstruction: "You are a Legal Documentation Specialist. Draft professional, statutory-grounded records requests.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            subject: { type: Type.STRING },
+            letter_body: { type: Type.STRING },
+            statute_reference: { type: Type.STRING, description: "The specific state code for public records access." }
+          },
+          required: ["subject", "letter_body", "statute_reference"]
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (error) { throw error; }
 };
 
 /**

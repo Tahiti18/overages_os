@@ -19,7 +19,9 @@ import {
   BookOpenIcon,
   HelpCircleIcon,
   LayersIcon,
-  LayoutDashboardIcon
+  LayoutDashboardIcon,
+  BarChartIcon,
+  MapIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import LiveAgent from './LiveAgent';
@@ -39,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
   const mainNav = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboardIcon },
+    { label: 'Market Intelligence', path: '/intelligence', icon: BarChartIcon },
     { label: 'Workflow Protocol', path: '/workflow', icon: LayersIcon },
     { label: 'Rules Engine', path: '/admin/rules', icon: ScaleIcon, roles: [UserRole.ADMIN] },
     { label: 'Team', path: '/admin/users', icon: UsersIcon, roles: [UserRole.ADMIN] },

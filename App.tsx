@@ -12,6 +12,7 @@ import GlobalWaterfall from './components/GlobalWaterfall';
 import GlobalPackager from './components/GlobalPackager';
 import ComplianceCalendar from './components/ComplianceCalendar';
 import WorkflowProtocol from './components/WorkflowProtocol';
+import MarketIntelligence from './components/MarketIntelligence';
 import { User, UserRole } from './types';
 
 const MOCK_USER: User = {
@@ -29,6 +30,7 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<Layout user={MOCK_USER} isLiveMode={isLiveMode} setIsLiveMode={setIsLiveMode} />}>
           <Route path="/" element={<Dashboard isLiveMode={isLiveMode} />} />
+          <Route path="/intelligence" element={<MarketIntelligence />} />
           <Route path="/workflow" element={<WorkflowProtocol />} />
           <Route path="/properties/new" element={<PropertyForm />} />
           <Route path="/properties/:id" element={<PropertyDetail />} />

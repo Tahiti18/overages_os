@@ -76,11 +76,21 @@ export const discoverPropertyLiens = async (property: any) => {
 };
 
 /**
- * Extracts structured data from property-related legal documents.
+ * Extracts structured data from property-related legal documents with jurisdiction awareness.
  */
-export const extractDocumentData = async (base64Data: string, mimeType: string) => {
+export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
+  const state = jurisdiction?.state || "Unknown";
+  const county = jurisdiction?.county || "Unknown";
+
+  const jurisdictionDirectives = {
+    'MD': "Maryland is a JUDICIAL state. Prioritize identifying Circuit Court headers, Case Numbers, and Attorney certifications (Rule 14-B compliance). Look for 'Motion for Distribution of Surplus'.",
+    'GA': "Georgia is a REDEMPTION state. Identify if the document is a Tax Deed or Quitclaim. Focus on the 12-month redemption period status and expiration date.",
+    'FL': "Florida has a 120-day junior lien window (HB 141). Look for 'Surplus Application' forms and notarized 'Affidavit of Ownership'.",
+    'TX': "Texas has strict 2-year redemption for homesteads. Identify Homestead Affidavits and check for HOA priority seniority issues."
+  }[state] || "Standard US property tax surplus context.";
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
@@ -88,12 +98,12 @@ export const extractDocumentData = async (base64Data: string, mimeType: string) 
         {
           parts: [
             { inlineData: { data: base64Data, mimeType: mimeType } },
-            { text: "Perform a deep legal audit of this document. Focus on identifying the current owner, the parcel ID, and any recorded encumbrances or liens." },
+            { text: `Analyze this document for property in ${county}, ${state}. ${jurisdictionDirectives}` },
           ],
         },
       ],
       config: {
-        systemInstruction: `You are a World-Class Senior Legal Document Auditor. Analyze for: 1. Owner names 2. Parcel IDs 3. Financials 4. Liens (MORTGAGE, HOA, etc).`,
+        systemInstruction: `You are a World-Class Senior Legal Document Auditor. Analyze for: 1. Owner names 2. Parcel IDs 3. Financials 4. Liens 5. Jurisdiction-specific compliance markers.`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -106,7 +116,8 @@ export const extractDocumentData = async (base64Data: string, mimeType: string) 
             document_type: { type: Type.STRING },
             tags: { type: Type.ARRAY, items: { type: Type.STRING } },
             confidence_score: { type: Type.NUMBER },
-            extraction_rationale: { type: Type.STRING }
+            extraction_rationale: { type: Type.STRING },
+            jurisdiction_compliance_found: { type: Type.BOOLEAN, description: "True if state-specific required markers were identified." }
           },
           required: ["owner_name", "parcel_id", "document_type", "confidence_score"],
         },

@@ -34,6 +34,8 @@ import Tooltip from './Tooltip';
 
 interface DocumentUploadProps {
   propertyId: string;
+  propertyState?: string;
+  propertyCounty?: string;
   onVerificationChange?: (docs: Document[]) => void;
 }
 
@@ -54,7 +56,7 @@ const DOCUMENT_TYPES = [
   { value: 'OTHER', label: 'Other Attachment' }
 ];
 
-const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificationChange }) => {
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertyState, propertyCounty, onVerificationChange }) => {
   const [documents, setDocuments] = useState<Document[]>([
     {
       id: 'd1',
@@ -114,7 +116,10 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
       const base64 = await readFileAsBase64(file);
 
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 45, status: 'extracting' } : f));
-      const aiData = await extractDocumentData(base64, file.type);
+      const aiData = await extractDocumentData(base64, file.type, { 
+        state: propertyState || 'Unknown', 
+        county: propertyCounty || 'Unknown' 
+      });
       
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 85, status: 'finalizing' } : f));
 
@@ -563,7 +568,19 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                       </div>
                     </div>
 
-                    {!selectedDoc.verified_by_human && (
+                    {/* Compliance Marker */}
+                    {selectedDoc.extracted_fields.jurisdiction_compliance_found && (
+                      <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-3xl flex items-start gap-5 shadow-sm animate-in zoom-in duration-300">
+                        <div className="p-2 bg-white rounded-xl shadow-sm">
+                          <ShieldCheckIcon size={24} className="text-emerald-500" />
+                        </div>
+                        <p className="text-[13px] text-emerald-900 leading-relaxed font-bold">
+                          Jurisdiction Verified: Document matches specific statutory requirements for {propertyState}.
+                        </p>
+                      </div>
+                    )}
+
+                    {!selectedDoc.verified_by_human && !selectedDoc.extracted_fields.jurisdiction_compliance_found && (
                       <div className="p-6 bg-amber-50 border border-amber-100 rounded-3xl flex items-start gap-5 shadow-sm">
                         <div className="p-2 bg-white rounded-xl shadow-sm">
                           <AlertCircleIcon size={24} className="text-amber-500" />
@@ -586,7 +603,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                       </div>
                       <div className="grid grid-cols-1 gap-6">
                         {Object.entries(selectedDoc.extracted_fields).map(([key, value]) => {
-                          if (['tags', 'document_type', 'extraction_rationale', 'confidence_score', 'discovered_liens'].includes(key)) return null;
+                          if (['tags', 'document_type', 'extraction_rationale', 'confidence_score', 'discovered_liens', 'jurisdiction_compliance_found'].includes(key)) return null;
                           return (
                             <div key={key} className="group">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-3 group-focus-within:text-indigo-600 transition-colors flex items-center gap-2">

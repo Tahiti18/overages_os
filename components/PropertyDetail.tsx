@@ -396,7 +396,14 @@ const PropertyDetail: React.FC = () => {
         {activeTab === 'overview' && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"><div className="lg:col-span-2 space-y-8"><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sale Price</p><p className="text-2xl font-black text-slate-900">${property.sale_price.toLocaleString()}</p></div><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Debt</p><p className="text-2xl font-black text-red-600">${property.total_debt.toLocaleString()}</p></div><div className="bg-indigo-600 p-6 rounded-3xl border border-indigo-500 shadow-2xl shadow-indigo-200"><p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Gross Surplus</p><p className="text-2xl font-black text-white">${property.surplus_amount.toLocaleString()}</p></div></div><LienWaterfall initialSurplus={property.surplus_amount} /></div></div>}
         {activeTab === 'research' && <SkipTracingHub ownerName="John Doe" address={property.address} />}
         {activeTab === 'packager' && <SmartDocumentPackager property={property} waterfallData={{ finalSurplus: 81500 }} />}
-        {activeTab === 'documents' && <DocumentUpload propertyId={property.id} onVerificationChange={handleDocumentVerificationChange} />}
+        {activeTab === 'documents' && (
+          <DocumentUpload 
+            propertyId={property.id} 
+            propertyState={property.state} 
+            propertyCounty={property.county} 
+            onVerificationChange={handleDocumentVerificationChange} 
+          />
+        )}
       </div>
     </div>
   );

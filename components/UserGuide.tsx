@@ -101,6 +101,7 @@ const UserGuide: React.FC<UserGuideProps> = ({ isOpen, onClose }) => {
       source.start();
     } catch (err) {
       console.error("Narrator System Error:", err);
+      // Ensure state is cleared on error to stop spinning
       setIsSpeaking(null);
     }
   };

@@ -12,14 +12,15 @@ import {
   InfoIcon,
   SparklesIcon,
   RefreshCwIcon,
-  // Added DollarSignIcon to fix "Cannot find name 'DollarSignIcon'" error
   DollarSignIcon
 } from 'lucide-react';
-import { Lien, LienType } from '../types';
+import { Lien, LienType, Property } from '../types';
+import { discoverPropertyLiens } from '../lib/gemini';
 
 interface LienWaterfallProps {
   initialSurplus: number;
-  aiDiscoveredLiens?: Lien[]; // New prop for AI integration
+  property?: Property;
+  aiDiscoveredLiens?: Lien[];
 }
 
 const DEFAULT_PRIORITY: Record<LienType, number> = {
@@ -32,7 +33,7 @@ const DEFAULT_PRIORITY: Record<LienType, number> = {
   [LienType.OTHER]: 7,
 };
 
-const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, aiDiscoveredLiens }) => {
+const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, property, aiDiscoveredLiens }) => {
   const [liens, setLiens] = useState<Lien[]>([
     { id: 'l1', type: LienType.MORTGAGE_1, description: 'First Mortgage (Chase)', amount: 45000, priority: 2 },
     { id: 'l2', type: LienType.HOA, description: 'HOA Past Due', amount: 3500, priority: 4 },
@@ -82,29 +83,37 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, aiDiscove
     setLiens(liens.map(l => l.id === id ? { ...l, ...updates } : l));
   };
 
-  const syncAiDiscovery = () => {
+  const syncAiDiscovery = async () => {
     setIsSyncing(true);
-    // Simulate AI Sync delay
-    setTimeout(() => {
+    try {
       if (aiDiscoveredLiens && aiDiscoveredLiens.length > 0) {
         setLiens(prev => {
           const existingIds = new Set(prev.map(l => l.id));
           const newOnes = aiDiscoveredLiens.filter(al => !existingIds.has(al.id));
           return [...prev, ...newOnes];
         });
-      } else {
-        // Mock some AI discovery for demo if no props
-        const mockAiLien: Lien = {
-           id: `ai-${Date.now()}`,
-           type: LienType.JUDGMENT,
-           description: 'AI Discovery: Secondary Judgment (Fulton County)',
-           amount: 1250,
-           priority: 5
-        };
-        setLiens(prev => [...prev, mockAiLien]);
+      } else if (property) {
+        const discovered = await discoverPropertyLiens(property);
+        const newLiens: Lien[] = discovered.map((d: any, idx: number) => ({
+          id: `ai-${Date.now()}-${idx}`,
+          type: d.type as LienType,
+          description: `AI DISCOVERY: ${d.description}`,
+          amount: d.amount,
+          priority: d.priority
+        }));
+        
+        setLiens(prev => {
+          // Prevent duplicates by description
+          const currentDescriptions = new Set(prev.map(l => l.description));
+          const filteredNew = newLiens.filter(nl => !currentDescriptions.has(nl.description));
+          return [...prev, ...filteredNew];
+        });
       }
+    } catch (err) {
+      console.error("AI Sync failed", err);
+    } finally {
       setIsSyncing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -128,7 +137,6 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, aiDiscove
 
       {isExpanded && (
         <div className="p-8 space-y-10">
-          {/* Header Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Gross Surplus</p>
@@ -144,9 +152,7 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, aiDiscove
             </div>
           </div>
 
-          {/* Waterfall Flow */}
           <div className="relative space-y-4 pt-4">
-             {/* Initial Amount Bubble */}
              <div className="flex justify-center mb-8">
                <div className="px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-black shadow-xl ring-8 ring-slate-50 uppercase tracking-widest">
                  Funds Source: Tax Sale Surplus
@@ -223,7 +229,6 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, aiDiscove
                </div>
              ))}
 
-             {/* Final Residual Step */}
              <div className="flex flex-col items-center">
                <div className="h-14 w-0.5 bg-slate-200 border-dashed border-l-2"></div>
                <div className="w-full flex items-center gap-8">
@@ -250,7 +255,7 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, aiDiscove
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-100">
             <div className="flex items-center gap-3 text-slate-400 text-xs font-medium">
               <InfoIcon size={18} className="text-indigo-400" />
-              Priority hierarchy governed by Georgia Rule 47-B. Seniority is manually audited by AI Core v3.0.
+              Priority hierarchy governed by jurisdiction rules. Seniority is audited by AI Core v3.0.
             </div>
             <div className="flex items-center gap-4 w-full md:w-auto">
                <button 

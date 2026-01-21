@@ -33,6 +33,49 @@ export const generateVoiceGuide = async (text: string) => {
 };
 
 /**
+ * Uses Gemini to search for potential liens or judgments on a property.
+ */
+export const discoverPropertyLiens = async (property: any) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Search for potential liens, judgments, or encumbrances associated with the property at ${property.address} (Parcel ID: ${property.parcel_id}) in ${property.county}, ${property.state}. Focus on tax records and judicial filings.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        systemInstruction: "You are a Forensic Title Researcher. Identify potential debts that might affect a surplus recovery waterfall.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              type: { type: Type.STRING, description: "Lien type like MORTGAGE_1, HOA, JUDGMENT, etc." },
+              description: { type: Type.STRING },
+              amount: { type: Type.NUMBER },
+              priority: { type: Type.NUMBER, description: "1 for Gov, 2-3 for Mortgages, 4-7 for junior liens" },
+            },
+            required: ["type", "description", "amount", "priority"]
+          }
+        },
+      },
+    });
+
+    // Check if the response text is JSON
+    try {
+      return JSON.parse(response.text || "[]");
+    } catch (e) {
+      console.warn("AI returned non-JSON for liens, returning empty array.");
+      return [];
+    }
+  } catch (error) {
+    console.error("Lien Discovery Error:", error);
+    throw error;
+  }
+};
+
+/**
  * Extracts structured data from property-related legal documents.
  */
 export const extractDocumentData = async (base64Data: string, mimeType: string) => {

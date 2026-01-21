@@ -15,10 +15,14 @@ import {
   ArchiveIcon,
   GlobeIcon,
   ActivityIcon,
-  CalendarIcon
+  CalendarIcon,
+  BookOpenIcon,
+  HelpCircleIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import LiveAgent from './LiveAgent';
+import UserGuide from './UserGuide';
+import Tooltip from './Tooltip';
 
 interface LayoutProps {
   user: User;
@@ -29,6 +33,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const location = useLocation();
   const [isAgentOpen, setIsAgentOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   const mainNav = [
     { label: 'Dashboard', path: '/', icon: HomeIcon },
@@ -83,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
             </nav>
           </div>
 
-          {/* AI CORE V3.0 - FRONT AND CENTER */}
+          {/* AI CORE V3.0 */}
           <div>
             <div className="flex items-center justify-between px-4 mb-4">
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AI CORE V3.0</p>
@@ -125,6 +130,23 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                 </Link>
               ))}
             </div>
+          </div>
+
+          {/* SUPPORT & HELP */}
+          <div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-4">Support</p>
+            <nav className="space-y-1">
+              <button 
+                onClick={() => setIsGuideOpen(true)}
+                className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all group"
+              >
+                <div className="relative">
+                  <BookOpenIcon size={18} className="text-slate-500 group-hover:text-amber-400 transition-colors" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full animate-ping"></div>
+                </div>
+                <span className="font-bold text-xs uppercase tracking-widest">User Guide</span>
+              </button>
+            </nav>
           </div>
         </div>
 
@@ -176,19 +198,23 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
             <div className="h-10 w-px bg-slate-200"></div>
 
             <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-               <button 
-                 onClick={() => setIsLiveMode(false)}
-                 className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!isLiveMode ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-               >
-                 Simulation
-               </button>
-               <button 
-                 onClick={() => setIsLiveMode(true)}
-                 className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isLiveMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:text-slate-600'}`}
-               >
-                 {isLiveMode && <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2 inline-block"></div>}
-                 Live Engine
-               </button>
+               <Tooltip content="Switch to training environment with sample data.">
+                 <button 
+                   onClick={() => setIsLiveMode(false)}
+                   className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!isLiveMode ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                 >
+                   Simulation
+                 </button>
+               </Tooltip>
+               <Tooltip content="Connect to real-time property records & live search grounding.">
+                 <button 
+                   onClick={() => setIsLiveMode(true)}
+                   className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isLiveMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:text-slate-600'}`}
+                 >
+                   {isLiveMode && <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2 inline-block"></div>}
+                   Live Engine
+                 </button>
+               </Tooltip>
             </div>
           </div>
         </header>
@@ -200,6 +226,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
       </main>
 
       <LiveAgent isOpen={isAgentOpen} onClose={() => setIsAgentOpen(false)} />
+      <UserGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
     </div>
   );
 };

@@ -21,9 +21,11 @@ import {
   MapPinIcon,
   TrendingDownIcon,
   BarChart3Icon,
-  ActivityIcon
+  ActivityIcon,
+  InfoIcon
 } from 'lucide-react';
 import { Property, CaseStatus } from '../types';
+import Tooltip from './Tooltip';
 
 const MOCK_PROPERTIES: Property[] = [
   {
@@ -90,10 +92,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
   const [filters, setFilters] = useState({ minSurplus: '', maxSurplus: '' });
 
   const stats = [
-    { label: 'Active Pipeline', value: isLiveMode ? '$0' : '$735,000', icon: TrendingUpIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'High Yield (90+)', value: isLiveMode ? '0' : '12 Cases', icon: SparklesIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Action Required', value: isLiveMode ? '0' : '8 Tasks', icon: AlertCircleIcon, color: 'text-red-600', bg: 'bg-red-50' },
-    { label: 'Predictive YTD', value: isLiveMode ? '$0' : '$1.4M', icon: CheckCircle2Icon, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Active Pipeline', value: isLiveMode ? '$0' : '$735,000', icon: TrendingUpIcon, color: 'text-indigo-600', bg: 'bg-indigo-50', tip: 'Total estimated gross surplus for all active cases in the system.' },
+    { label: 'High Yield (90+)', value: isLiveMode ? '0' : '12 Cases', icon: SparklesIcon, color: 'text-amber-600', bg: 'bg-amber-50', tip: 'Cases with an Intelligence Rank over 90, indicating highest recovery probability.' },
+    { label: 'Action Required', value: isLiveMode ? '0' : '8 Tasks', icon: AlertCircleIcon, color: 'text-red-600', bg: 'bg-red-50', tip: 'Urgent compliance deadlines or document deficiencies requiring human review.' },
+    { label: 'Predictive YTD', value: isLiveMode ? '$0' : '$1.4M', icon: CheckCircle2Icon, color: 'text-green-600', bg: 'bg-green-50', tip: 'Estimated annual recovery based on historical conversion rates and current pipeline.' },
   ];
 
   const filteredProperties = useMemo(() => {
@@ -134,13 +136,15 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
         <div className="lg:col-span-3 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {stats.map((stat, i) => (
-              <div key={i} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-start justify-between group hover:border-indigo-400 transition-all hover:shadow-xl hover:-translate-y-1">
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{stat.label}</p>
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</h3>
+              <Tooltip key={i} content={stat.tip}>
+                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-start justify-between group hover:border-indigo-400 transition-all hover:shadow-xl hover:-translate-y-1 h-full">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{stat.label}</p>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</h3>
+                  </div>
+                  <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl transition-transform group-hover:scale-110 shadow-sm`}><stat.icon size={24} /></div>
                 </div>
-                <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl transition-transform group-hover:scale-110 shadow-sm`}><stat.icon size={24} /></div>
-              </div>
+              </Tooltip>
             ))}
           </div>
 
@@ -160,7 +164,13 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                    <th className="px-8 py-6">Intelligence Rank</th>
+                    <th className="px-8 py-6">
+                      <Tooltip content="System-generated priority based on debt ratios, jurisdiction difficulty, and claimant clarity.">
+                        <div className="flex items-center gap-1">
+                          Intelligence Rank <InfoIcon size={10} className="text-slate-300" />
+                        </div>
+                      </Tooltip>
+                    </th>
                     <th className="px-8 py-6">Property Context</th>
                     <th className="px-8 py-6 text-center">Risk Level</th>
                     <th className="px-8 py-6">Est. Net Recovery</th>
@@ -261,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                 <p className="text-indigo-100 text-xs leading-relaxed opacity-80">
                    Based on current GA and FL trends, Q4 surplus volume is expected to rise by 18%. Update rules to prioritize FL-Miami records.
                 </p>
-                <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-900/50 hover:bg-indigo-50 transition-all">
+                <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-950/50 hover:bg-indigo-50 transition-all">
                    Run Full Simulation
                 </button>
              </div>

@@ -22,7 +22,9 @@ import {
   LayoutDashboardIcon,
   BarChartIcon,
   MapIcon,
-  GavelIcon
+  GavelIcon,
+  CreditCardIcon,
+  GiftIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import LiveAgent from './LiveAgent';
@@ -48,6 +50,11 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     { label: 'Team', path: '/admin/users', icon: UsersIcon, roles: [UserRole.ADMIN], tip: 'Manage team access levels and review performance metrics.' },
   ];
 
+  const adminNav = [
+    { label: 'Billing & Tiers', path: '/billing', icon: CreditCardIcon, tip: 'Manage your platform subscription and AI credits.' },
+    { label: 'Affiliate Portal', path: '/affiliate', icon: GiftIcon, tip: 'Earn recurring commission by referring other recovery agents.' },
+  ];
+
   const intelligenceSuite = [
     { label: 'Skip-Trace Hub', path: '/research', icon: GlobeIcon, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
     { label: 'Waterfall Engine', path: '/waterfall', icon: CalculatorIcon, color: 'text-emerald-400', desc: 'Financial Logic', tip: 'Simulate lien priority and final recovery amounts.' },
@@ -58,7 +65,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Sidebar - Enhanced Contrast */}
       <aside className="w-80 bg-slate-950 text-white flex flex-col hidden md:flex shadow-2xl z-30 border-r border-white/10">
         <div className="p-8">
           <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
@@ -71,7 +77,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 space-y-8 py-4 custom-scrollbar">
-          {/* Main Navigation */}
           <div>
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-4">Core Terminal</p>
             <nav className="space-y-1.5">
@@ -90,16 +95,30 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                   </Link>
                 </Tooltip>
               ))}
-              <Tooltip content="Manually initialize a new surplus recovery case file." position="right">
-                <Link to="/properties/new" className="flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-200 border border-transparent hover:bg-slate-800 hover:text-white hover:border-white/5 transition-all">
-                  <PlusCircleIcon size={20} className="text-emerald-400/80" />
-                  <span className="font-black text-[11px] uppercase tracking-widest">New Case File</span>
-                </Link>
-              </Tooltip>
             </nav>
           </div>
 
-          {/* AI CORE V3.5 */}
+          <div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-4">Account & Revenue</p>
+            <nav className="space-y-1.5">
+              {adminNav.map((item) => (
+                <Tooltip key={item.path} content={item.tip} position="right">
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 border ${
+                      location.pathname === item.path 
+                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-950/60 translate-x-1' 
+                        : 'text-slate-200 border-transparent hover:bg-slate-800 hover:text-white hover:border-white/5'
+                    }`}
+                  >
+                    <item.icon size={20} className={location.pathname === item.path ? 'text-white' : 'text-indigo-400/80'} />
+                    <span className="font-black text-[11px] uppercase tracking-widest">{item.label}</span>
+                  </Link>
+                </Tooltip>
+              ))}
+            </nav>
+          </div>
+
           <div>
             <div className="flex items-center justify-between px-4 mb-4">
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Autonomous Suite</p>
@@ -143,29 +162,10 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
               ))}
             </div>
           </div>
-
-          {/* SUPPORT */}
-          <div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-4">Docs</p>
-            <nav className="space-y-1">
-              <Tooltip content="Listen to AI explain our proprietary recovery protocols." position="right">
-                <button 
-                  onClick={() => setIsGuideOpen(true)}
-                  className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-200 hover:bg-slate-800 hover:text-white transition-all group"
-                >
-                  <div className="relative">
-                    <BookOpenIcon size={20} className="text-amber-400" />
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full animate-ping"></div>
-                  </div>
-                  <span className="font-black text-[11px] uppercase tracking-widest">Voice-Over Manual</span>
-                </button>
-              </Tooltip>
-            </nav>
-          </div>
         </div>
 
         <div className="p-6 border-t border-white/5 mt-auto bg-slate-950">
-          <Tooltip content={`Signed in as ${user.role}. Click to manage profile settings.`} position="right">
+          <Tooltip content={`Subscription: ${user.subscription?.tier}. Credits: ${user.subscription?.ai_credits_remaining}`} position="right">
             <div className="flex items-center gap-4 px-2 cursor-pointer group">
               <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 flex items-center justify-center text-indigo-400 font-black border border-indigo-500/30 shadow-inner group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 {user.email[0].toUpperCase()}
@@ -173,8 +173,8 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
               <div className="overflow-hidden text-left">
                 <p className="text-xs font-black truncate text-white uppercase tracking-tight">{user.email.split('@')[0]}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.6)]"></div>
-                  <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{user.role}</p>
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                  <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{user.subscription?.tier}</p>
                 </div>
               </div>
             </div>
@@ -182,7 +182,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-24 bg-white border-b border-slate-200 flex items-center justify-between px-10 shrink-0 z-20">
           <div className="flex items-center gap-6 w-full max-w-2xl">

@@ -6,6 +6,28 @@ export enum UserRole {
   VIEWER = 'VIEWER'
 }
 
+export enum SubscriptionTier {
+  STARTER = 'STARTER',
+  PROFESSIONAL = 'PROFESSIONAL',
+  ENTERPRISE = 'ENTERPRISE'
+}
+
+export interface UserSubscription {
+  tier: SubscriptionTier;
+  status: 'active' | 'past_due' | 'canceled';
+  ai_credits_remaining: number;
+  billing_cycle: 'monthly' | 'yearly';
+  renews_at: string;
+}
+
+export interface AffiliateProfile {
+  referral_code: string;
+  total_referrals: number;
+  active_subscriptions: number;
+  unpaid_earnings: number;
+  total_earned: number;
+}
+
 export enum CaseStatus {
   NEW = 'NEW',
   NEEDS_DOCS = 'NEEDS_DOCS',
@@ -33,7 +55,7 @@ export interface Attorney {
   firm: string;
   bar_id: string;
   specialty: string[];
-  jurisdictions: string[]; // e.g. ["MD", "VA"]
+  jurisdictions: string[];
   contact_email: string;
   rating: number;
   cases_handled: number;
@@ -63,6 +85,8 @@ export interface User {
   email: string;
   role: UserRole;
   is_active: boolean;
+  subscription?: UserSubscription;
+  affiliate?: AffiliateProfile;
 }
 
 export interface JurisdictionRule {
@@ -85,7 +109,7 @@ export interface Claimant {
   verified_by_user_id?: string;
   verified_by_email?: string;
   contact_info?: string;
-  verification_rationale?: string; // AI generated explanation
+  verification_rationale?: string;
   confidence_score?: number;
 }
 
@@ -106,8 +130,7 @@ export interface Property {
   created_at: string;
   liens?: Lien[];
   claimants?: Claimant[];
-  // AI Enhancements
-  priority_score?: number; // 0-100
+  priority_score?: number;
   risk_level?: 'LOW' | 'MEDIUM' | 'HIGH';
   est_payout_days?: number;
 }

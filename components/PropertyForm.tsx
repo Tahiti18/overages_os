@@ -7,7 +7,8 @@ import {
   MapPinIcon, 
   DollarSignIcon, 
   CalendarIcon,
-  InfoIcon
+  InfoIcon,
+  PlusCircleIcon
 } from 'lucide-react';
 import { CaseStatus } from '../types';
 

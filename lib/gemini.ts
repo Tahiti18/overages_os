@@ -1,9 +1,14 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// We wrap initialization to avoid top-level ReferenceErrors if process is weirdly handled
+const getAIClient = () => {
+  const apiKey = process.env?.API_KEY || "";
+  return new GoogleGenAI({ apiKey });
+};
 
 export const extractDocumentData = async (base64Data: string, mimeType: string) => {
+  const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: [

@@ -3,31 +3,32 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUpIcon, 
-  ClockIcon, 
   AlertCircleIcon, 
   CheckCircle2Icon,
   ArrowRightIcon,
-  WifiIcon,
   PlusCircleIcon,
-  LayoutListIcon,
-  MapIcon,
   SparklesIcon,
   ZapIcon,
   FilterIcon,
-  DollarSignIcon,
-  ChevronDownIcon,
-  RotateCcwIcon,
-  SearchIcon,
-  MapPinIcon,
-  TrendingDownIcon,
   BarChart3Icon,
   ActivityIcon,
-  InfoIcon
+  InfoIcon,
+  UserPlusIcon,
+  SearchIcon,
+  ChevronDownIcon,
+  UserIcon
 } from 'lucide-react';
-import { Property, CaseStatus } from '../types';
+import { Property, CaseStatus, User, UserRole } from '../types';
 import Tooltip from './Tooltip';
 
-const MOCK_PROPERTIES: Property[] = [
+const TEAM_MEMBERS: User[] = [
+  { id: 'u1', email: 'admin@prospector.ai', role: UserRole.ADMIN, is_active: true },
+  { id: 'u2', email: 'reviewer_jane@prospector.ai', role: UserRole.REVIEWER, is_active: true },
+  { id: 'u3', email: 'agent_bob@prospector.ai', role: UserRole.FILING_AGENT, is_active: true },
+  { id: 'u4', email: 'audit_steve@prospector.ai', role: UserRole.VIEWER, is_active: false },
+];
+
+const INITIAL_PROPERTIES: Property[] = [
   {
     id: '1',
     state: 'GA',
@@ -43,7 +44,8 @@ const MOCK_PROPERTIES: Property[] = [
     created_at: '2024-02-01',
     priority_score: 92,
     risk_level: 'LOW',
-    est_payout_days: 120
+    est_payout_days: 120,
+    assigned_to_user_id: 'u2'
   },
   {
     id: '2',
@@ -60,7 +62,8 @@ const MOCK_PROPERTIES: Property[] = [
     created_at: '2023-12-05',
     priority_score: 84,
     risk_level: 'MEDIUM',
-    est_payout_days: 180
+    est_payout_days: 180,
+    assigned_to_user_id: 'u3'
   },
   {
     id: '3',
@@ -77,7 +80,8 @@ const MOCK_PROPERTIES: Property[] = [
     created_at: '2024-03-05',
     priority_score: 71,
     risk_level: 'HIGH',
-    est_payout_days: 90
+    est_payout_days: 90,
+    assigned_to_user_id: undefined
   }
 ];
 
@@ -87,6 +91,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
   const navigate = useNavigate();
+  const [properties, setProperties] = useState<Property[]>(INITIAL_PROPERTIES);
   const [filterStatus, setFilterStatus] = useState<CaseStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ minSurplus: '', maxSurplus: '' });
@@ -100,13 +105,32 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
 
   const filteredProperties = useMemo(() => {
     if (isLiveMode) return [];
-    return MOCK_PROPERTIES.filter(p => {
+    return properties.filter(p => {
       if (filterStatus !== 'ALL' && p.status !== filterStatus) return false;
       if (searchQuery && !p.address.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filters.minSurplus && p.surplus_amount < Number(filters.minSurplus)) return false;
       return true;
     }).sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
-  }, [filterStatus, filters, searchQuery, isLiveMode]);
+  }, [filterStatus, filters, searchQuery, isLiveMode, properties]);
+
+  const handleAssignChange = (propertyId: string, userId: string) => {
+    setProperties(prev => prev.map(p => 
+      p.id === propertyId ? { ...p, assigned_to_user_id: userId === 'unassigned' ? undefined : userId } : p
+    ));
+  };
+
+  const getUserInitials = (userId: string | undefined) => {
+    if (!userId) return '?';
+    const user = TEAM_MEMBERS.find(u => u.id === userId);
+    if (!user) return '?';
+    return user.email[0].toUpperCase();
+  };
+
+  const getUserName = (userId: string | undefined) => {
+    if (!userId) return 'Unassigned';
+    const user = TEAM_MEMBERS.find(u => u.id === userId);
+    return user ? user.email.split('@')[0] : 'Unknown';
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
@@ -172,6 +196,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                       </Tooltip>
                     </th>
                     <th className="px-8 py-6">Property Context</th>
+                    <th className="px-8 py-6">Assignee</th>
                     <th className="px-8 py-6 text-center">Risk Level</th>
                     <th className="px-8 py-6">Est. Net Recovery</th>
                     <th className="px-8 py-6 text-right">Actions</th>
@@ -179,8 +204,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredProperties.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => navigate(`/properties/${p.id}`)}>
-                      <td className="px-8 py-6">
+                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                      <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shadow-inner border ${p.priority_score! > 85 ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                             {p.priority_score}
@@ -188,13 +213,42 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                           {p.priority_score! > 90 && <SparklesIcon size={14} className="text-amber-500 animate-pulse" />}
                         </div>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
                         <div>
                           <p className="text-sm font-black text-slate-900 leading-tight">{p.address}</p>
                           <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{p.parcel_id} • {p.county}, {p.state}</p>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-center">
+                      <td className="px-8 py-6">
+                        <Tooltip content="Assign this case to a team member for verification and recovery processing.">
+                          <div className="relative group/assignee">
+                            <div className="flex items-center gap-3 p-2 rounded-2xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border transition-all ${p.assigned_to_user_id ? 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-sm' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                                {p.assigned_to_user_id ? getUserInitials(p.assigned_to_user_id) : <UserPlusIcon size={12} />}
+                              </div>
+                              <div className="flex flex-col">
+                                <p className="text-[11px] font-black text-slate-800 leading-none mb-1">{getUserName(p.assigned_to_user_id)}</p>
+                                <select 
+                                  className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                                  value={p.assigned_to_user_id || 'unassigned'}
+                                  onChange={(e) => handleAssignChange(p.id, e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <option value="unassigned">Unassigned</option>
+                                  {TEAM_MEMBERS.map(member => (
+                                    <option key={member.id} value={member.id}>{member.email.split('@')[0]}</option>
+                                  ))}
+                                </select>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Reassign</span>
+                                  <ChevronDownIcon size={8} className="text-slate-300" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Tooltip>
+                      </td>
+                      <td className="px-8 py-6 text-center" onClick={() => navigate(`/properties/${p.id}`)}>
                         <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
                           p.risk_level === 'LOW' ? 'bg-green-50 text-green-700 border-green-200' :
                           p.risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -203,12 +257,15 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                           {p.risk_level} Risk
                         </span>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-8 py-6" onClick={() => navigate(`/properties/${p.id}`)}>
                         <p className="text-sm font-black text-indigo-600">${p.surplus_amount.toLocaleString()}</p>
                         <p className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Est. Payout: {p.est_payout_days} Days</p>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all shadow-sm">
+                        <button 
+                          onClick={() => navigate(`/properties/${p.id}`)}
+                          className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all shadow-sm"
+                        >
                           <ArrowRightIcon size={18} />
                         </button>
                       </td>

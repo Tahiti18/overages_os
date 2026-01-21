@@ -6,13 +6,15 @@ import {
   ChevronLeftIcon, CheckCircleIcon, SearchIcon, MapPinIcon, CalendarIcon,
   InfoIcon, ArrowDownIcon, SparklesIcon, CalculatorIcon, ArchiveIcon,
   ShieldCheckIcon, UserCheckIcon, ClockIcon, MailIcon, MessageSquareIcon,
-  Wand2Icon, CopyIcon, PhoneIcon, Loader2Icon
+  Wand2Icon, CopyIcon, PhoneIcon, Loader2Icon, ShieldAlertIcon,
+  UserXIcon, FingerprintIcon
 } from 'lucide-react';
 import { Property, CaseStatus, User, UserRole, Claimant } from '../types';
 import DocumentUpload from './DocumentUpload';
 import SkipTracingHub from './SkipTracingHub';
 import LienWaterfall from './LienWaterfall';
 import SmartDocumentPackager from './SmartDocumentPackager';
+import Tooltip from './Tooltip';
 import { generateOutreachArchitect } from '../lib/gemini';
 
 const PropertyDetail: React.FC = () => {
@@ -28,7 +30,15 @@ const PropertyDetail: React.FC = () => {
     address: '123 Peach Ave, Atlanta, GA 30303', tax_sale_date: '2024-01-15',
     sale_price: 150000, total_debt: 20000, surplus_amount: 130000,
     deadline_date: '2025-01-15', status: CaseStatus.NEW, created_at: '2024-02-01',
-    claimants: [{ id: 'c1', name: 'John Doe', relationship: 'OWNER', is_verified: false, contact_info: 'john.doe@example.com', confidence_score: 0.95, verification_rationale: "Name on Tax Deed matches skip-tracing record. Secondary social media verification confirmed address history." }]
+    claimants: [{ 
+      id: 'c1', 
+      name: 'John Doe', 
+      relationship: 'OWNER', 
+      is_verified: false, 
+      contact_info: 'john.doe@example.com', 
+      confidence_score: 0.95, 
+      verification_rationale: "Name on Tax Deed matches skip-tracing record. Secondary social media verification confirmed address history." 
+    }]
   });
 
   const tabs = [
@@ -49,15 +59,26 @@ const PropertyDetail: React.FC = () => {
   };
 
   const verifyClaimant = (claimantId: string) => {
-    if (user.role !== UserRole.ADMIN && user.role !== UserRole.REVIEWER) return;
+    // Explicit role check: only ADMIN or REVIEWER can authorize
+    if (user.role !== UserRole.ADMIN && user.role !== UserRole.REVIEWER) {
+      alert("Unauthorized: You do not have the REVIEWER or ADMIN role required to authorize a Verified Owner.");
+      return;
+    }
+
+    const timestamp = new Date().toLocaleString();
     setProperty(prev => ({
       ...prev,
       claimants: prev.claimants?.map(c => c.id === claimantId ? {
-        ...c, is_verified: true, verified_at: new Date().toISOString().split('T')[0],
-        verified_by_user_id: user.id, verified_by_email: user.email
+        ...c, 
+        is_verified: true, 
+        verified_at: timestamp,
+        verified_by_user_id: user.id, 
+        verified_by_email: user.email
       } : c)
     }));
   };
+
+  const canVerify = user.role === UserRole.ADMIN || user.role === UserRole.REVIEWER;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
@@ -90,20 +111,53 @@ const PropertyDetail: React.FC = () => {
                   <div key={c.id} className="bg-white border-2 border-slate-100 rounded-[2rem] overflow-hidden shadow-sm hover:border-indigo-200 transition-all">
                      <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
                         <div className="flex items-center gap-6">
-                           <div className="w-20 h-20 rounded-3xl bg-indigo-50 flex items-center justify-center font-black text-3xl text-indigo-600 border border-indigo-100">{c.name[0]}</div>
+                           <div className={`w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl border transition-colors ${c.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                             {c.name[0]}
+                           </div>
                            <div>
                               <div className="flex items-center gap-3">
                                 <h4 className="text-2xl font-black text-slate-900">{c.name}</h4>
-                                {c.is_verified && <ShieldCheckIcon className="text-green-500" size={24} />}
+                                {c.is_verified ? (
+                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200 shadow-sm animate-in zoom-in duration-300">
+                                    <ShieldCheckIcon size={14} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Verified Owner</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-full border border-slate-200">
+                                    <FingerprintIcon size={14} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Unverified</span>
+                                  </div>
+                                )}
                               </div>
                               <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">{c.relationship} • {c.contact_info}</p>
                            </div>
                         </div>
-                        <div className="flex flex-col items-end gap-3">
-                           {!c.is_verified && (
-                             <button onClick={() => verifyClaimant(c.id)} className="px-8 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center gap-2"><UserCheckIcon size={16}/> Authorize Recovery</button>
+                        <div className="flex flex-col items-end gap-3 min-w-[200px]">
+                           {!c.is_verified ? (
+                             <Tooltip content={canVerify ? "Promote this claimant to 'Verified Owner' status after document audit." : "Requires REVIEWER or ADMIN role to authorize."}>
+                               <button 
+                                 onClick={() => verifyClaimant(c.id)} 
+                                 disabled={!canVerify}
+                                 className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 transition-all ${canVerify ? 'bg-indigo-600 text-white shadow-indigo-100 hover:scale-[1.02] active:scale-95' : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed opacity-60'}`}
+                               >
+                                 <UserCheckIcon size={16}/> Authorize Recovery
+                               </button>
+                             </Tooltip>
+                           ) : (
+                             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex flex-col gap-1 items-end animate-in slide-in-from-right-2">
+                                <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Authorized Artifact</p>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700 text-[10px] font-black">
+                                    {c.verified_by_email ? c.verified_by_email[0].toUpperCase() : 'A'}
+                                  </div>
+                                  <p className="text-xs font-bold text-emerald-900">{c.verified_by_email?.split('@')[0]}</p>
+                                </div>
+                                <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-500 mt-1">
+                                  <ClockIcon size={10} />
+                                  {c.verified_at}
+                                </div>
+                             </div>
                            )}
-                           {c.is_verified && <p className="text-xs font-bold text-green-600 uppercase tracking-widest">Verified by {c.verified_by_email}</p>}
                         </div>
                      </div>
                      {/* AI REVIEWER DIGEST */}

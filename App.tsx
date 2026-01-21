@@ -11,6 +11,7 @@ import GlobalResearch from './components/GlobalResearch';
 import GlobalWaterfall from './components/GlobalWaterfall';
 import GlobalPackager from './components/GlobalPackager';
 import ComplianceCalendar from './components/ComplianceCalendar';
+import WorkflowProtocol from './components/WorkflowProtocol';
 import { User, UserRole } from './types';
 
 const MOCK_USER: User = {
@@ -28,12 +29,11 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<Layout user={MOCK_USER} isLiveMode={isLiveMode} setIsLiveMode={setIsLiveMode} />}>
           <Route path="/" element={<Dashboard isLiveMode={isLiveMode} />} />
+          <Route path="/workflow" element={<WorkflowProtocol />} />
           <Route path="/properties/new" element={<PropertyForm />} />
           <Route path="/properties/:id" element={<PropertyDetail />} />
           <Route path="/admin/rules" element={<JurisdictionRules />} />
           <Route path="/admin/users" element={<UserAdmin />} />
-          
-          {/* AI Core v3.0 Global Routes */}
           <Route path="/research" element={<GlobalResearch />} />
           <Route path="/waterfall" element={<GlobalWaterfall />} />
           <Route path="/packager" element={<GlobalPackager />} />

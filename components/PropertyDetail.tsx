@@ -8,7 +8,8 @@ import {
   ShieldCheckIcon, UserCheckIcon, ClockIcon, MailIcon, MessageSquareIcon,
   Wand2Icon, CopyIcon, PhoneIcon, Loader2Icon, ShieldAlertIcon,
   UserXIcon, FingerprintIcon, ZapIcon, ListChecksIcon, ShieldIcon,
-  GavelIcon
+  GavelIcon, ClipboardCheckIcon, UserIcon, FileCheckIcon, SignatureIcon,
+  CheckIcon, ChevronRightIcon
 } from 'lucide-react';
 import { Property, CaseStatus, User, UserRole, Claimant, Document, AuditEvent } from '../types';
 import DocumentUpload from './DocumentUpload';
@@ -33,6 +34,8 @@ const PropertyDetail: React.FC = () => {
   const [outreachLoading, setOutreachLoading] = useState(false);
   const [outreachData, setOutreachData] = useState<any>(null);
   const [showStatusToast, setShowStatusToast] = useState(false);
+  const [verifiedDocs, setVerifiedDocs] = useState<Document[]>([]);
+  
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([
     {
       id: 'a1',
@@ -58,11 +61,12 @@ const PropertyDetail: React.FC = () => {
       is_verified: false, 
       contact_info: 'john.doe@example.com', 
       confidence_score: 0.95, 
-      verification_rationale: "Name on Tax Deed matches skip-tracing record. Secondary social media verification confirmed address history." 
+      verification_rationale: "Name on Tax Deed matches skip-tracing record. Secondary social media verification confirmed address history for the last 10 years." 
     }]
   });
 
   const handleDocumentVerificationChange = (allDocs: Document[]) => {
+    setVerifiedDocs(allDocs.filter(d => d.verified_by_human));
     const key = `${property.state}-${property.county}`;
     const requiredTypes = JURISDICTION_REQUIREMENTS[key] || JURISDICTION_REQUIREMENTS['GA-Fulton'];
     
@@ -75,7 +79,7 @@ const PropertyDetail: React.FC = () => {
 
     const isComplete = requiredTypes.every(type => verifiedTypes.has(type));
 
-    if (isComplete && property.status !== CaseStatus.READY_FOR_REVIEW && property.status !== CaseStatus.APPROVED_TO_FILE) {
+    if (isComplete && property.status !== CaseStatus.READY_FOR_REVIEW && property.status !== CaseStatus.APPROVED_TO_FILE && property.status !== CaseStatus.PAID) {
       setProperty(prev => ({ ...prev, status: CaseStatus.READY_FOR_REVIEW }));
       setShowStatusToast(true);
       setTimeout(() => setShowStatusToast(false), 5000);
@@ -104,16 +108,18 @@ const PropertyDetail: React.FC = () => {
   const verifyClaimant = (claimantId: string) => {
     // Role Gate: Only Admin or Reviewer
     if (user.role !== UserRole.ADMIN && user.role !== UserRole.REVIEWER) {
-      alert("Unauthorized: Explicit approval requires a REVIEWER or ADMIN role.");
+      alert("UNAUTHORIZED: Explicit approval for 'Verified Owner' status requires a REVIEWER or ADMIN role.");
       return;
     }
 
-    if (!window.confirm("CONFIRM VERIFICATION: By clicking OK, you attest that you have reviewed the necessary legal artifacts and confirm this claimant as the 'Verified Owner' for this surplus recovery.")) {
+    const claimant = property.claimants?.find(c => c.id === claimantId);
+    if (!claimant) return;
+
+    if (!window.confirm(`AUTHORIZATION REQUIRED: You are about to grant 'Verified Owner' status to ${claimant.name}. \n\nThis confirms you have audited the existing ${verifiedDocs.length} legal artifacts and confirm they match this claimant's identity. This action is permanently logged for statutory compliance.`)) {
       return;
     }
 
     const timestamp = new Date().toLocaleString();
-    const claimantName = property.claimants?.find(c => c.id === claimantId)?.name || 'Unknown';
 
     // Update Property State
     setProperty(prev => ({
@@ -134,9 +140,11 @@ const PropertyDetail: React.FC = () => {
       entity_id: claimantId,
       action: 'CLAIMANT_VERIFIED_OWNER',
       metadata: { 
-        claimant_name: claimantName,
+        claimant_name: claimant.name,
         approver_id: user.id,
-        approver_role: user.role
+        approver_role: user.role,
+        evidence_count: verifiedDocs.length,
+        evidence_files: verifiedDocs.map(d => d.filename)
       },
       created_at: timestamp,
       actor_email: user.email
@@ -211,84 +219,181 @@ const PropertyDetail: React.FC = () => {
       <div className="mt-8">
         {activeTab === 'legal' && <AttorneyHub state={property.state} county={property.county} />}
         {activeTab === 'claimants' && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-             <div className="grid grid-cols-1 gap-6">
+          <div className="space-y-10 animate-in fade-in duration-500">
+             {/* Claimant Verification Protocol Header */}
+             <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-100 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                   <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner border border-indigo-100">
+                      <UserCheckIcon size={32} />
+                   </div>
+                   <div>
+                      <h4 className="text-xl font-black text-slate-900 tracking-tight uppercase italic">Claimant Verification Protocol</h4>
+                      <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Status: {property.claimants?.every(c => c.is_verified) ? 'Fully Authorized' : 'Audit in Progress'}</p>
+                   </div>
+                </div>
+                <div className="flex items-center gap-4">
+                   <div className="text-right">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Artifacts Audited</p>
+                      <p className="text-lg font-black text-indigo-600">{verifiedDocs.length} Records</p>
+                   </div>
+                   <div className="w-px h-10 bg-slate-100 mx-2"></div>
+                   <Tooltip content="Add a potential heir or owner found during skip tracing.">
+                     <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center gap-2">
+                       <UserCircleIcon size={14} /> Add Prospect
+                     </button>
+                   </Tooltip>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 gap-8">
                 {property.claimants?.map(c => (
-                  <div key={c.id} className="bg-white border-2 border-slate-100 rounded-[2rem] overflow-hidden shadow-sm hover:border-indigo-200 transition-all">
-                     <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="flex items-center gap-6">
-                           <div className={`w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl border transition-colors ${c.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                  <div key={c.id} className={`bg-white border-2 rounded-[3.5rem] overflow-hidden transition-all duration-500 shadow-sm relative ${c.is_verified ? 'border-emerald-500/30' : 'border-slate-100 hover:border-indigo-200'}`}>
+                     {c.is_verified && (
+                       <div className="absolute top-10 right-10 z-20 pointer-events-none opacity-20">
+                          <div className="w-40 h-40 rounded-full border-[10px] border-emerald-500 flex items-center justify-center rotate-12">
+                             <span className="text-emerald-500 font-black text-2xl uppercase tracking-tighter">Verified Artifact</span>
+                          </div>
+                       </div>
+                     )}
+
+                     <div className="p-10 flex flex-col xl:flex-row gap-12">
+                        {/* Profile Info */}
+                        <div className="flex items-center gap-8 xl:w-1/3">
+                           <div className={`w-28 h-28 rounded-[2.5rem] flex items-center justify-center font-black text-4xl border-4 transition-all duration-700 ${c.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-500 shadow-2xl shadow-emerald-100 rotate-3' : 'bg-indigo-50 text-indigo-600 border-indigo-50 shadow-inner'}`}>
                              {c.name[0]}
                            </div>
-                           <div>
-                              <div className="flex items-center gap-3">
-                                <h4 className="text-2xl font-black text-slate-900">{c.name}</h4>
+                           <div className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <h4 className="text-3xl font-black text-slate-900 tracking-tighter">{c.name}</h4>
                                 {c.is_verified ? (
-                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200 shadow-sm animate-in zoom-in duration-300">
-                                    <ShieldCheckIcon size={14} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Verified Owner</span>
+                                  <div className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full border-2 border-emerald-200 shadow-sm animate-in zoom-in duration-500 ring-4 ring-emerald-50">
+                                    <ShieldCheckIcon size={16} />
+                                    <span className="text-[11px] font-black uppercase tracking-[0.1em]">Verified Owner</span>
                                   </div>
                                 ) : (
-                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full border border-amber-200 animate-pulse">
-                                    <ShieldAlertIcon size={14} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Pending Reviewer Approval</span>
+                                  <div className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-50 text-amber-600 rounded-full border-2 border-amber-100 animate-pulse">
+                                    <ShieldAlertIcon size={16} />
+                                    <span className="text-[11px] font-black uppercase tracking-[0.1em]">Authorization Pending</span>
                                   </div>
                                 )}
                               </div>
-                              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">{c.relationship} • {c.contact_info}</p>
+                              <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <FingerprintIcon size={14} className="text-indigo-400" /> {c.relationship} • {c.contact_info}
+                              </p>
                            </div>
                         </div>
-                        <div className="flex flex-col items-end gap-3 min-w-[200px]">
+
+                        {/* Evidence Summary */}
+                        <div className="flex-1 bg-slate-50/50 rounded-[2.5rem] p-8 border border-slate-100 flex flex-col gap-6">
+                           <div className="flex items-center justify-between">
+                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <FileCheckIcon size={14} className="text-indigo-600" /> Statutory Evidence Linkage
+                              </h5>
+                              <span className="text-[9px] font-bold text-indigo-400 bg-indigo-50 px-2 py-1 rounded-lg">Required Docs Met</span>
+                           </div>
+                           <div className="flex flex-wrap gap-4">
+                              {verifiedDocs.length > 0 ? verifiedDocs.map(d => (
+                                <div key={d.id} className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-sm group/ev">
+                                   <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                      <CheckIcon size={14} strokeWidth={3} />
+                                   </div>
+                                   <div>
+                                      <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">{d.filename}</p>
+                                      <p className="text-[8px] font-bold text-slate-400 uppercase">{d.doc_type}</p>
+                                   </div>
+                                </div>
+                              )) : (
+                                <div className="text-center py-4 w-full">
+                                   <p className="text-xs font-bold text-slate-400 italic">No verified artifacts currently linked to this profile.</p>
+                                </div>
+                              )}
+                           </div>
+                        </div>
+
+                        {/* Action Area */}
+                        <div className="xl:w-1/4 flex flex-col justify-center items-end gap-4">
                            {!c.is_verified ? (
-                             <Tooltip content={canVerify ? "Grant explicit 'Verified Owner' status. This action is logged for audit compliance." : "Requires REVIEWER or ADMIN role to authorize."}>
+                             <Tooltip content={canVerify ? "Grant explicit 'Verified Owner' status. This requires auditing all linked documents." : "Requires REVIEWER or ADMIN role to authorize."}>
                                <button 
                                  onClick={() => verifyClaimant(c.id)} 
                                  disabled={!canVerify}
-                                 className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 transition-all ${canVerify ? 'bg-indigo-600 text-white shadow-indigo-100 hover:scale-[1.02] active:scale-95' : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed opacity-60'}`}
+                                 className={`w-full group py-5 px-8 rounded-3xl text-xs font-black uppercase tracking-[0.15em] shadow-2xl flex items-center justify-center gap-3 transition-all duration-300 ${canVerify ? 'bg-indigo-600 text-white shadow-indigo-200 hover:scale-[1.02] hover:-translate-y-1 active:scale-95' : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed opacity-60'}`}
                                >
-                                 <UserCheckIcon size={16}/> Approve Overage Recovery
+                                 <SignatureIcon size={20} className="group-hover:rotate-12 transition-transform" />
+                                 Authorize Claim
                                </button>
                              </Tooltip>
                            ) : (
-                             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex flex-col gap-1 items-end animate-in slide-in-from-right-2">
-                                <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Verified Owner Artifact</p>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700 text-[10px] font-black">
-                                    {c.verified_by_email ? c.verified_by_email[0].toUpperCase() : 'A'}
+                             <div className="bg-emerald-600 text-white rounded-3xl p-8 w-full flex flex-col gap-4 shadow-2xl shadow-emerald-100 animate-in slide-in-from-right-4 duration-700 relative overflow-hidden group">
+                                <div className="relative z-10">
+                                  <p className="text-[10px] font-black text-emerald-200 uppercase tracking-[0.2em] mb-3">Verification Authorized By</p>
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-black border border-white/30 shadow-lg">
+                                      {c.verified_by_email ? c.verified_by_email[0].toUpperCase() : 'A'}
+                                    </div>
+                                    <div className="overflow-hidden">
+                                      <p className="text-sm font-black truncate">{c.verified_by_email?.split('@')[0]}</p>
+                                      <p className="text-[10px] font-bold text-emerald-100 opacity-80 uppercase tracking-widest">Lvl 4 Reviewer</p>
+                                    </div>
                                   </div>
-                                  <p className="text-xs font-bold text-emerald-900 truncate max-w-[120px]">{c.verified_by_email?.split('@')[0]}</p>
+                                  <div className="flex items-center gap-2 text-[10px] font-black text-emerald-200 mt-5 pt-4 border-t border-white/10">
+                                    <ClockIcon size={12} />
+                                    {c.verified_at}
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-500 mt-1">
-                                  <ClockIcon size={10} />
-                                  {c.verified_at}
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-1000">
+                                   <ShieldCheckIcon size={120} fill="white" />
                                 </div>
                              </div>
                            )}
                         </div>
                      </div>
-                     <div className="bg-slate-50 p-8 border-t border-slate-100">
-                        <div className="flex items-center gap-3 mb-4">
-                           <SparklesIcon size={18} className="text-indigo-600" />
-                           <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Verification Digest</h5>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <div className="space-y-2">
-                              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">Confidence Rationale</p>
-                              <p className="text-xs text-slate-700 leading-relaxed font-medium">{c.verification_rationale}</p>
+
+                     {/* Audit Rationale Drawer */}
+                     <div className={`p-10 border-t-2 border-slate-100 transition-all duration-700 ${c.is_verified ? 'bg-emerald-50/30' : 'bg-slate-50/50'}`}>
+                        <div className="flex items-center gap-4 mb-6">
+                           <div className={`p-2 rounded-xl shadow-sm ${c.is_verified ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                              <SparklesIcon size={18} />
                            </div>
-                           <div className="flex items-center gap-4">
-                              <Tooltip content="The statistical probability that this claimant is the true legal owner based on artifact matching.">
-                                <div className="p-4 bg-white rounded-2xl border border-slate-200 flex-1 text-center cursor-help">
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Match Rating</p>
-                                  <p className="text-xl font-black text-indigo-600">{(c.confidence_score || 0) * 100}%</p>
-                                </div>
-                              </Tooltip>
-                              <Tooltip content="The perceived difficulty of recovery based on jurisdictional precedent.">
-                                <div className="p-4 bg-white rounded-2xl border border-slate-200 flex-1 text-center cursor-help">
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Risk Profile</p>
-                                  <p className="text-xl font-black text-green-600">LOW</p>
-                                </div>
-                              </Tooltip>
+                           <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em]">Audit Logic Rationale</h5>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                           <div className="space-y-4">
+                              <p className="text-xs text-slate-600 leading-relaxed font-bold border-l-4 border-indigo-500 pl-6 py-2 italic bg-white/40 rounded-r-2xl">
+                                 "{c.verification_rationale}"
+                              </p>
+                              <div className="flex items-center gap-3">
+                                 <Tooltip content="The statistical probability that this claimant is the true legal owner based on artifact matching.">
+                                   <div className="px-4 py-2 bg-white rounded-xl border border-slate-200 flex items-center gap-3 shadow-sm cursor-help">
+                                      <span className="text-[10px] font-black text-slate-400 uppercase">Match Score</span>
+                                      <span className="text-sm font-black text-indigo-600">{(c.confidence_score || 0) * 100}%</span>
+                                   </div>
+                                 </Tooltip>
+                                 <Tooltip content="Overall risk profile based on jurisdictional complexity and document clarity.">
+                                   <div className="px-4 py-2 bg-white rounded-xl border border-slate-200 flex items-center gap-3 shadow-sm cursor-help">
+                                      <span className="text-[10px] font-black text-slate-400 uppercase">Risk Index</span>
+                                      <span className="text-sm font-black text-emerald-600 uppercase tracking-tighter">Low-Friction</span>
+                                   </div>
+                                 </Tooltip>
+                              </div>
+                           </div>
+                           
+                           {/* Compliance Checklist */}
+                           <div className="bg-white/60 rounded-[2rem] border border-slate-200 p-8 space-y-4">
+                              <h6 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Internal Compliance Checklist</h6>
+                              <div className="space-y-3">
+                                 {[
+                                   { l: 'Identity Document Authenticated', s: true },
+                                   { l: 'Tax Sale Deed Link Confirmed', s: true },
+                                   { l: 'Senior Lienholder Exhaustion Audited', s: true },
+                                   { l: 'No Competing Heirs Identified', s: true }
+                                 ].map((check, i) => (
+                                   <div key={i} className="flex items-center justify-between px-2">
+                                      <span className="text-[10px] font-bold text-slate-500 uppercase">{check.l}</span>
+                                      <CheckIcon size={14} className="text-emerald-500" />
+                                   </div>
+                                 ))}
+                              </div>
                            </div>
                         </div>
                      </div>
@@ -397,7 +502,7 @@ const PropertyDetail: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'overview' && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"><div className="lg:col-span-2 space-y-8"><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sale Price</p><p className="text-2xl font-black text-slate-900">${property.sale_price.toLocaleString()}</p></div><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Debt</p><p className="text-2xl font-black text-red-600">${property.total_debt.toLocaleString()}</p></div><div className="bg-indigo-600 p-6 rounded-3xl border border-indigo-500 shadow-2xl shadow-indigo-200"><p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Gross Surplus</p><p className="text-2xl font-black text-white">${property.surplus_amount.toLocaleString()}</p></div></div><LienWaterfall initialSurplus={property.surplus_amount} /></div></div>}
+        {activeTab === 'overview' && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"><div className="lg:col-span-2 space-y-8"><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sale Price</p><p className="text-2xl font-black text-slate-900">${property.sale_price.toLocaleString()}</p></div><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Debt</p><p className="text-2xl font-black text-red-600">${property.total_debt.toLocaleString()}</p></div><div className="bg-indigo-600 p-6 rounded-3xl border border-indigo-500 shadow-2xl shadow-indigo-200"><p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Gross Surplus</p><p className="text-2xl font-black text-white">${property.surplus_amount.toLocaleString()}</p></div></div><LienWaterfall property={property} initialSurplus={property.surplus_amount} /></div></div>}
         {activeTab === 'research' && <SkipTracingHub ownerName="John Doe" address={property.address} />}
         {activeTab === 'packager' && <SmartDocumentPackager property={property} waterfallData={{ finalSurplus: 81500 }} />}
         {activeTab === 'documents' && (

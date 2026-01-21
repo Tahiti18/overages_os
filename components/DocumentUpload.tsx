@@ -21,7 +21,12 @@ import {
   ShieldCheckIcon,
   CheckIcon,
   ChevronDownIcon,
-  InfoIcon
+  InfoIcon,
+  SearchIcon,
+  HashIcon,
+  CalendarIcon,
+  DollarSignIcon,
+  MapPinIcon
 } from 'lucide-react';
 import { Document } from '../types';
 import { extractDocumentData } from '../lib/gemini';
@@ -77,7 +82,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
   const [newTag, setNewTag] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Notify parent of state changes
+  // Synchronize with parent pipeline
   useEffect(() => {
     onVerificationChange?.(documents);
   }, [documents]);
@@ -227,6 +232,16 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
     setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
   };
 
+  const getFieldIcon = (key: string) => {
+    const k = key.toLowerCase();
+    if (k.includes('id') || k.includes('parcel')) return <HashIcon size={14} />;
+    if (k.includes('date')) return <CalendarIcon size={14} />;
+    if (k.includes('amount') || k.includes('price')) return <DollarSignIcon size={14} />;
+    if (k.includes('owner') || k.includes('name')) return <TypeIcon size={14} />;
+    if (k.includes('address') || k.includes('jurisdiction')) return <MapPinIcon size={14} />;
+    return <SparklesIcon size={14} />;
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col lg:flex-row gap-8">
@@ -236,8 +251,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`bg-white rounded-[2.5rem] border-2 border-dashed p-12 text-center group transition-all shadow-sm relative overflow-hidden ${
-              isDragging ? 'bg-indigo-50 border-indigo-500 scale-[1.01] ring-4 ring-indigo-500/10' : 'border-slate-200 hover:bg-slate-50/50 hover:border-indigo-400'
+            className={`bg-white rounded-[3rem] border-2 border-dashed p-14 text-center group transition-all shadow-sm relative overflow-hidden ${
+              isDragging ? 'bg-indigo-50 border-indigo-500 scale-[1.01] ring-8 ring-indigo-500/5' : 'border-slate-200 hover:bg-slate-50/50 hover:border-indigo-400'
             }`}
           >
             <input 
@@ -248,41 +263,43 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
               ref={fileInputRef}
               onChange={handleFileUpload}
             />
-            <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-5 relative z-10">
-              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all duration-300 ${
-                isDragging ? 'bg-indigo-600 text-white scale-110 shadow-xl shadow-indigo-200 rotate-12' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 group-hover:scale-110'
+            <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-6 relative z-10">
+              <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center transition-all duration-500 ${
+                isDragging ? 'bg-indigo-600 text-white scale-110 shadow-2xl shadow-indigo-200 rotate-12' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 group-hover:scale-110'
               }`}>
-                {isDragging ? <PlusIcon size={40} /> : <UploadCloudIcon size={40} />}
+                {isDragging ? <PlusIcon size={48} strokeWidth={2.5} /> : <UploadCloudIcon size={48} strokeWidth={2.5} />}
               </div>
-              <div className="space-y-1">
-                <p className="text-xl font-black text-slate-900 tracking-tight">
-                  {isDragging ? 'Drop Artifacts Now' : 'Ingest Legal Artifacts'}
+              <div className="space-y-2">
+                <p className="text-2xl font-black text-slate-900 tracking-tight">
+                  {isDragging ? 'Drop Legal Evidence' : 'Ingest Case Artifacts'}
                 </p>
-                <p className="text-sm text-slate-500 font-medium">Batch upload enabled • Multi-format support (PDF, JPG, PNG)</p>
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-sm">AI OCR Enabled</span>
-                  <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-sm">Audit Grounding</span>
+                <p className="text-sm text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
+                  Bulk upload property deeds, tax bills, and IDs. AI Core will automatically extract recovery data.
+                </p>
+                <div className="flex items-center justify-center gap-3 mt-6">
+                  <span className="px-4 py-1.5 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] shadow-sm">AI OCR Enabled</span>
+                  <span className="px-4 py-1.5 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] shadow-sm">Grounding Filter</span>
                 </div>
               </div>
             </label>
             {isDragging && (
-              <div className="absolute inset-0 pointer-events-none border-4 border-indigo-600/20 m-2 rounded-[2rem] animate-pulse"></div>
+              <div className="absolute inset-0 pointer-events-none border-4 border-indigo-600/10 m-3 rounded-[2.5rem] animate-pulse"></div>
             )}
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between px-4">
-              <div className="flex items-center gap-2">
-                <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Case Artifacts</h5>
-                <span className="px-2 py-0.5 bg-slate-100 rounded-md text-[10px] font-black text-slate-600">{documents.length}</span>
+            <div className="flex items-center justify-between px-6">
+              <div className="flex items-center gap-3">
+                <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Artifact Repository</h5>
+                <span className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black">{documents.length}</span>
               </div>
               {documents.length > 0 && (
                 <button 
                   onClick={clearAllDocuments}
-                  className="px-4 py-2 bg-red-50 text-[10px] font-black text-red-600 rounded-xl uppercase tracking-widest hover:bg-red-600 hover:text-white flex items-center gap-2 transition-all border border-red-100 shadow-sm"
+                  className="px-5 py-2.5 bg-red-50 text-[10px] font-black text-red-600 rounded-2xl uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm flex items-center gap-2"
                 >
                   <Trash2Icon size={14} />
-                  Purge Case Inventory
+                  Purge Inventory
                 </button>
               )}
             </div>
@@ -291,39 +308,42 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
               {processingFiles.map(file => (
                 <div 
                   key={file.id}
-                  className={`flex flex-col p-6 rounded-[2rem] shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 border-2 ${
-                    file.status === 'error' ? 'bg-red-50 border-red-100' : 'bg-white border-indigo-100'
+                  className={`flex flex-col p-8 rounded-[2.5rem] shadow-lg animate-in fade-in slide-in-from-top-4 duration-300 border-2 ${
+                    file.status === 'error' ? 'bg-red-50 border-red-100 shadow-red-50' : 'bg-white border-indigo-100 shadow-indigo-50/50'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
-                        file.status === 'error' ? 'bg-red-100 text-red-500' : 'bg-indigo-50 text-indigo-500'
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-5">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner ${
+                        file.status === 'error' ? 'bg-red-100 text-red-500' : 'bg-indigo-50 text-indigo-600'
                       }`}>
-                        {file.status === 'error' ? <AlertCircleIcon size={28} /> : <RefreshCwIcon size={28} className="animate-spin" />}
+                        {file.status === 'error' ? <AlertCircleIcon size={32} /> : <RefreshCwIcon size={32} className="animate-spin" />}
                       </div>
                       <div>
-                        <p className="text-base font-black text-slate-900 tracking-tight truncate max-w-[240px]">{file.name}</p>
-                        <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${file.status === 'error' ? 'text-red-600' : 'text-indigo-600'}`}>
-                          {file.status === 'error' ? 'System Failure' : `Extraction Engine: ${file.status}...`}
-                        </p>
+                        <p className="text-lg font-black text-slate-900 tracking-tight truncate max-w-[280px]">{file.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className={`w-2 h-2 rounded-full ${file.status === 'error' ? 'bg-red-500' : 'bg-indigo-500 animate-pulse'}`}></div>
+                          <p className={`text-[10px] font-black uppercase tracking-widest ${file.status === 'error' ? 'text-red-600' : 'text-indigo-600'}`}>
+                            {file.status === 'error' ? 'Extraction Failure' : `Intelligence Stage: ${file.status.toUpperCase()}`}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`text-xl font-black ${file.status === 'error' ? 'text-red-500' : 'text-indigo-600'}`}>
+                      <p className={`text-2xl font-black ${file.status === 'error' ? 'text-red-500' : 'text-indigo-600'}`}>
                         {file.status === 'error' ? '!' : `${file.progress}%`}
                       </p>
                     </div>
                   </div>
                   
                   {file.status === 'error' ? (
-                    <div className="bg-white p-3 rounded-xl border border-red-200">
-                      <p className="text-[11px] font-bold text-red-700">{file.error}</p>
+                    <div className="bg-white p-4 rounded-2xl border border-red-200">
+                      <p className="text-[11px] font-bold text-red-700 leading-relaxed">{file.error}</p>
                     </div>
                   ) : (
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                       <div 
-                        className="h-full bg-indigo-600 transition-all duration-700 ease-out shadow-[0_0_12px_rgba(79,70,229,0.5)]"
+                        className="h-full bg-indigo-600 transition-all duration-700 ease-out shadow-[0_0_15px_rgba(79,70,229,0.4)]"
                         style={{ width: `${file.progress}%` }}
                       ></div>
                     </div>
@@ -335,60 +355,61 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                 <div 
                   key={doc.id}
                   onClick={() => setSelectedDoc(doc)}
-                  className={`flex items-center justify-between p-6 bg-white border-2 rounded-[2rem] cursor-pointer transition-all group ${
+                  className={`flex items-center justify-between p-8 bg-white border-2 rounded-[2.5rem] cursor-pointer transition-all group ${
                     selectedDoc?.id === doc.id 
                       ? 'border-indigo-600 shadow-2xl shadow-indigo-100 -translate-y-1' 
-                      : 'border-slate-100 hover:border-indigo-300 shadow-sm'
+                      : 'border-slate-100 hover:border-indigo-300 shadow-sm hover:shadow-md'
                   }`}
                 >
-                  <div className="flex items-center gap-5">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
+                  <div className="flex items-center gap-6">
+                    <div className={`w-18 h-18 rounded-[1.5rem] flex items-center justify-center transition-all duration-300 ${
                       doc.verified_by_human 
                         ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                        : 'bg-slate-50 text-slate-400 border border-slate-100 group-hover:bg-indigo-50 group-hover:text-indigo-600'
+                        : 'bg-slate-50 text-slate-400 border border-slate-100 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:scale-105'
                     }`}>
-                      {doc.verified_by_human ? <FileCheckIcon size={32} /> : <FileIcon size={32} />}
+                      {doc.verified_by_human ? <FileCheckIcon size={36} /> : <FileIcon size={36} />}
                     </div>
                     <div>
-                      <p className="text-base font-black text-slate-900 tracking-tight">{doc.filename}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                        <span className="text-[9px] bg-slate-900 text-white px-2.5 py-1 rounded-lg font-black uppercase tracking-widest">{doc.doc_type.replace(/_/g, ' ')}</span>
+                      <p className="text-lg font-black text-slate-900 tracking-tight">{doc.filename}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="text-[9px] bg-slate-900 text-white px-3 py-1 rounded-lg font-black uppercase tracking-widest">{doc.doc_type.replace(/_/g, ' ')}</span>
                         {doc.tags.map(tag => (
-                          <span key={tag} className="text-[9px] bg-indigo-50 text-indigo-500 px-2.5 py-1 rounded-lg font-bold uppercase border border-indigo-100 flex items-center gap-1">
+                          <span key={tag} className="text-[9px] bg-indigo-50 text-indigo-500 px-3 py-1 rounded-lg font-bold uppercase border border-indigo-100 flex items-center gap-1.5 shadow-sm">
+                            <TagIcon size={10} className="opacity-60" />
                             {tag}
                           </span>
                         ))}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-5">
                     {doc.verified_by_human && (
-                      <div className="flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl border border-emerald-200">
-                        <ShieldCheckIcon size={14} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Verified</span>
+                      <div className="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-200 shadow-sm">
+                        <ShieldCheckIcon size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.1em]">Audited</span>
                       </div>
                     )}
                     <button 
                       onClick={(e) => removeDoc(doc.id, e)}
-                      className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      className="p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                     >
-                      <Trash2Icon size={20} />
+                      <Trash2Icon size={22} />
                     </button>
-                    <div className="p-3 text-slate-300 group-hover:text-indigo-600 transition-all transform group-hover:scale-110">
-                      <EyeIcon size={24} />
+                    <div className="p-4 text-slate-300 group-hover:text-indigo-600 transition-all transform group-hover:scale-125">
+                      <ChevronDownIcon size={28} className="-rotate-90" />
                     </div>
                   </div>
                 </div>
               ))}
 
               {documents.length === 0 && processingFiles.length === 0 && (
-                <div className="py-24 text-center space-y-4 border-2 border-dashed border-slate-100 rounded-[3rem]">
-                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200 border border-slate-100 shadow-inner">
-                    <ArchiveIcon size={40} />
+                <div className="py-32 text-center space-y-6 border-2 border-dashed border-slate-100 rounded-[3.5rem] bg-slate-50/20 shadow-inner">
+                  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto text-slate-200 border border-slate-100 shadow-xl">
+                    <ArchiveIcon size={48} strokeWidth={1} />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-black text-slate-400 uppercase tracking-widest">No artifacts detected</p>
-                    <p className="text-xs text-slate-400 font-medium">Upload deeds, tax bills, or affidavits to begin</p>
+                  <div className="space-y-2">
+                    <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Repository Empty</p>
+                    <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto">Upload recovery evidence to initialize AI audit engine.</p>
                   </div>
                 </div>
               )}
@@ -397,82 +418,84 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
         </div>
 
         {/* Right: Intelligence Review Pane */}
-        <div className="lg:w-[500px] shrink-0">
+        <div className="lg:w-[540px] shrink-0">
           {selectedDoc ? (
-            <div className="bg-white border-2 border-slate-100 rounded-[3rem] shadow-2xl flex flex-col h-[800px] overflow-hidden animate-in slide-in-from-right-8 duration-500 sticky top-10">
+            <div className="bg-white border-2 border-slate-100 rounded-[3.5rem] shadow-2xl flex flex-col h-[850px] overflow-hidden animate-in slide-in-from-right-12 duration-500 sticky top-10 ring-1 ring-slate-100">
               {/* Header */}
-              <div className="px-10 py-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-200 ring-4 ring-white">
-                    <SparklesIcon size={24} />
+              <div className="px-12 py-10 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-indigo-600 text-white rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-indigo-300 ring-4 ring-white">
+                    <SparklesIcon size={28} />
                   </div>
-                  <div>
-                    <h5 className="font-black text-slate-900 text-base uppercase tracking-tight">Intelligence Inspector</h5>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate max-w-[240px] mt-0.5">{selectedDoc.filename}</p>
+                  <div className="overflow-hidden">
+                    <h5 className="font-black text-slate-900 text-lg uppercase tracking-tight">Case Intelligence</h5>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate max-w-[280px] mt-1">{selectedDoc.filename}</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setSelectedDoc(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 transition-colors bg-white rounded-xl border border-slate-200 hover:shadow-md"
+                  className="p-3 text-slate-400 hover:text-slate-900 transition-all bg-white rounded-2xl border border-slate-200 hover:shadow-lg active:scale-90"
                 >
                   <XIcon size={24} />
                 </button>
               </div>
 
               {/* Tabs */}
-              <div className="flex border-b border-slate-100">
+              <div className="flex border-b border-slate-100 bg-white">
                 <button 
                   onClick={() => setReviewTab('fields')}
-                  className={`flex-1 py-5 text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${reviewTab === 'fields' ? 'text-indigo-600 border-b-4 border-indigo-600 bg-white' : 'text-slate-400 hover:text-slate-600 bg-slate-50/30'}`}
+                  className={`flex-1 py-6 text-[11px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 relative ${reviewTab === 'fields' ? 'text-indigo-600 bg-indigo-50/30' : 'text-slate-400 hover:text-slate-600 bg-white'}`}
                 >
                   <TypeIcon size={16} />
                   Structured Fields
+                  {reviewTab === 'fields' && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600"></div>}
                 </button>
                 <button 
                   onClick={() => setReviewTab('ocr')}
-                  className={`flex-1 py-5 text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${reviewTab === 'ocr' ? 'text-indigo-600 border-b-4 border-indigo-600 bg-white' : 'text-slate-400 hover:text-slate-600 bg-slate-50/30'}`}
+                  className={`flex-1 py-6 text-[11px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 relative ${reviewTab === 'ocr' ? 'text-indigo-600 bg-indigo-50/30' : 'text-slate-400 hover:text-slate-600 bg-white'}`}
                 >
                   <FileSearchIcon size={16} />
                   Audit Rationale
+                  {reviewTab === 'ocr' && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600"></div>}
                 </button>
               </div>
               
               {/* Content Area */}
-              <div className="flex-1 overflow-auto p-10 space-y-8 custom-scrollbar">
+              <div className="flex-1 overflow-auto p-12 space-y-10 custom-scrollbar">
                 {reviewTab === 'fields' ? (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {/* Confidence Score Visual */}
                     {selectedDoc.extracted_fields.confidence_score && (
-                      <div className="p-6 bg-slate-900 rounded-3xl text-white relative overflow-hidden group">
+                      <div className="p-8 bg-slate-900 rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl">
                         <div className="relative z-10 flex items-center justify-between">
                           <div>
-                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Extraction Confidence</p>
-                            <p className="text-3xl font-black">{(selectedDoc.extracted_fields.confidence_score * 100).toFixed(1)}%</p>
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">Extraction Reliability</p>
+                            <p className="text-4xl font-black tracking-tight">{(selectedDoc.extracted_fields.confidence_score * 100).toFixed(1)}%</p>
                           </div>
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 ${selectedDoc.extracted_fields.confidence_score > 0.9 ? 'border-emerald-500 text-emerald-500' : 'border-amber-500 text-amber-500'}`}>
-                            <ShieldCheckIcon size={32} />
+                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${selectedDoc.extracted_fields.confidence_score > 0.9 ? 'border-emerald-500 text-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-amber-500 text-amber-500 shadow-lg shadow-amber-500/20'}`}>
+                            <ShieldCheckIcon size={36} />
                           </div>
                         </div>
-                        <div className="absolute -right-4 -bottom-4 opacity-5 rotate-12 group-hover:scale-110 transition-transform duration-1000">
-                           <SparklesIcon size={100} fill="white" />
+                        <div className="absolute -right-6 -bottom-6 opacity-5 rotate-12 group-hover:scale-125 group-hover:rotate-45 transition-all duration-1000">
+                           <SparklesIcon size={120} fill="white" />
                         </div>
                       </div>
                     )}
 
                     {/* Document Classification Select */}
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2">
-                        <FileIcon size={14} className="text-indigo-500" /> Core Classification
+                    <div className="space-y-4">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2.5">
+                        <FileIcon size={16} className="text-indigo-500" /> Statutory Classification
                       </label>
                       <div className="relative group">
                         <select 
                           value={selectedDoc.doc_type}
                           disabled={selectedDoc.verified_by_human}
                           onChange={(e) => updateDocType(e.target.value)}
-                          className={`w-full px-6 py-4 border-2 rounded-2xl text-[13px] font-black transition-all outline-none appearance-none ${
+                          className={`w-full px-8 py-5 border-2 rounded-3xl text-[14px] font-black transition-all outline-none appearance-none ${
                             selectedDoc.verified_by_human 
                               ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-default' 
-                              : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm cursor-pointer'
+                              : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm cursor-pointer hover:border-indigo-300'
                           }`}
                         >
                           {DOCUMENT_TYPES.map(type => (
@@ -480,8 +503,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                           ))}
                         </select>
                         {!selectedDoc.verified_by_human && (
-                          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                            <ChevronDownIcon size={18} />
+                          <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                            <ChevronDownIcon size={20} />
                           </div>
                         )}
                       </div>
@@ -490,24 +513,25 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                     {/* Tags Section */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between px-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                          <TagIcon size={14} className="text-indigo-500" /> Case Metadata Tags
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2.5">
+                          <TagIcon size={16} className="text-indigo-500" /> Case Prioritization Tags
                         </label>
                         {!selectedDoc.verified_by_human && (
-                          <Tooltip content="Tags allow AI logic to prioritize recovery tasks.">
-                             <InfoIcon size={12} className="text-slate-300" />
-                          </Tooltip>
+                          <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-full text-[9px] font-black text-indigo-600 uppercase tracking-wider animate-pulse border border-indigo-100">
+                            <SparklesIcon size={10} />
+                            AI Suggesed
+                          </div>
                         )}
                       </div>
                       
-                      <div className="flex flex-wrap gap-2 min-h-[50px] p-5 bg-slate-50 rounded-[2rem] border-2 border-slate-100 shadow-inner group/tags">
+                      <div className="flex flex-wrap gap-3 min-h-[60px] p-6 bg-slate-50 rounded-[2.5rem] border-2 border-slate-100 shadow-inner group/tags">
                         {selectedDoc.tags.map(tag => (
                           <div 
                             key={tag} 
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest shadow-sm transition-all animate-in zoom-in duration-200 ${
+                            className={`flex items-center gap-2 px-4 py-2 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-sm transition-all animate-in zoom-in duration-300 ${
                               selectedDoc.verified_by_human 
                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                : 'bg-white text-indigo-600 border-indigo-100 hover:border-red-200 hover:text-red-500'
+                                : 'bg-white text-indigo-600 border-indigo-100 hover:border-red-200 hover:text-red-500 cursor-default'
                             }`}
                           >
                             {selectedDoc.verified_by_human ? <CheckIcon size={12} /> : <SparklesIcon size={12} className="opacity-40" />}
@@ -515,7 +539,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                             {!selectedDoc.verified_by_human && (
                               <button 
                                 onClick={() => removeTag(tag)} 
-                                className="text-slate-300 hover:text-red-500 transition-colors ml-1 p-0.5"
+                                className="text-slate-300 hover:text-red-500 transition-colors ml-1 p-0.5 rounded-md hover:bg-red-50"
                               >
                                 <XIcon size={12} />
                               </button>
@@ -523,12 +547,12 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                           </div>
                         ))}
                         {!selectedDoc.verified_by_human && (
-                          <form onSubmit={addTag} className="flex-1 min-w-[120px]">
-                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                          <form onSubmit={addTag} className="flex-1 min-w-[140px]">
+                            <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-2xl px-4 py-2 shadow-sm focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
                               <PlusIcon size={14} className="text-slate-300" />
                               <input 
                                 type="text" 
-                                placeholder="Manual tag..."
+                                placeholder="MANUAL TAG..."
                                 value={newTag}
                                 onChange={(e) => setNewTag(e.target.value)}
                                 className="w-full bg-transparent border-none p-0 text-[10px] font-black outline-none placeholder:text-slate-400 uppercase tracking-widest"
@@ -540,62 +564,71 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                     </div>
 
                     {!selectedDoc.verified_by_human && (
-                      <div className="p-5 bg-amber-50 border border-amber-100 rounded-3xl flex items-start gap-4">
-                        <AlertCircleIcon size={22} className="text-amber-500 shrink-0 mt-0.5" />
-                        <p className="text-[12px] text-amber-900 leading-relaxed font-bold">
-                          Data verification required. Review the AI-extracted metadata below. Manual overrides are tracked for the audit trail.
+                      <div className="p-6 bg-amber-50 border border-amber-100 rounded-3xl flex items-start gap-5 shadow-sm">
+                        <div className="p-2 bg-white rounded-xl shadow-sm">
+                          <AlertCircleIcon size={24} className="text-amber-500" />
+                        </div>
+                        <p className="text-[13px] text-amber-900 leading-relaxed font-bold">
+                          Verification Pending: Every data point must be audited for accuracy before authorizing recovery inclusion.
                         </p>
                       </div>
                     )}
 
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                       <div className="px-2 flex items-center justify-between">
-                         <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Extracted Properties</h6>
+                         <h6 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Metadata Artifacts</h6>
                          {!selectedDoc.verified_by_human && (
-                            <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-400 uppercase tracking-widest animate-pulse">
-                               <SparklesIcon size={10} />
-                               AI Draft Mode
+                            <div className="flex items-center gap-2 text-[9px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">
+                               <RefreshCwIcon size={10} className="animate-spin-slow" />
+                               Human Review Active
                             </div>
                          )}
                       </div>
-                      {Object.entries(selectedDoc.extracted_fields).map(([key, value]) => {
-                        if (['tags', 'document_type', 'extraction_rationale', 'confidence_score', 'discovered_liens'].includes(key)) return null;
-                        return (
-                          <div key={key} className="group">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5 px-2 group-focus-within:text-indigo-600 transition-colors">
-                              {key.replace(/_/g, ' ')}
-                            </label>
-                            <div className="relative">
-                              <input 
-                                type="text" 
-                                value={value === null ? '' : String(value)}
-                                onChange={(e) => updateField(key, e.target.value)}
-                                className={`w-full px-6 py-4 border-2 rounded-2xl text-[13px] font-black transition-all outline-none ${
-                                  selectedDoc.verified_by_human 
-                                    ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-default shadow-none' 
-                                    : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm'
-                                }`}
-                                readOnly={selectedDoc.verified_by_human}
-                              />
-                              {!selectedDoc.verified_by_human && (
-                                <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-200 group-focus-within:text-indigo-200 transition-colors">
-                                  <SparklesIcon size={16} />
-                                </div>
-                              )}
+                      <div className="grid grid-cols-1 gap-6">
+                        {Object.entries(selectedDoc.extracted_fields).map(([key, value]) => {
+                          if (['tags', 'document_type', 'extraction_rationale', 'confidence_score', 'discovered_liens'].includes(key)) return null;
+                          return (
+                            <div key={key} className="group">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-3 group-focus-within:text-indigo-600 transition-colors flex items-center gap-2">
+                                {getFieldIcon(key)}
+                                {key.replace(/_/g, ' ')}
+                              </label>
+                              <div className="relative">
+                                <input 
+                                  type="text" 
+                                  value={value === null ? '' : String(value)}
+                                  onChange={(e) => updateField(key, e.target.value)}
+                                  className={`w-full px-8 py-5 border-2 rounded-[1.5rem] text-[15px] font-black transition-all outline-none ${
+                                    selectedDoc.verified_by_human 
+                                      ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-default shadow-none' 
+                                      : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm'
+                                  }`}
+                                  readOnly={selectedDoc.verified_by_human}
+                                />
+                                {!selectedDoc.verified_by_human && (
+                                  <div className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-200 group-focus-within:text-indigo-200 transition-colors">
+                                    <CheckCircle2Icon size={20} />
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                     <div className="p-8 bg-slate-900 text-indigo-100 rounded-[2.5rem] font-mono text-[12px] leading-relaxed border border-indigo-500/30 shadow-2xl min-h-[450px]">
-                        {selectedDoc.ocr_text || "System logic dormant. Initiate extraction to view rationale."}
+                  <div className="space-y-8 animate-in fade-in duration-500">
+                     <div className="p-10 bg-slate-900 text-indigo-100 rounded-[3rem] font-mono text-[13px] leading-relaxed border border-indigo-500/30 shadow-2xl min-h-[500px] selection:bg-indigo-500 selection:text-white">
+                        <div className="mb-6 flex items-center justify-between border-b border-indigo-500/20 pb-4">
+                           <span className="text-indigo-400 font-black uppercase text-[10px] tracking-widest">Raw OCR Stream</span>
+                           <span className="text-[10px] text-indigo-600 font-black">UTF-8 / LATIN-1</span>
+                        </div>
+                        {selectedDoc.ocr_text || "Logic trace dormant. Extraction rationale not found."}
                      </div>
-                     <div className="flex items-center justify-center gap-3 text-slate-400 px-4">
+                     <div className="flex items-center justify-center gap-4 text-slate-400 px-6">
                         <div className="h-px flex-1 bg-slate-100"></div>
-                        <p className="text-[10px] font-black uppercase tracking-widest">Logic Trace Grounding</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center">Audit Logic Grounding Complete</p>
                         <div className="h-px flex-1 bg-slate-100"></div>
                      </div>
                   </div>
@@ -603,39 +636,39 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
               </div>
 
               {/* Actions Footer */}
-              <div className="p-10 bg-slate-50/80 border-t border-slate-100 flex flex-col gap-4">
+              <div className="p-12 bg-slate-50 border-t border-slate-100 flex flex-col gap-5">
                 <button 
                   onClick={() => approveDoc(selectedDoc.id)}
                   disabled={selectedDoc.verified_by_human}
-                  className={`w-full flex items-center justify-center gap-4 py-5 rounded-[2rem] text-sm font-black uppercase tracking-widest transition-all shadow-2xl ${
+                  className={`w-full flex items-center justify-center gap-4 py-6 rounded-[2.5rem] text-sm font-black uppercase tracking-[0.15em] transition-all shadow-2xl ${
                     selectedDoc.verified_by_human 
                       ? 'bg-emerald-600 text-white cursor-default shadow-emerald-200' 
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.98] shadow-indigo-200 transform hover:-translate-y-1'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.98] shadow-indigo-200 transform hover:-translate-y-1.5'
                   }`}
                 >
-                  {selectedDoc.verified_by_human ? <ClipboardCheckIcon size={20} /> : <CheckCircle2Icon size={20} />}
-                  {selectedDoc.verified_by_human ? 'Artifact Verified' : 'Authorize Metadata & Confirm AI'}
+                  {selectedDoc.verified_by_human ? <ClipboardCheckIcon size={24} /> : <CheckCircle2Icon size={24} />}
+                  {selectedDoc.verified_by_human ? 'Record Fully Authorized' : 'Confirm & Authorize Data'}
                 </button>
                 
                 {!selectedDoc.verified_by_human && (
                   <button 
                     onClick={(e) => removeDoc(selectedDoc.id, e)}
-                    className="flex items-center justify-center gap-2 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest"
+                    className="flex items-center justify-center gap-2 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all text-[11px] font-black uppercase tracking-widest"
                   >
-                    <Trash2Icon size={16} />
-                    Discard Unverified Record
+                    <Trash2Icon size={18} />
+                    Reject Artifact
                   </button>
                 )}
               </div>
             </div>
           ) : (
-            <div className="bg-white border-4 border-dashed border-slate-100 rounded-[3.5rem] flex flex-col items-center justify-center p-16 text-center h-[700px] group transition-all hover:bg-slate-50/50">
-              <div className="w-28 h-28 bg-white rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-100 shadow-xl group-hover:scale-110 transition-transform duration-500">
-                <FileSearchIcon size={48} className="text-slate-200 group-hover:text-indigo-200 transition-colors" />
+            <div className="bg-white border-4 border-dashed border-slate-100 rounded-[4rem] flex flex-col items-center justify-center p-20 text-center h-[750px] group transition-all hover:bg-slate-50/50 hover:border-indigo-100">
+              <div className="w-32 h-32 bg-white rounded-[3rem] flex items-center justify-center mb-10 border-2 border-slate-50 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+                <FileSearchIcon size={56} className="text-slate-200 group-hover:text-indigo-400 transition-colors" />
               </div>
-              <h5 className="font-black text-slate-800 uppercase text-sm tracking-[0.2em] mb-3">Intelligence Inspector Dormant</h5>
-              <p className="text-sm font-medium text-slate-400 max-w-[260px] leading-relaxed">
-                Select a legal artifact from the case inventory to initiate deep audit and metadata verification protocols.
+              <h5 className="font-black text-slate-800 uppercase text-lg tracking-[0.2em] mb-4">Inspection Dormant</h5>
+              <p className="text-sm font-medium text-slate-400 max-w-[320px] mx-auto leading-relaxed">
+                Select a legal record from the inventory to initiate the Deep Audit protocol and verify extracted recovery points.
               </p>
             </div>
           )}

@@ -10,6 +10,7 @@ import UserAdmin from './components/UserAdmin';
 import GlobalResearch from './components/GlobalResearch';
 import GlobalWaterfall from './components/GlobalWaterfall';
 import GlobalPackager from './components/GlobalPackager';
+import ComplianceCalendar from './components/ComplianceCalendar';
 import { User, UserRole } from './types';
 
 const MOCK_USER: User = {
@@ -36,6 +37,7 @@ const App: React.FC = () => {
           <Route path="/research" element={<GlobalResearch />} />
           <Route path="/waterfall" element={<GlobalWaterfall />} />
           <Route path="/packager" element={<GlobalPackager />} />
+          <Route path="/calendar" element={<ComplianceCalendar />} />
         </Route>
       </Routes>
     </Router>

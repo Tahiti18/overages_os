@@ -7,9 +7,9 @@ import {
   InfoIcon, ArrowDownIcon, SparklesIcon, CalculatorIcon, ArchiveIcon,
   ShieldCheckIcon, UserCheckIcon, ClockIcon, MailIcon, MessageSquareIcon,
   Wand2Icon, CopyIcon, PhoneIcon, Loader2Icon, ShieldAlertIcon,
-  UserXIcon, FingerprintIcon, ZapIcon
+  UserXIcon, FingerprintIcon, ZapIcon, ListChecksIcon, ShieldIcon
 } from 'lucide-react';
-import { Property, CaseStatus, User, UserRole, Claimant, Document } from '../types';
+import { Property, CaseStatus, User, UserRole, Claimant, Document, AuditEvent } from '../types';
 import DocumentUpload from './DocumentUpload';
 import SkipTracingHub from './SkipTracingHub';
 import LienWaterfall from './LienWaterfall';
@@ -31,6 +31,17 @@ const PropertyDetail: React.FC = () => {
   const [outreachLoading, setOutreachLoading] = useState(false);
   const [outreachData, setOutreachData] = useState<any>(null);
   const [showStatusToast, setShowStatusToast] = useState(false);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([
+    {
+      id: 'a1',
+      entity_type: 'PROPERTY',
+      entity_id: id || '1',
+      action: 'CASE_INITIALIZED',
+      metadata: { source: 'GA_TAX_COMMISSIONER' },
+      created_at: '2024-02-01 09:00:00',
+      actor_email: 'system@prospector.ai'
+    }
+  ]);
 
   const [property, setProperty] = useState<Property>({
     id: id || '1',
@@ -76,6 +87,7 @@ const PropertyDetail: React.FC = () => {
     { id: 'outreach', label: 'Outreach', icon: MessageSquareIcon },
     { id: 'packager', label: 'Packager', icon: ArchiveIcon },
     { id: 'documents', label: 'Docs', icon: FileTextIcon },
+    { id: 'audit', label: 'Audit Log', icon: ListChecksIcon },
   ];
 
   const handleOutreachGen = async () => {
@@ -87,12 +99,20 @@ const PropertyDetail: React.FC = () => {
   };
 
   const verifyClaimant = (claimantId: string) => {
+    // Role Gate: Only Admin or Reviewer
     if (user.role !== UserRole.ADMIN && user.role !== UserRole.REVIEWER) {
-      alert("Unauthorized: You do not have the REVIEWER or ADMIN role required to authorize a Verified Owner.");
+      alert("Unauthorized: Explicit approval requires a REVIEWER or ADMIN role.");
+      return;
+    }
+
+    if (!window.confirm("CONFIRM VERIFICATION: By clicking OK, you attest that you have reviewed the necessary legal artifacts and confirm this claimant as the 'Verified Owner' for this surplus recovery.")) {
       return;
     }
 
     const timestamp = new Date().toLocaleString();
+    const claimantName = property.claimants?.find(c => c.id === claimantId)?.name || 'Unknown';
+
+    // Update Property State
     setProperty(prev => ({
       ...prev,
       claimants: prev.claimants?.map(c => c.id === claimantId ? {
@@ -103,6 +123,23 @@ const PropertyDetail: React.FC = () => {
         verified_by_email: user.email
       } : c)
     }));
+
+    // Add Audit Event
+    const newAudit: AuditEvent = {
+      id: `audit-${Date.now()}`,
+      entity_type: 'CLAIMANT',
+      entity_id: claimantId,
+      action: 'CLAIMANT_VERIFIED_OWNER',
+      metadata: { 
+        claimant_name: claimantName,
+        approver_id: user.id,
+        approver_role: user.role
+      },
+      created_at: timestamp,
+      actor_email: user.email
+    };
+
+    setAuditEvents(prev => [newAudit, ...prev]);
   };
 
   const canVerify = user.role === UserRole.ADMIN || user.role === UserRole.REVIEWER;
@@ -173,9 +210,9 @@ const PropertyDetail: React.FC = () => {
                                     <span className="text-[10px] font-black uppercase tracking-widest">Verified Owner</span>
                                   </div>
                                 ) : (
-                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-full border border-slate-200">
-                                    <FingerprintIcon size={14} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Unverified</span>
+                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full border border-amber-200 animate-pulse">
+                                    <ShieldAlertIcon size={14} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Pending Reviewer Approval</span>
                                   </div>
                                 )}
                               </div>
@@ -184,23 +221,23 @@ const PropertyDetail: React.FC = () => {
                         </div>
                         <div className="flex flex-col items-end gap-3 min-w-[200px]">
                            {!c.is_verified ? (
-                             <Tooltip content={canVerify ? "Promote this claimant to 'Verified Owner' status after document audit." : "Requires REVIEWER or ADMIN role to authorize."}>
+                             <Tooltip content={canVerify ? "Grant explicit 'Verified Owner' status. This action is logged for audit compliance." : "Requires REVIEWER or ADMIN role to authorize."}>
                                <button 
                                  onClick={() => verifyClaimant(c.id)} 
                                  disabled={!canVerify}
                                  className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 transition-all ${canVerify ? 'bg-indigo-600 text-white shadow-indigo-100 hover:scale-[1.02] active:scale-95' : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed opacity-60'}`}
                                >
-                                 <UserCheckIcon size={16}/> Authorize Recovery
+                                 <UserCheckIcon size={16}/> Approve Overage Recovery
                                </button>
                              </Tooltip>
                            ) : (
                              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex flex-col gap-1 items-end animate-in slide-in-from-right-2">
-                                <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Authorized Artifact</p>
+                                <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Verified Owner Artifact</p>
                                 <div className="flex items-center gap-2">
                                   <div className="w-6 h-6 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700 text-[10px] font-black">
                                     {c.verified_by_email ? c.verified_by_email[0].toUpperCase() : 'A'}
                                   </div>
-                                  <p className="text-xs font-bold text-emerald-900">{c.verified_by_email?.split('@')[0]}</p>
+                                  <p className="text-xs font-bold text-emerald-900 truncate max-w-[120px]">{c.verified_by_email?.split('@')[0]}</p>
                                 </div>
                                 <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-500 mt-1">
                                   <ClockIcon size={10} />
@@ -234,6 +271,52 @@ const PropertyDetail: React.FC = () => {
                      </div>
                   </div>
                 ))}
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'audit' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+             <div className="bg-white border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-sm">
+                <div className="p-8 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                   <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                     <ListChecksIcon size={20} className="text-indigo-600" /> Compliance Audit Trail
+                   </h4>
+                   <span className="text-[10px] font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-widest">Case Activity</span>
+                </div>
+                <div className="divide-y divide-slate-100">
+                   {auditEvents.map((event) => (
+                     <div key={event.id} className="p-8 hover:bg-slate-50/50 transition-colors flex items-start gap-6">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 ${
+                          event.action === 'CLAIMANT_VERIFIED_OWNER' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'
+                        }`}>
+                          {event.action === 'CLAIMANT_VERIFIED_OWNER' ? <ShieldCheckIcon size={20} /> : <ClockIcon size={20} />}
+                        </div>
+                        <div className="flex-1">
+                           <div className="flex items-center justify-between mb-2">
+                              <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{event.action.replace(/_/g, ' ')}</p>
+                              <span className="text-[10px] font-bold text-slate-400">{event.created_at}</span>
+                           </div>
+                           <div className="flex flex-wrap gap-4 mt-1">
+                              <div className="flex items-center gap-2">
+                                 <UserCircleIcon size={14} className="text-slate-400" />
+                                 <span className="text-xs font-bold text-slate-600">{event.actor_email}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                 <ShieldIcon size={14} className="text-slate-400" />
+                                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{event.entity_type} ID: {event.entity_id}</span>
+                              </div>
+                           </div>
+                           {event.metadata && (
+                              <div className="mt-4 p-4 bg-slate-100/50 rounded-xl border border-slate-200/50">
+                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Metadata Log</p>
+                                 <pre className="text-[11px] font-mono text-slate-700">{JSON.stringify(event.metadata, null, 2)}</pre>
+                              </div>
+                           )}
+                        </div>
+                     </div>
+                   ))}
+                </div>
              </div>
           </div>
         )}

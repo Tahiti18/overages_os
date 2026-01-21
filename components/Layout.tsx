@@ -21,7 +21,8 @@ import {
   LayersIcon,
   LayoutDashboardIcon,
   BarChartIcon,
-  MapIcon
+  MapIcon,
+  GavelIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import LiveAgent from './LiveAgent';
@@ -50,6 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const intelligenceSuite = [
     { label: 'Skip-Trace Hub', path: '/research', icon: GlobeIcon, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
     { label: 'Waterfall Engine', path: '/waterfall', icon: CalculatorIcon, color: 'text-emerald-400', desc: 'Financial Logic', tip: 'Simulate lien priority and final recovery amounts.' },
+    { label: 'Counsel Hub', path: '/counsel', icon: GavelIcon, color: 'text-purple-400', desc: 'Legal Network', tip: 'Research and engage specialized surplus attorneys.' },
     { label: 'Smart Packager', path: '/packager', icon: ArchiveIcon, color: 'text-blue-400', desc: 'Auto-Assembly', tip: 'Generate court-ready claim artifacts and demand letters.' },
     { label: 'Compliance Calendar', path: '/calendar', icon: CalendarIcon, color: 'text-rose-400', desc: 'Legal Deadlines', tip: 'Track critical filing windows across all jurisdictions.' },
   ];

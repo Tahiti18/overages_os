@@ -7,13 +7,15 @@ import {
   InfoIcon, ArrowDownIcon, SparklesIcon, CalculatorIcon, ArchiveIcon,
   ShieldCheckIcon, UserCheckIcon, ClockIcon, MailIcon, MessageSquareIcon,
   Wand2Icon, CopyIcon, PhoneIcon, Loader2Icon, ShieldAlertIcon,
-  UserXIcon, FingerprintIcon, ZapIcon, ListChecksIcon, ShieldIcon
+  UserXIcon, FingerprintIcon, ZapIcon, ListChecksIcon, ShieldIcon,
+  GavelIcon
 } from 'lucide-react';
 import { Property, CaseStatus, User, UserRole, Claimant, Document, AuditEvent } from '../types';
 import DocumentUpload from './DocumentUpload';
 import SkipTracingHub from './SkipTracingHub';
 import LienWaterfall from './LienWaterfall';
 import SmartDocumentPackager from './SmartDocumentPackager';
+import AttorneyHub from './AttorneyHub';
 import Tooltip from './Tooltip';
 import { generateOutreachArchitect } from '../lib/gemini';
 
@@ -27,7 +29,7 @@ const JURISDICTION_REQUIREMENTS: Record<string, string[]> = {
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useOutletContext<{ user: User }>();
-  const [activeTab, setActiveTab] = useState<'overview' | 'claimants' | 'research' | 'documents' | 'audit' | 'packager' | 'outreach'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'claimants' | 'research' | 'documents' | 'audit' | 'packager' | 'outreach' | 'legal'>('overview');
   const [outreachLoading, setOutreachLoading] = useState(false);
   const [outreachData, setOutreachData] = useState<any>(null);
   const [showStatusToast, setShowStatusToast] = useState(false);
@@ -85,6 +87,7 @@ const PropertyDetail: React.FC = () => {
     { id: 'research', label: 'Research', icon: SparklesIcon, tip: 'AI-powered skip tracing and social verification.' },
     { id: 'claimants', label: 'Claimants', icon: UserCircleIcon, tip: 'Manage owner/heir verification and contact info.' },
     { id: 'outreach', label: 'Outreach', icon: MessageSquareIcon, tip: 'Generate personalized recovery notices and scripts.' },
+    { id: 'legal', label: 'Legal Counsel', icon: GavelIcon, tip: 'Research and assign specialized attorneys for complex jurisdictions.' },
     { id: 'packager', label: 'Packager', icon: ArchiveIcon, tip: 'Assemble final claim affidavits and demand letters.' },
     { id: 'documents', label: 'Docs', icon: FileTextIcon, tip: 'Repository for deeds, IDs, and tax bill artifacts.' },
     { id: 'audit', label: 'Audit Log', icon: ListChecksIcon, tip: 'Historical trail of all system and human actions.' },
@@ -206,6 +209,7 @@ const PropertyDetail: React.FC = () => {
       </div>
 
       <div className="mt-8">
+        {activeTab === 'legal' && <AttorneyHub state={property.state} county={property.county} />}
         {activeTab === 'claimants' && (
           <div className="space-y-6 animate-in fade-in duration-300">
              <div className="grid grid-cols-1 gap-6">

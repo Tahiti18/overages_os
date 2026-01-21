@@ -10,6 +10,7 @@ export enum CaseStatus {
   NEW = 'NEW',
   NEEDS_DOCS = 'NEEDS_DOCS',
   READY_FOR_REVIEW = 'READY_FOR_REVIEW',
+  COUNSEL_REVIEW = 'COUNSEL_REVIEW',
   APPROVED_TO_FILE = 'APPROVED_TO_FILE',
   FILED = 'FILED',
   PAID = 'PAID',
@@ -24,6 +25,27 @@ export enum LienType {
   JUDGMENT = 'JUDGMENT',
   MECHANIC = 'MECHANIC',
   OTHER = 'OTHER'
+}
+
+export interface Attorney {
+  id: string;
+  name: string;
+  firm: string;
+  bar_id: string;
+  specialty: string[];
+  jurisdictions: string[]; // e.g. ["MD", "VA"]
+  contact_email: string;
+  rating: number;
+  cases_handled: number;
+}
+
+export interface LegalEngagement {
+  id: string;
+  property_id: string;
+  attorney_id: string;
+  status: 'PROPOSED' | 'RETAINED' | 'FILING_ACTIVE' | 'CLOSED';
+  engagement_date: string;
+  notes?: string;
 }
 
 export interface Lien {
@@ -51,6 +73,7 @@ export interface JurisdictionRule {
   required_documents: string[];
   filing_method: string;
   notes?: string;
+  attorney_required: boolean;
 }
 
 export interface Claimant {

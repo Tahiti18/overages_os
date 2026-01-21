@@ -4,6 +4,7 @@ import { ScaleIcon, PlusIcon, EditIcon, Trash2Icon, SearchIcon } from 'lucide-re
 import { JurisdictionRule } from '../types';
 
 const JurisdictionRules: React.FC = () => {
+  // Fix: Added attorney_required property to match JurisdictionRule interface
   const [rules, setRules] = useState<JurisdictionRule[]>([
     {
       id: 'r1',
@@ -12,7 +13,8 @@ const JurisdictionRules: React.FC = () => {
       claim_deadline_days: 365,
       required_documents: ['Govt ID', 'Proof of Ownership', 'Claim Form'],
       filing_method: 'Mail / In-Person',
-      notes: 'Standard 1-year period from sale date.'
+      notes: 'Standard 1-year period from sale date.',
+      attorney_required: false
     },
     {
       id: 'r2',
@@ -21,7 +23,8 @@ const JurisdictionRules: React.FC = () => {
       claim_deadline_days: 120,
       required_documents: ['ID', 'Affidavit', 'Surplus Application'],
       filing_method: 'Online Portal',
-      notes: 'Requires notarization of application.'
+      notes: 'Requires notarization of application.',
+      attorney_required: false
     }
   ]);
 

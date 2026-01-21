@@ -4,6 +4,43 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 // AI Core v3.0 - Central Intelligence Library
 
 /**
+ * Researches and identifies attorneys specializing in property tax surplus/overage recovery.
+ */
+export const researchSpecializedCounsel = async (state: string, county: string) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Search for high-rated attorneys or law firms in ${county} County, ${state} who specialize specifically in "Property Tax Surplus Recovery", "Excess Proceeds Claims", or "Tax Sale Foreclosure Defense". Focus on those with a history of filing motions in local Circuit or Superior courts.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        systemInstruction: "You are a Legal Recruitment Specialist. Find Bar-verified counsel with specific surplus recovery expertise.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              firm: { type: Type.STRING },
+              expertise_score: { type: Type.NUMBER, description: "1-100 score based on relevant practice areas found." },
+              contact_info: { type: Type.STRING },
+              website: { type: Type.STRING },
+              rationale: { type: Type.STRING, description: "Why this attorney was selected." }
+            },
+            required: ["name", "firm", "expertise_score", "contact_info"]
+          }
+        },
+      },
+    });
+    return JSON.parse(response.text || "[]");
+  } catch (error) {
+    console.error("Counsel Research Error:", error);
+    throw error;
+  }
+};
+
+/**
  * Generates audio narration for user guides and workflow steps.
  */
 export const generateVoiceGuide = async (text: string) => {

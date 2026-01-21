@@ -19,13 +19,19 @@ export const extractDocumentData = async (base64Data: string, mimeType: string) 
         {
           parts: [
             { inlineData: { data: base64Data, mimeType: mimeType } },
-            { text: "Perform a deep legal audit. Extract critical fields including potential liens, senior encumbrances, and judgments." },
+            { text: "Perform a deep legal audit of this document. Focus on identifying the current owner, the parcel ID, and any recorded encumbrances or liens that might affect a surplus recovery claim." },
           ],
         },
       ],
       config: {
-        systemInstruction: `You are a Senior Legal Document Auditor specialized in US Property Tax Surplus. 
-        Extract data for automated waterfall processing.`,
+        systemInstruction: `You are a World-Class Senior Legal Document Auditor specialized in US Property Tax Surplus. 
+        Your task is to extract data for automated waterfall processing. 
+        Analyze for: 
+        1. Owner names (Claimants)
+        2. Property identification (Parcel IDs, APNs)
+        3. Financials (Surplus amounts, sale prices)
+        4. Liens/Encumbrances: Specifically look for Senior Mortgages, HOA Liens, Judgments, and Government Liens. 
+        Assign priority (1 for Gov, 2-3 for Mortgages, 4+ for others).`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -37,20 +43,20 @@ export const extractDocumentData = async (base64Data: string, mimeType: string) 
             tax_sale_date: { type: Type.STRING },
             document_type: { type: Type.STRING },
             tags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            // NEW: Automated Lien Extraction
             discovered_liens: {
               type: Type.ARRAY,
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  type: { type: Type.STRING, description: "MORTGAGE_1, HOA, JUDGMENT, etc." },
+                  type: { type: Type.STRING, description: "MORTGAGE_1, MORTGAGE_2, HOA, JUDGMENT, MECHANIC, or OTHER" },
                   description: { type: Type.STRING },
                   amount: { type: Type.NUMBER },
                   priority: { type: Type.NUMBER }
                 }
               }
             },
-            confidence_score: { type: Type.NUMBER }
+            confidence_score: { type: Type.NUMBER },
+            extraction_rationale: { type: Type.STRING }
           },
           required: ["owner_name", "parcel_id", "document_type", "confidence_score"],
         },
@@ -78,7 +84,7 @@ export const generateOutreachArchitect = async (claimant: any, property: any, sk
       contents: `Generate personalized outreach scripts for ${claimant.name} regarding a potential surplus recovery of $${property.surplus_amount} at ${property.address}. 
       Ground the copy in these research findings: ${skipTraceData}`,
       config: {
-        systemInstruction: "You are a specialized Legal Outreach Strategist. Create empathetic, authoritative, and non-spammy copy for Direct Mail and SMS.",
+        systemInstruction: "You are a specialized Legal Outreach Strategist. Your goal is to create empathetic, authoritative, and professional copy for Direct Mail, SMS, and Phone. Avoid spammy language. Use the 'helpful neighbor' tone. Clearly explain that the recipient may be entitled to funds from a previous property sale.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -106,14 +112,20 @@ export const performSkipTracing = async (ownerName: string, address: string) => 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Deep skip trace: ${ownerName} at ${address}. Find current contact info, next of kin, and obituaries.`,
-      config: { tools: [{ googleSearch: {} }] },
+      contents: `Perform a deep skip trace on ${ownerName} who previously owned ${address}. Identify: 1. Current address 2. Known phone numbers 3. Potential relatives or heirs 4. Obituary records if deceased.`,
+      config: { 
+        tools: [{ googleSearch: {} }],
+        systemInstruction: "You are a Private Investigator specialized in asset recovery. Provide factual, verified data points from your search results."
+      },
     });
     return {
-      text: response.text || "No info.",
+      text: response.text || "No actionable data found in current index.",
       sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
     };
-  } catch (error) { throw error; }
+  } catch (error) { 
+    console.error("Skip Tracing Error:", error);
+    throw error; 
+  }
 };
 
 /**
@@ -124,8 +136,12 @@ export const generateClaimPackage = async (property: any, waterfallData: any) =>
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `Generate claim package for ${property.address}. Waterfall: ${JSON.stringify(waterfallData)}`,
+      contents: `Generate a complete claim package for the property at ${property.address}. 
+      Jurisdiction: ${property.county}, ${property.state}. 
+      Net Recovery to Owner: $${waterfallData.finalSurplus}. 
+      Lien Details: ${JSON.stringify(waterfallData.steps)}`,
       config: {
+        systemInstruction: "You are a Legal Documentation Specialist. Draft professional, court-ready claim forms. Use precise legal terminology. Ensure the accounting section clearly shows gross surplus minus identified liens.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,

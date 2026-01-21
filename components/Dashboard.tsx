@@ -19,10 +19,11 @@ import {
   RotateCcwIcon,
   SearchIcon,
   MapPinIcon,
-  TrendingDownIcon
+  TrendingDownIcon,
+  BarChart3Icon,
+  ActivityIcon
 } from 'lucide-react';
 import { Property, CaseStatus } from '../types';
-import PropertyMap from './PropertyMap';
 
 const MOCK_PROPERTIES: Property[] = [
   {
@@ -39,7 +40,8 @@ const MOCK_PROPERTIES: Property[] = [
     status: CaseStatus.NEW,
     created_at: '2024-02-01',
     priority_score: 92,
-    risk_level: 'LOW'
+    risk_level: 'LOW',
+    est_payout_days: 120
   },
   {
     id: '2',
@@ -55,7 +57,8 @@ const MOCK_PROPERTIES: Property[] = [
     status: CaseStatus.READY_FOR_REVIEW,
     created_at: '2023-12-05',
     priority_score: 84,
-    risk_level: 'MEDIUM'
+    risk_level: 'MEDIUM',
+    est_payout_days: 180
   },
   {
     id: '3',
@@ -71,7 +74,8 @@ const MOCK_PROPERTIES: Property[] = [
     status: CaseStatus.NEW,
     created_at: '2024-03-05',
     priority_score: 71,
-    risk_level: 'HIGH'
+    risk_level: 'HIGH',
+    est_payout_days: 90
   }
 ];
 
@@ -82,10 +86,8 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
   const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<CaseStatus | 'ALL'>('ALL');
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({ minSurplus: '', maxSurplus: '', startDate: '', endDate: '', deadlineWithinDays: '' });
+  const [filters, setFilters] = useState({ minSurplus: '', maxSurplus: '' });
 
   const stats = [
     { label: 'Active Pipeline', value: isLiveMode ? '$0' : '$735,000', icon: TrendingUpIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
@@ -93,12 +95,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
     { label: 'Action Required', value: isLiveMode ? '0' : '8 Tasks', icon: AlertCircleIcon, color: 'text-red-600', bg: 'bg-red-50' },
     { label: 'Predictive YTD', value: isLiveMode ? '$0' : '$1.4M', icon: CheckCircle2Icon, color: 'text-green-600', bg: 'bg-green-50' },
   ];
-
-  const resetFilters = () => {
-    setFilters({ minSurplus: '', maxSurplus: '', startDate: '', endDate: '', deadlineWithinDays: '' });
-    setFilterStatus('ALL');
-    setSearchQuery('');
-  };
 
   const filteredProperties = useMemo(() => {
     if (isLiveMode) return [];
@@ -112,101 +108,168 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
+      {/* Top Intelligence Banner */}
+      <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group border border-white/5">
         <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform duration-1000">
            <ZapIcon size={160} fill="white" />
         </div>
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">AI Prediction Active</span>
+              <span className="bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">AI Core v3.0 Connected</span>
               <h2 className="text-4xl font-black tracking-tighter">Recovery Intelligence</h2>
             </div>
             <p className="text-slate-400 text-lg max-w-xl font-medium leading-relaxed">
-              Gemini 3.0 has analyzed <span className="text-indigo-400 font-bold">124</span> potential recoveries. Sorting by priority to maximize recovery speed.
+              Proprietary yielding engine active. Analyzing <span className="text-indigo-400 font-bold">124</span> potential recoveries for jurisdiction-specific compliance.
             </p>
           </div>
-          <button onClick={() => navigate('/properties/new')} className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:shadow-2xl hover:scale-[1.02] transition-all flex items-center gap-3">
+          <button onClick={() => navigate('/properties/new')} className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:shadow-2xl hover:scale-[1.02] transition-all flex items-center gap-3 border border-slate-200 shadow-xl shadow-indigo-950/20">
              <PlusCircleIcon size={20} className="text-indigo-600" /> New Intake
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-start justify-between group hover:border-indigo-400 transition-all hover:shadow-xl hover:-translate-y-1">
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{stat.label}</p>
-              <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</h3>
-            </div>
-            <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl transition-transform group-hover:scale-110 shadow-sm`}><stat.icon size={24} /></div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main Content Area */}
+        <div className="lg:col-span-3 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {stats.map((stat, i) => (
+              <div key={i} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex items-start justify-between group hover:border-indigo-400 transition-all hover:shadow-xl hover:-translate-y-1">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{stat.label}</p>
+                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</h3>
+                </div>
+                <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl transition-transform group-hover:scale-110 shadow-sm`}><stat.icon size={24} /></div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="flex flex-col space-y-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 tracking-tight">Active Recoveries</h2>
-          <div className="flex items-center gap-4">
-             <div className="relative w-80">
-                <SearchIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" placeholder="Search pipeline..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all" />
-             </div>
-             <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="bg-white px-6 py-3 rounded-2xl border border-slate-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:border-indigo-400 transition-all"><FilterIcon size={14}/> Filter Engine</button>
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3 tracking-tight uppercase">Pipeline <span className="text-slate-400">({filteredProperties.length})</span></h2>
+              <div className="flex items-center gap-4">
+                 <div className="relative w-80">
+                    <SearchIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Search addresses or APNs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm" />
+                 </div>
+                 <button className="bg-white px-6 py-3 rounded-2xl border border-slate-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:border-indigo-400 transition-all shadow-sm"><FilterIcon size={14}/> Engine Filters</button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                    <th className="px-8 py-6">Intelligence Rank</th>
+                    <th className="px-8 py-6">Property Context</th>
+                    <th className="px-8 py-6 text-center">Risk Level</th>
+                    <th className="px-8 py-6">Est. Net Recovery</th>
+                    <th className="px-8 py-6 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredProperties.map((p) => (
+                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => navigate(`/properties/${p.id}`)}>
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shadow-inner border ${p.priority_score! > 85 ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                            {p.priority_score}
+                          </div>
+                          {p.priority_score! > 90 && <SparklesIcon size={14} className="text-amber-500 animate-pulse" />}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <div>
+                          <p className="text-sm font-black text-slate-900 leading-tight">{p.address}</p>
+                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{p.parcel_id} • {p.county}, {p.state}</p>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
+                          p.risk_level === 'LOW' ? 'bg-green-50 text-green-700 border-green-200' :
+                          p.risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                          'bg-red-50 text-red-700 border-red-200'
+                        }`}>
+                          {p.risk_level} Risk
+                        </span>
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className="text-sm font-black text-indigo-600">${p.surplus_amount.toLocaleString()}</p>
+                        <p className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Est. Payout: {p.est_payout_days} Days</p>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all shadow-sm">
+                          <ArrowRightIcon size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-              <th className="px-8 py-6">Intelligence Rank</th>
-              <th className="px-8 py-6">Property Context</th>
-              <th className="px-8 py-6 text-center">Risk Level</th>
-              <th className="px-8 py-6">Est. Net Recovery</th>
-              <th className="px-8 py-6 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredProperties.map((p) => (
-              <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => navigate(`/properties/${p.id}`)}>
-                <td className="px-8 py-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-600 text-xs shadow-inner">
-                      {p.priority_score}
-                    </div>
-                    {p.priority_score && p.priority_score > 90 && <SparklesIcon size={14} className="text-amber-500 animate-pulse" />}
-                  </div>
-                </td>
-                <td className="px-8 py-6">
-                  <div>
-                    <p className="text-sm font-black text-slate-900 leading-tight">{p.address}</p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{p.parcel_id} • {p.county}, {p.state}</p>
-                  </div>
-                </td>
-                <td className="px-8 py-6 text-center">
-                  <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
-                    p.risk_level === 'LOW' ? 'bg-green-50 text-green-700 border-green-200' :
-                    p.risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                    'bg-red-50 text-red-700 border-red-200'
-                  }`}>
-                    {p.risk_level} Risk
-                  </span>
-                </td>
-                <td className="px-8 py-6">
-                  <p className="text-sm font-black text-indigo-600">${p.surplus_amount.toLocaleString()}</p>
-                  <p className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Yield Probability: 95%</p>
-                </td>
-                <td className="px-8 py-6 text-right">
-                  <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 transition-all shadow-sm">
-                    <ArrowRightIcon size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Sidebar Intelligence & Metrics */}
+        <div className="space-y-6">
+          <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <h4 className="font-black text-slate-900 text-xs uppercase tracking-widest flex items-center gap-2">
+                <BarChart3Icon size={16} className="text-indigo-600" /> Recovery Velocity
+              </h4>
+              <span className="text-[10px] font-bold text-green-600 flex items-center gap-1">
+                <TrendingUpIcon size={10} /> +12%
+              </span>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                   <span>Verification Speed</span>
+                   <span className="text-slate-900">2.4 Days</span>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                   <div className="h-full bg-indigo-600 w-[85%] rounded-full"></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                   <span>Conversion Rate</span>
+                   <span className="text-slate-900">42%</span>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                   <div className="h-full bg-emerald-500 w-[42%] rounded-full"></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                   <span>Avg. Case Lifecycle</span>
+                   <span className="text-slate-900">128 Days</span>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                   <div className="h-full bg-amber-500 w-[60%] rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-indigo-600 p-8 rounded-[2rem] text-white shadow-2xl relative overflow-hidden group">
+             <div className="relative z-10 space-y-4">
+                <div className="flex items-center gap-2">
+                   <ActivityIcon size={18} className="text-indigo-200" />
+                   <h4 className="font-black text-sm uppercase">Forecasting Hub</h4>
+                </div>
+                <p className="text-indigo-100 text-xs leading-relaxed opacity-80">
+                   Based on current GA and FL trends, Q4 surplus volume is expected to rise by 18%. Update rules to prioritize FL-Miami records.
+                </p>
+                <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-900/50 hover:bg-indigo-50 transition-all">
+                   Run Full Simulation
+                </button>
+             </div>
+             <div className="absolute -bottom-10 -right-10 opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
+                <TrendingUpIcon size={120} />
+             </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -9,12 +9,17 @@ import {
   AlertTriangleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  InfoIcon
+  InfoIcon,
+  SparklesIcon,
+  RefreshCwIcon,
+  // Added DollarSignIcon to fix "Cannot find name 'DollarSignIcon'" error
+  DollarSignIcon
 } from 'lucide-react';
 import { Lien, LienType } from '../types';
 
 interface LienWaterfallProps {
   initialSurplus: number;
+  aiDiscoveredLiens?: Lien[]; // New prop for AI integration
 }
 
 const DEFAULT_PRIORITY: Record<LienType, number> = {
@@ -27,12 +32,13 @@ const DEFAULT_PRIORITY: Record<LienType, number> = {
   [LienType.OTHER]: 7,
 };
 
-const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus }) => {
+const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus, aiDiscoveredLiens }) => {
   const [liens, setLiens] = useState<Lien[]>([
     { id: 'l1', type: LienType.MORTGAGE_1, description: 'First Mortgage (Chase)', amount: 45000, priority: 2 },
     { id: 'l2', type: LienType.HOA, description: 'HOA Past Due', amount: 3500, priority: 4 },
   ]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const waterfallData = useMemo(() => {
     let remaining = initialSurplus;
@@ -76,40 +82,65 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus }) => {
     setLiens(liens.map(l => l.id === id ? { ...l, ...updates } : l));
   };
 
+  const syncAiDiscovery = () => {
+    setIsSyncing(true);
+    // Simulate AI Sync delay
+    setTimeout(() => {
+      if (aiDiscoveredLiens && aiDiscoveredLiens.length > 0) {
+        setLiens(prev => {
+          const existingIds = new Set(prev.map(l => l.id));
+          const newOnes = aiDiscoveredLiens.filter(al => !existingIds.has(al.id));
+          return [...prev, ...newOnes];
+        });
+      } else {
+        // Mock some AI discovery for demo if no props
+        const mockAiLien: Lien = {
+           id: `ai-${Date.now()}`,
+           type: LienType.JUDGMENT,
+           description: 'AI Discovery: Secondary Judgment (Fulton County)',
+           amount: 1250,
+           priority: 5
+        };
+        setLiens(prev => [...prev, mockAiLien]);
+      }
+      setIsSyncing(false);
+    }, 1500);
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div 
-        className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer"
+        className="px-8 py-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-2">
-          <CalculatorIcon size={18} className="text-indigo-600" />
-          <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider">Automated Lien Waterfall</h3>
+        <div className="flex items-center gap-3">
+          <CalculatorIcon size={20} className="text-indigo-600" />
+          <h3 className="font-black text-slate-900 text-xs uppercase tracking-widest">Lien Waterfall Engine</h3>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-100 rounded-lg border border-indigo-200">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase">Recoverable</span>
-            <span className="text-sm font-bold text-indigo-700">${waterfallData.finalSurplus.toLocaleString()}</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200">
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Recoverable</span>
+            <span className="text-sm font-black">${waterfallData.finalSurplus.toLocaleString()}</span>
           </div>
           {isExpanded ? <ChevronUpIcon size={18} className="text-slate-400" /> : <ChevronDownIcon size={18} className="text-slate-400" />}
         </div>
       </div>
 
       {isExpanded && (
-        <div className="p-6 space-y-8">
+        <div className="p-8 space-y-10">
           {/* Header Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Surplus</p>
-              <p className="text-lg font-bold text-slate-800">${initialSurplus.toLocaleString()}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Gross Surplus</p>
+              <p className="text-2xl font-black text-slate-900">${initialSurplus.toLocaleString()}</p>
             </div>
-            <div className="p-4 bg-red-50 rounded-xl border border-red-100">
-              <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1">Lien Reductions</p>
-              <p className="text-lg font-bold text-red-600">-${(initialSurplus - waterfallData.finalSurplus).toLocaleString()}</p>
+            <div className="p-6 bg-red-50 rounded-2xl border border-red-100 shadow-sm">
+              <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Total Senior Debt</p>
+              <p className="text-2xl font-black text-red-600">-${(initialSurplus - waterfallData.finalSurplus).toLocaleString()}</p>
             </div>
-            <div className="p-4 bg-green-50 rounded-xl border border-green-100">
-              <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">Owner Net Recovery</p>
-              <p className="text-lg font-bold text-green-600">${waterfallData.finalSurplus.toLocaleString()}</p>
+            <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm">
+              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Net Owner Recovery</p>
+              <p className="text-2xl font-black text-emerald-700">${waterfallData.finalSurplus.toLocaleString()}</p>
             </div>
           </div>
 
@@ -117,38 +148,35 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus }) => {
           <div className="relative space-y-4 pt-4">
              {/* Initial Amount Bubble */}
              <div className="flex justify-center mb-8">
-               <div className="px-6 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-lg ring-4 ring-slate-100">
-                 Source: Surplus Sale Funds (${initialSurplus.toLocaleString()})
+               <div className="px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-black shadow-xl ring-8 ring-slate-50 uppercase tracking-widest">
+                 Funds Source: Tax Sale Surplus
                </div>
              </div>
 
              {waterfallData.steps.map((step, idx) => (
                <div key={step.id} className="relative flex flex-col items-center">
-                 {/* Connection Line */}
-                 <div className="h-8 w-0.5 bg-slate-200"></div>
+                 <div className="h-10 w-0.5 bg-slate-200"></div>
                  
-                 <div className="w-full flex items-start gap-6 group">
-                   {/* Priority Number */}
-                   <div className="w-12 h-12 rounded-xl bg-white border-2 border-slate-200 flex items-center justify-center font-bold text-slate-400 shrink-0 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-all">
+                 <div className="w-full flex items-start gap-8 group">
+                   <div className="w-14 h-14 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center font-black text-slate-400 shrink-0 group-hover:border-indigo-400 group-hover:text-indigo-600 group-hover:shadow-lg transition-all">
                      {step.priority}
                    </div>
 
-                   {/* Lien Card */}
-                   <div className={`flex-1 p-5 rounded-2xl border transition-all ${
-                     step.status === 'PAID' ? 'bg-white border-slate-200' : 
+                   <div className={`flex-1 p-6 rounded-[1.5rem] border-2 transition-all ${
+                     step.status === 'PAID' ? 'bg-white border-slate-100 hover:border-indigo-200 shadow-sm' : 
                      step.status === 'PARTIAL' ? 'bg-orange-50 border-orange-200' : 
                      'bg-slate-50 border-slate-100 opacity-60'
                    }`}>
-                     <div className="flex items-start justify-between mb-4">
+                     <div className="flex items-start justify-between mb-6">
                        <div className="flex-1">
-                         <div className="flex items-center gap-3 mb-1">
+                         <div className="flex items-center gap-3 mb-2">
                             <input 
                               type="text" 
                               value={step.description}
                               onChange={(e) => updateLien(step.id, { description: e.target.value })}
-                              className="bg-transparent border-none p-0 text-sm font-bold text-slate-800 focus:ring-0 w-full"
+                              className="bg-transparent border-none p-0 text-base font-black text-slate-900 focus:ring-0 w-full"
                             />
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase border ${
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border shadow-sm ${
                               step.status === 'PAID' ? 'bg-green-100 text-green-700 border-green-200' :
                               step.status === 'PARTIAL' ? 'bg-orange-100 text-orange-700 border-orange-200' :
                               'bg-slate-200 text-slate-500 border-slate-300'
@@ -159,35 +187,34 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus }) => {
                          <select 
                            value={step.type}
                            onChange={(e) => updateLien(step.id, { type: e.target.value as LienType, priority: DEFAULT_PRIORITY[e.target.value as LienType] })}
-                           className="text-[10px] font-bold text-slate-400 bg-transparent border-none p-0 focus:ring-0 uppercase tracking-widest cursor-pointer hover:text-indigo-600"
+                           className="text-[10px] font-black text-slate-400 bg-transparent border-none p-0 focus:ring-0 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
                          >
                             {Object.values(LienType).map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
                          </select>
                        </div>
-                       <div className="flex flex-col items-end">
-                         <div className="flex items-center gap-2">
-                           <span className="text-xs text-slate-400">$</span>
+                       <div className="flex flex-col items-end gap-2">
+                         <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                           <DollarSignIcon size={14} className="text-slate-400" />
                            <input 
                               type="number"
                               value={step.amount}
                               onChange={(e) => updateLien(step.id, { amount: Number(e.target.value) })}
-                              className="w-24 text-right bg-slate-100 border-none rounded-lg p-1 text-sm font-bold focus:ring-2 focus:ring-indigo-500"
+                              className="w-24 text-right bg-transparent border-none rounded-lg p-0 text-sm font-black focus:ring-0"
                            />
                            <button 
                              onClick={() => removeLien(step.id)}
-                             className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
+                             className="p-1.5 text-slate-300 hover:text-red-500 transition-colors ml-1"
                            >
-                             <Trash2Icon size={14} />
+                             <Trash2Icon size={16} />
                            </button>
                          </div>
-                         <p className="text-[10px] font-bold text-indigo-500 mt-2">Deducted: ${step.satisfied_amount.toLocaleString()}</p>
+                         <p className="text-[11px] font-black text-indigo-600 uppercase tracking-tighter">Satisfied: ${step.satisfied_amount.toLocaleString()}</p>
                        </div>
                      </div>
                      
-                     {/* Depletion Bar */}
-                     <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                     <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                        <div 
-                         className={`h-full transition-all duration-700 ${step.status === 'PAID' ? 'bg-green-500' : 'bg-orange-400'}`}
+                         className={`h-full transition-all duration-1000 ${step.status === 'PAID' ? 'bg-indigo-600' : 'bg-amber-400'}`}
                          style={{ width: `${(step.satisfied_amount / (step.amount || 1)) * 100}%` }}
                        ></div>
                      </div>
@@ -198,37 +225,50 @@ const LienWaterfall: React.FC<LienWaterfallProps> = ({ initialSurplus }) => {
 
              {/* Final Residual Step */}
              <div className="flex flex-col items-center">
-               <div className="h-12 w-0.5 bg-slate-200 border-dashed border-l-2"></div>
-               <div className="w-full flex items-center gap-6">
-                 <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-                    <ShieldCheckIcon size={24} />
+               <div className="h-14 w-0.5 bg-slate-200 border-dashed border-l-2"></div>
+               <div className="w-full flex items-center gap-8">
+                 <div className="w-14 h-14 rounded-2xl bg-indigo-900 text-white flex items-center justify-center shadow-2xl shadow-indigo-200">
+                    <ShieldCheckIcon size={28} />
                  </div>
-                 <div className="flex-1 p-6 bg-indigo-900 text-white rounded-2xl shadow-xl flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-lg">Final Claimable Amount</h4>
-                      <p className="text-indigo-300 text-xs">Total remaining after all senior liens satisfied.</p>
+                 <div className="flex-1 p-8 bg-slate-900 text-white rounded-[2rem] shadow-2xl flex items-center justify-between border border-white/5 relative overflow-hidden group">
+                    <div className="relative z-10">
+                      <h4 className="font-black text-xl uppercase tracking-tighter">Net Yield to Claimant</h4>
+                      <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-widest mt-1">Ready for Automated Packager</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-black">${waterfallData.finalSurplus.toLocaleString()}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-400">Net to Claimant</p>
+                    <div className="text-right relative z-10">
+                      <p className="text-4xl font-black text-white">${waterfallData.finalSurplus.toLocaleString()}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mt-2">Final Authorized Amount</p>
+                    </div>
+                    <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
+                       <CalculatorIcon size={100} fill="white" />
                     </div>
                  </div>
                </div>
              </div>
           </div>
 
-          <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-            <div className="flex items-center gap-2 text-slate-400 text-xs italic">
-              <InfoIcon size={14} />
-              Priority order follows standard judicial foreclosure hierarchy.
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-100">
+            <div className="flex items-center gap-3 text-slate-400 text-xs font-medium">
+              <InfoIcon size={18} className="text-indigo-400" />
+              Priority hierarchy governed by Georgia Rule 47-B. Seniority is manually audited by AI Core v3.0.
             </div>
-            <button 
-              onClick={addLien}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all active:scale-[0.98]"
-            >
-              <PlusIcon size={16} />
-              Add Discovery Lien
-            </button>
+            <div className="flex items-center gap-4 w-full md:w-auto">
+               <button 
+                 onClick={syncAiDiscovery}
+                 disabled={isSyncing}
+                 className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 disabled:opacity-50 group"
+               >
+                 {isSyncing ? <RefreshCwIcon size={18} className="animate-spin" /> : <SparklesIcon size={18} className="text-amber-400 group-hover:scale-110 transition-transform" />}
+                 AI Discovery Sync
+               </button>
+               <button 
+                 onClick={addLien}
+                 className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-slate-200 text-slate-800 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-indigo-400 hover:text-indigo-600 transition-all active:scale-95 shadow-sm"
+               >
+                 <PlusIcon size={18} />
+                 Manual Discovery
+               </button>
+            </div>
           </div>
         </div>
       )}

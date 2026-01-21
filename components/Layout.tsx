@@ -36,9 +36,9 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   ];
 
   const intelligenceSuite = [
-    { label: 'Skip-Trace Hub', icon: GlobeIcon, color: 'text-amber-400', desc: 'Grounding Search' },
-    { label: 'Waterfall Engine', icon: CalculatorIcon, color: 'text-emerald-400', desc: 'Financial Logic' },
-    { label: 'Smart Packager', icon: ArchiveIcon, color: 'text-blue-400', desc: 'Auto-Assembly' },
+    { label: 'Skip-Trace Hub', path: '/research', icon: GlobeIcon, color: 'text-amber-400', desc: 'Grounding Search' },
+    { label: 'Waterfall Engine', path: '/waterfall', icon: CalculatorIcon, color: 'text-emerald-400', desc: 'Financial Logic' },
+    { label: 'Smart Packager', path: '/packager', icon: ArchiveIcon, color: 'text-blue-400', desc: 'Auto-Assembly' },
   ];
 
   return (
@@ -47,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
       <aside className="w-80 bg-slate-900 text-white flex flex-col hidden md:flex shadow-2xl z-30 border-r border-white/5">
         <div className="p-8">
           <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 rotate-3 group-hover:rotate-0 transition-transform">
+            <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 rotate-3 transition-transform">
               <ZapIcon size={20} fill="white" />
             </div>
             PROSPECTOR
@@ -104,18 +104,23 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
               </button>
 
               {intelligenceSuite.map((tool, idx) => (
-                <button 
+                <Link 
                   key={idx}
-                  className="w-full flex items-center gap-4 px-4 py-4 bg-slate-800/50 rounded-2xl border border-white/5 hover:bg-slate-800 hover:border-white/10 transition-all group"
+                  to={tool.path}
+                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border transition-all group ${
+                    location.pathname === tool.path 
+                      ? 'bg-slate-800 border-indigo-500/50 shadow-lg shadow-indigo-950/20' 
+                      : 'bg-slate-800/50 border-white/5 hover:bg-slate-800 hover:border-white/10'
+                  }`}
                 >
                   <div className={`p-2 rounded-xl bg-slate-900 ${tool.color}`}>
                     <tool.icon size={18} />
                   </div>
                   <div className="text-left">
-                    <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1 text-white">{tool.label}</p>
+                    <p className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${location.pathname === tool.path ? 'text-indigo-400' : 'text-white'}`}>{tool.label}</p>
                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">{tool.desc}</p>
                   </div>
-                </button>
+                </Link>
               ))}
             </div>
           </div>
@@ -179,6 +184,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                  onClick={() => setIsLiveMode(true)}
                  className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isLiveMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:text-slate-600'}`}
                >
+                 {isLiveMode && <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2 inline-block"></div>}
                  Live Engine
                </button>
             </div>

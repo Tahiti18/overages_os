@@ -7,6 +7,9 @@ import PropertyDetail from './components/PropertyDetail';
 import PropertyForm from './components/PropertyForm';
 import JurisdictionRules from './components/JurisdictionRules';
 import UserAdmin from './components/UserAdmin';
+import GlobalResearch from './components/GlobalResearch';
+import GlobalWaterfall from './components/GlobalWaterfall';
+import GlobalPackager from './components/GlobalPackager';
 import { User, UserRole } from './types';
 
 const MOCK_USER: User = {
@@ -28,6 +31,11 @@ const App: React.FC = () => {
           <Route path="/properties/:id" element={<PropertyDetail />} />
           <Route path="/admin/rules" element={<JurisdictionRules />} />
           <Route path="/admin/users" element={<UserAdmin />} />
+          
+          {/* AI Core v3.0 Global Routes */}
+          <Route path="/research" element={<GlobalResearch />} />
+          <Route path="/waterfall" element={<GlobalWaterfall />} />
+          <Route path="/packager" element={<GlobalPackager />} />
         </Route>
       </Routes>
     </Router>

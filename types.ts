@@ -76,6 +76,7 @@ export interface Document {
   property_id: string;
   filename: string;
   doc_type: string;
+  tags: string[];
   extraction_status: 'QUEUED' | 'OCR_DONE' | 'LLM_DONE' | 'READY_FOR_REVIEW' | 'FAILED';
   extracted_fields: any;
   verified_by_human: boolean;

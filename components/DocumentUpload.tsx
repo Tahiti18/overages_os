@@ -12,8 +12,9 @@ import {
   FileSearchIcon,
   TypeIcon,
   ClipboardCheckIcon,
-  // Added XIcon import to fix the "Cannot find name 'XIcon'" error.
-  XIcon
+  XIcon,
+  TagIcon,
+  PlusIcon
 } from 'lucide-react';
 import { Document } from '../types';
 import { extractDocumentData } from '../lib/gemini';
@@ -28,7 +29,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
       id: 'd1',
       property_id: propertyId,
       filename: 'tax_bill_2023.pdf',
-      doc_type: 'Tax Record',
+      doc_type: 'TAX_BILL',
+      tags: ['Primary Record', 'Current Year', 'Verified'],
       extraction_status: 'READY_FOR_REVIEW',
       extracted_fields: {
         parcel_id: '14-0021-0004-012-0',
@@ -44,6 +46,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [reviewTab, setReviewTab] = useState<'fields' | 'ocr'>('fields');
+  const [newTag, setNewTag] = useState('');
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -61,7 +64,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
         reader.readAsDataURL(file);
         const base64 = await base64Promise;
 
-        // Call Gemini AI for real-time extraction
+        // Call Gemini AI for real-time extraction and tagging
         const aiData = await extractDocumentData(base64, file.type);
         
         const newDoc: Document = {
@@ -69,6 +72,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
           property_id: propertyId,
           filename: file.name,
           doc_type: aiData?.document_type || 'OTHER',
+          tags: aiData?.tags || [],
           extraction_status: 'READY_FOR_REVIEW',
           extracted_fields: aiData || {},
           verified_by_human: false,
@@ -100,6 +104,24 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
     setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
   };
 
+  const addTag = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDoc || !newTag.trim()) return;
+    const updatedTags = [...selectedDoc.tags, newTag.trim()];
+    const updatedDoc = { ...selectedDoc, tags: updatedTags };
+    setSelectedDoc(updatedDoc);
+    setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
+    setNewTag('');
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    if (!selectedDoc) return;
+    const updatedTags = selectedDoc.tags.filter(t => t !== tagToRemove);
+    const updatedDoc = { ...selectedDoc, tags: updatedTags };
+    setSelectedDoc(updatedDoc);
+    setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col lg:flex-row gap-8">
@@ -126,7 +148,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
               )}
               <div>
                 <p className="text-lg font-black text-slate-900">{isUploading ? 'AI Extraction in Progress...' : 'Drop Legal Artifact'}</p>
-                <p className="text-sm text-slate-500 font-medium">Fast-track extraction powered by Gemini 3.0 Core</p>
+                <p className="text-sm text-slate-500 font-medium">Auto-tagging & extraction powered by Gemini 3.0 Core</p>
               </div>
             </label>
             {isUploading && (
@@ -158,19 +180,19 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
                     <div>
                       <p className="text-sm font-black text-slate-900 tracking-tight">{doc.filename}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{doc.doc_type}</span>
-                        {doc.verified_by_human ? (
-                          <span className="flex items-center gap-1 text-[9px] font-black text-green-600 uppercase tracking-widest">
-                            <CheckCircle2Icon size={10} /> Verified
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest animate-pulse">Needs Review</span>
-                        )}
+                        <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{doc.doc_type.replace(/_/g, ' ')}</span>
+                        {doc.tags.slice(0, 2).map(tag => (
+                          <span key={tag} className="text-[9px] bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full font-bold uppercase border border-indigo-100">{tag}</span>
+                        ))}
+                        {doc.tags.length > 2 && <span className="text-[9px] text-slate-400 font-bold">+{doc.tags.length - 2}</span>}
                       </div>
                     </div>
                   </div>
-                  <div className="p-2 text-slate-300 group-hover:text-indigo-600">
-                    <EyeIcon size={18} />
+                  <div className="flex items-center gap-2">
+                    {doc.verified_by_human && <CheckCircle2Icon size={18} className="text-green-500" />}
+                    <div className="p-2 text-slate-300 group-hover:text-indigo-600">
+                      <EyeIcon size={18} />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -223,6 +245,38 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
               <div className="flex-1 overflow-auto p-8 space-y-6">
                 {reviewTab === 'fields' ? (
                   <div className="space-y-5">
+                    {/* Tags Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-1.5">
+                          <TagIcon size={12} /> AI Suggested Tags
+                        </label>
+                      </div>
+                      <div className="flex flex-wrap gap-2 min-h-[40px] p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        {selectedDoc.tags.map(tag => (
+                          <div key={tag} className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-indigo-100 text-[10px] font-black text-indigo-600 group/tag">
+                            {tag}
+                            {!selectedDoc.verified_by_human && (
+                              <button onClick={() => removeTag(tag)} className="text-slate-300 hover:text-red-500">
+                                <XIcon size={10} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {!selectedDoc.verified_by_human && (
+                          <form onSubmit={addTag} className="flex-1">
+                            <input 
+                              type="text" 
+                              placeholder="Add tag..."
+                              value={newTag}
+                              onChange={(e) => setNewTag(e.target.value)}
+                              className="w-full bg-transparent border-none p-0 text-[10px] font-bold outline-none placeholder:text-slate-400"
+                            />
+                          </form>
+                        )}
+                      </div>
+                    </div>
+
                     {!selectedDoc.verified_by_human && (
                       <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
                         <AlertCircleIcon size={18} className="text-amber-500 shrink-0 mt-0.5" />
@@ -233,31 +287,34 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
                     )}
 
                     <div className="space-y-4">
-                      {Object.entries(selectedDoc.extracted_fields).map(([key, value]) => (
-                        <div key={key} className="group">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1 group-focus-within:text-indigo-600 transition-colors">
-                            {key.replace(/_/g, ' ')}
-                          </label>
-                          <div className="relative">
-                            <input 
-                              type="text" 
-                              value={value === null ? '' : String(value)}
-                              onChange={(e) => updateField(key, e.target.value)}
-                              className={`w-full px-5 py-3.5 border-2 rounded-2xl text-xs font-black transition-all outline-none ${
-                                selectedDoc.verified_by_human 
-                                  ? 'bg-slate-50 border-slate-100 text-slate-500' 
-                                  : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/5'
-                              }`}
-                              readOnly={selectedDoc.verified_by_human}
-                            />
-                            {!selectedDoc.verified_by_human && (
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-200">
-                                <SparklesIcon size={12} />
-                              </div>
-                            )}
+                      {Object.entries(selectedDoc.extracted_fields).map(([key, value]) => {
+                        if (key === 'tags' || key === 'document_type') return null;
+                        return (
+                          <div key={key} className="group">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1 group-focus-within:text-indigo-600 transition-colors">
+                              {key.replace(/_/g, ' ')}
+                            </label>
+                            <div className="relative">
+                              <input 
+                                type="text" 
+                                value={value === null ? '' : String(value)}
+                                onChange={(e) => updateField(key, e.target.value)}
+                                className={`w-full px-5 py-3.5 border-2 rounded-2xl text-xs font-black transition-all outline-none ${
+                                  selectedDoc.verified_by_human 
+                                    ? 'bg-slate-50 border-slate-100 text-slate-500' 
+                                    : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/5'
+                                }`}
+                                readOnly={selectedDoc.verified_by_human}
+                              />
+                              {!selectedDoc.verified_by_human && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-200">
+                                  <SparklesIcon size={12} />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (

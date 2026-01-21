@@ -20,13 +20,13 @@ export const extractDocumentData = async (base64Data: string, mimeType: string) 
             },
           },
           {
-            text: "Extract key property tax and surplus information from this document. Provide owner names, parcel IDs, dollar amounts, and relevant dates.",
+            text: "Analyze this legal artifact for property tax surplus recovery. Extract key data and suggest classification tags. Include tags like 'Deed', 'ID', 'Proof of Mailing', 'Affidavit', 'Death Certificate', 'Tax Bill', 'Probate Record'.",
           },
         ],
       },
     ],
     config: {
-      systemInstruction: "You are a professional legal document extractor. Return ONLY valid JSON that matches the requested schema. If a value is unknown, use null.",
+      systemInstruction: "You are a specialized legal document auditor for Property Tax Surplus Recovery. Analyze the document and return structured JSON. Ensure you classify the document correctly and provide multiple relevant descriptive tags.",
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -36,9 +36,15 @@ export const extractDocumentData = async (base64Data: string, mimeType: string) 
           address: { type: Type.STRING, description: "Full physical address of the property" },
           surplus_amount: { type: Type.NUMBER, description: "The calculated excess proceeds or surplus amount" },
           tax_sale_date: { type: Type.STRING, description: "The date the tax sale occurred (YYYY-MM-DD)" },
-          document_type: { type: Type.STRING, description: "Classification: DEED, TAX_BILL, ID, or OTHER" },
+          document_type: { type: Type.STRING, description: "Primary classification: DEED, TAX_BILL, ID, AFFIDAVIT, PROBATE, MAILING_PROOF, or OTHER" },
+          tags: { 
+            type: Type.ARRAY, 
+            items: { type: Type.STRING }, 
+            description: "Suggested descriptive tags based on content (e.g., 'Notarized', 'Heirship', 'Outdated', 'Primary ID')" 
+          },
+          confidence_score: { type: Type.NUMBER, description: "AI confidence level 0-1" }
         },
-        required: ["owner_name", "parcel_id", "document_type"],
+        required: ["owner_name", "parcel_id", "document_type", "tags"],
       },
     },
   });

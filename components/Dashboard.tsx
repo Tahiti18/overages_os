@@ -97,12 +97,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
             )}
           </h2>
           <p className="text-slate-500">
-            {isLiveMode ? 'Waiting for real-time surplus events from connected county records.' : 'Monitoring demo property surplus opportunities.'}
+            {isLiveMode ? 'Waiting for real-time surplus events.' : 'Monitoring demo property surplus opportunities.'}
           </p>
         </div>
         
         <div className="flex items-center gap-4">
-          {/* View Toggle */}
           <div className="flex bg-slate-200 p-1 rounded-xl">
             <button 
               onClick={() => setViewMode('list')}
@@ -130,7 +129,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between group hover:border-indigo-200 transition-colors cursor-default">
@@ -145,7 +143,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
         ))}
       </div>
 
-      {/* Conditional Rendering based on View Mode */}
       {viewMode === 'map' ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <PropertyMap properties={filteredProperties} />
@@ -157,23 +154,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
               Active Properties
               <span className="text-xs font-bold text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-md">{filteredProperties.length}</span>
             </h3>
-            <div className="flex items-center gap-3">
-              {!isLiveMode && (
-                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm">
-                   <FilterIcon size={14} className="text-slate-400" />
-                   <select 
-                     value={filterStatus}
-                     onChange={(e) => setFilterStatus(e.target.value as any)}
-                     className="text-xs font-bold border-none focus:ring-0 p-0 text-slate-600 cursor-pointer bg-transparent"
-                   >
-                     <option value="ALL">All Statuses</option>
-                     {Object.values(CaseStatus).map(s => (
-                       <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                     ))}
-                   </select>
-                 </div>
-              )}
-            </div>
           </div>
 
           {filteredProperties.length > 0 ? (
@@ -214,10 +194,33 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                             <span className="text-[10px] font-bold uppercase tracking-tight">AI Research Needed</span>
                           </div>
                         ) : (
-                          <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-700">{property.deadline_date}</span>
-                            <span className="text-[10px] text-orange-600 font-bold uppercase tracking-tight">Claim Deadline</span>
-                          </div>
+                          <span className="text-sm font-semibold text-slate-700">{property.deadline_date}</span>
                         )}
                       </td>
                       <td className="px-8 py-5">
+                        <span className={`text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest border ${getStatusColor(property.status)}`}>
+                          {property.status.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <button className="text-slate-300 group-hover:text-indigo-600 transition-colors p-2">
+                          <ArrowRightIcon size={20} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-32 text-center">
+              <h4 className="text-lg font-bold text-slate-800">No Results Found</h4>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;

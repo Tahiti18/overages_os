@@ -49,7 +49,7 @@ const SkipTracingHub: React.FC<SkipTracingHubProps> = ({ ownerName, address }) =
             <h3 className="text-xl font-bold">AI Research Hub</h3>
           </div>
           <p className="text-indigo-200 text-sm max-w-xl leading-relaxed mb-6">
-            Leverage Gemini 3.0 Pro with Google Search Grounding to scour public records, social profiles, and obituary data for <strong>{ownerName}</strong>. 
+            Leverage Gemini 3.0 Flash with Google Search Grounding to scour public records, social profiles, and obituary data for <strong>{ownerName}</strong>. 
           </p>
           {!results && !loading && (
             <button 
@@ -88,7 +88,6 @@ const SkipTracingHub: React.FC<SkipTracingHubProps> = ({ ownerName, address }) =
 
       {results && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700">
-          {/* Main Findings */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm prose prose-slate max-w-none">
               <h4 className="flex items-center gap-2 text-slate-800 font-bold mb-4">
@@ -125,7 +124,6 @@ const SkipTracingHub: React.FC<SkipTracingHubProps> = ({ ownerName, address }) =
             </div>
           </div>
 
-          {/* Action Panel */}
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
               <h4 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-widest">Next Steps</h4>
@@ -145,20 +143,6 @@ const SkipTracingHub: React.FC<SkipTracingHubProps> = ({ ownerName, address }) =
                   <ExternalLinkIcon size={14} className="text-slate-300" />
                 </button>
               </div>
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-              <div className="flex items-center gap-2 mb-4">
-                <UsersIcon size={18} className="text-slate-400" />
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Team Notes</h4>
-              </div>
-              <textarea 
-                placeholder="Notes about findings..."
-                className="w-full h-32 bg-white border border-slate-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-600 outline-none"
-              ></textarea>
-              <button className="mt-3 w-full bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest py-2 rounded-lg hover:bg-slate-700 transition-colors">
-                Save Observations
-              </button>
             </div>
           </div>
         </div>

@@ -1,7 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-// We wrap initialization to avoid top-level ReferenceErrors if process is weirdly handled
 const getAIClient = () => {
   const apiKey = process.env?.API_KEY || "";
   return new GoogleGenAI({ apiKey });

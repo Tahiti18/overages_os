@@ -18,10 +18,12 @@ import {
   RefreshCwIcon,
   ArchiveIcon,
   FileCheckIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  CheckIcon
 } from 'lucide-react';
 import { Document } from '../types';
 import { extractDocumentData } from '../lib/gemini';
+import Tooltip from './Tooltip';
 
 interface DocumentUploadProps {
   propertyId: string;
@@ -78,7 +80,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
   const processFile = async (file: File) => {
     const fileId = Math.random().toString(36).substr(2, 9);
     
-    // Initial state
     setProcessingFiles(prev => [...prev, { 
       id: fileId, 
       name: file.name, 
@@ -87,15 +88,12 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
     }]);
 
     try {
-      // Step 1: Read File
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 20, status: 'uploading' } : f));
       const base64 = await readFileAsBase64(file);
 
-      // Step 2: AI Extraction
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 45, status: 'extracting' } : f));
       const aiData = await extractDocumentData(base64, file.type);
       
-      // Step 3: Finalizing
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 85, status: 'finalizing' } : f));
 
       const newDoc: Document = {
@@ -112,7 +110,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
 
       setDocuments(prev => [newDoc, ...prev]);
       
-      // Success Cleanup
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'finalizing' } : f));
       setTimeout(() => {
         setProcessingFiles(prev => prev.filter(f => f.id !== fileId));
@@ -126,7 +123,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
         error: err.message || "AI Extraction Engine Timeout" 
       } : f));
       
-      // Keep error visible for a bit then remove
       setTimeout(() => {
         setProcessingFiles(prev => prev.filter(f => f.id !== fileId));
       }, 5000);
@@ -188,6 +184,10 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
   const addTag = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDoc || !newTag.trim()) return;
+    if (selectedDoc.tags.includes(newTag.trim())) {
+      setNewTag('');
+      return;
+    }
     const updatedTags = [...selectedDoc.tags, newTag.trim()];
     const updatedDoc = { ...selectedDoc, tags: updatedTags };
     setSelectedDoc(updatedDoc);
@@ -264,7 +264,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              {/* Processing Items with Progress Bars */}
               {processingFiles.map(file => (
                 <div 
                   key={file.id}
@@ -308,7 +307,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
                 </div>
               ))}
 
-              {/* Uploaded Documents */}
               {documents.map(doc => (
                 <div 
                   key={doc.id}
@@ -332,7 +330,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
                       <div className="flex flex-wrap items-center gap-2 mt-1.5">
                         <span className="text-[9px] bg-slate-900 text-white px-2.5 py-1 rounded-lg font-black uppercase tracking-widest">{doc.doc_type.replace(/_/g, ' ')}</span>
                         {doc.tags.map(tag => (
-                          <span key={tag} className="text-[9px] bg-indigo-50 text-indigo-500 px-2.5 py-1 rounded-lg font-bold uppercase border border-indigo-100">{tag}</span>
+                          <span key={tag} className="text-[9px] bg-indigo-50 text-indigo-500 px-2.5 py-1 rounded-lg font-bold uppercase border border-indigo-100 flex items-center gap-1">
+                            {tag}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -435,36 +435,68 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
                       </div>
                     )}
 
-                    {/* Tags Section */}
+                    {/* Tags Section - Refined for AI suggested tags */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between px-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                           <TagIcon size={14} className="text-indigo-500" /> Case Classifications
                         </label>
+                        {!selectedDoc.verified_by_human && (
+                          <div className="flex items-center gap-1 text-[9px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 animate-pulse">
+                            <SparklesIcon size={10} />
+                            AI Suggested
+                          </div>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-2 min-h-[50px] p-4 bg-slate-50 rounded-2xl border-2 border-slate-100">
+                      
+                      <div className="flex flex-wrap gap-2 min-h-[50px] p-5 bg-slate-50 rounded-[2rem] border-2 border-slate-100 shadow-inner group/tags">
                         {selectedDoc.tags.map(tag => (
-                          <div key={tag} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-indigo-100 text-[10px] font-black text-indigo-600 shadow-sm">
+                          <div 
+                            key={tag} 
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest shadow-sm transition-all animate-in zoom-in duration-200 ${
+                              selectedDoc.verified_by_human 
+                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                : 'bg-white text-indigo-600 border-indigo-100 hover:border-red-200 hover:text-red-500'
+                            }`}
+                          >
+                            {selectedDoc.verified_by_human ? <CheckIcon size={12} /> : <SparklesIcon size={12} className="opacity-40" />}
                             {tag}
                             {!selectedDoc.verified_by_human && (
-                              <button onClick={() => removeTag(tag)} className="text-slate-300 hover:text-red-500 transition-colors">
+                              <button 
+                                onClick={() => removeTag(tag)} 
+                                className="text-slate-300 hover:text-red-500 transition-colors ml-1 p-0.5"
+                              >
                                 <XIcon size={12} />
                               </button>
                             )}
                           </div>
                         ))}
                         {!selectedDoc.verified_by_human && (
-                          <form onSubmit={addTag} className="flex-1">
-                            <input 
-                              type="text" 
-                              placeholder="Add tag..."
-                              value={newTag}
-                              onChange={(e) => setNewTag(e.target.value)}
-                              className="w-full bg-transparent border-none p-0 text-[10px] font-black outline-none placeholder:text-slate-400"
-                            />
+                          <form onSubmit={addTag} className="flex-1 min-w-[120px]">
+                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                              <PlusIcon size={14} className="text-slate-300" />
+                              <input 
+                                type="text" 
+                                placeholder="Manual tag..."
+                                value={newTag}
+                                onChange={(e) => setNewTag(e.target.value)}
+                                className="w-full bg-transparent border-none p-0 text-[10px] font-black outline-none placeholder:text-slate-400 uppercase tracking-widest"
+                              />
+                            </div>
                           </form>
                         )}
                       </div>
+                      {!selectedDoc.verified_by_human && selectedDoc.tags.length > 0 && (
+                        <div className="flex justify-end px-2">
+                           <button 
+                             onClick={() => approveDoc(selectedDoc.id)}
+                             className="text-[9px] font-black text-indigo-400 hover:text-indigo-600 uppercase tracking-widest flex items-center gap-1.5 py-1 px-2 hover:bg-indigo-50 rounded-lg transition-all"
+                           >
+                             <CheckCircle2Icon size={12} />
+                             Confirm All AI Tags
+                           </button>
+                        </div>
+                      )}
                     </div>
 
                     {!selectedDoc.verified_by_human && (

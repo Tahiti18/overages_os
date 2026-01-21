@@ -49,6 +49,16 @@ export enum LienType {
   OTHER = 'OTHER'
 }
 
+export interface WatchedJurisdiction {
+  state: string;
+  county: string;
+  access_type: string;
+  cadence: string;
+  last_updated: string;
+  next_expected: string;
+  status: 'FRESH' | 'APPROACHING' | 'STALE' | 'UNKNOWN';
+}
+
 export interface Attorney {
   id: string;
   name: string;

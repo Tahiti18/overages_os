@@ -1,37 +1,37 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-// AI Core v3.6 - Central Intelligence Library
+// AI Core v3.7 - Temporal Intelligence Library
 
 /**
- * Scans the web for raw surplus/excess proceeds lists for a specific jurisdiction.
- * Updated to detect "Moats" - jurisdictional barriers that reduce competition.
+ * Scans for surplus lists AND analyzes the historical temporal patterns of the jurisdiction.
  */
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Find the official URL for the "Property Tax Surplus List" or "Excess Proceeds" for ${county} County, ${state}. 
-      CRITICAL: Determine if the list is hidden behind a "Moat" (e.g., requires an Open Records Request/ORR, is 404/Removed, or requires in-person inspection).
-      Find the Treasurer contact and the specific portal URL for filing an Open Records Request if no direct list exists.`,
+      contents: `Perform a deep audit of ${county} County, ${state} surplus list release patterns. 
+      1. Find the official surplus list URL.
+      2. Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.
+      3. CRITICAL: Research the "Temporal Cadence". Does this county update the list monthly, quarterly, or annually after the tax sale? 
+      4. Find the "Last Modified" date of the current list.
+      5. Predict the "Next Expected Update" based on historical sale cycles.`,
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Jurisdictional Data Scout. You find raw data sources. If a list is hidden or requires an ORR, flag it as a 'MOAT'.",
+        systemInstruction: "You are a Temporal Data Analyst specializing in Government Tax Cycles. Your job is to identify the 'Heartbeat' of county surplus list updates.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
             official_url: { type: Type.STRING },
-            access_type: { 
-              type: Type.STRING, 
-              description: "OPEN_ACCESS (direct download), HYBRID (web table), or MOAT_GATED (ORR required / gatekept)" 
-            },
-            data_format: { type: Type.STRING },
-            last_updated_mention: { type: Type.STRING },
-            treasurer_contact: { type: Type.STRING },
+            access_type: { type: Type.STRING, description: "OPEN_PDF, HYBRID_WEB, or MOAT_GATED" },
+            cadence: { type: Type.STRING, description: "Monthly, Quarterly, Annual, or Ad-hoc" },
+            last_updated: { type: Type.STRING, description: "ISO Date or mention from site." },
+            next_expected_drop: { type: Type.STRING, description: "Calculated prediction for the next list update." },
+            cadence_rationale: { type: Type.STRING, description: "Why we believe this is the update frequency." },
             search_summary: { type: Type.STRING },
-            orr_instructions: { type: Type.STRING, description: "Steps to file an Open Records Request if the list is gated." },
+            orr_instructions: { type: Type.STRING },
             discovery_links: { 
               type: Type.ARRAY, 
               items: { 
@@ -43,7 +43,7 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
               }
             }
           },
-          required: ["official_url", "access_type", "search_summary"]
+          required: ["official_url", "access_type", "cadence", "search_summary"]
         },
       },
     });

@@ -125,8 +125,9 @@ const GlobalCountyScanner: React.FC = () => {
           search_summary: `IDENTIFIED: ${targetCounty} County maintains its records via ${targetCounty === 'Fulton' ? 'a gatekept portal' : 'a public-facing transparency dashboard'}. Access strategy optimized for ${targetState} statutory timelines.`,
           orr_instructions: targetCounty === 'Fulton' ? "1. Visit the centralized county portal. 2. File a request for 'Current Excess Tax Funds List'. 3. Expected turnaround: 3-5 business days." : "No ORR needed. Download latest PDF from official transparency portal.",
           discovery_links: [
-            { title: "Direct Recovery Portal", url: resources.portal, reliability: "VERIFIED_GOV" },
-            { title: "Treasury FAQ / Guidelines", url: resources.faq, reliability: "VERIFIED_GOV" }
+            { title: "County Records Portal", url: resources.portal, reliability: "VERIFIED_GOV" },
+            { title: "Treasurer FAQ & Info", url: resources.faq, reliability: "VERIFIED_GOV" },
+            { title: "Judicial Filings Lookup", url: `https://www.google.com/search?q=${targetCounty}+court+records`, reliability: "SEARCH_RESULT" }
           ]
         });
         setIsScanning(false);
@@ -327,23 +328,23 @@ const GlobalCountyScanner: React.FC = () => {
                      </div>
                    )}
 
-                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-50 pb-8">
+                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-slate-50 pb-10">
                       <div className="flex items-center gap-6">
-                        <div className={`w-20 h-20 rounded-[1.75rem] text-white flex items-center justify-center font-black text-3xl shadow-2xl relative rotate-3 transition-transform ${isLiveMode ? 'bg-emerald-950' : 'bg-slate-950'}`}>
+                        <div className={`w-20 h-20 rounded-[1.75rem] text-white flex items-center justify-center font-black text-3xl shadow-2xl relative rotate-3 transition-transform shrink-0 ${isLiveMode ? 'bg-emerald-950' : 'bg-slate-950'}`}>
                           {targetState}
                         </div>
                         <div>
                           <h4 className="text-3xl font-black text-slate-900 tracking-tight">{targetCounty} County</h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <CheckCircle2Icon size={14} className="text-emerald-500" />
+                            <CheckCircle2Icon size={14} className="text-emerald-500 shrink-0" />
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Surplus Protocol Verified</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
                         <button 
                           onClick={handleWatch}
-                          className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2"
+                          className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-lg shadow-indigo-950/20"
                         >
                           <EyeIcon size={14} /> Watch Pulse
                         </button>
@@ -351,7 +352,7 @@ const GlobalCountyScanner: React.FC = () => {
                           href={results.official_url} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="px-6 py-4 bg-indigo-50 text-indigo-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all border border-indigo-100 flex items-center gap-2"
+                          className="px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all border border-indigo-500 shadow-lg shadow-indigo-100 flex items-center gap-2"
                         >
                           Official URL <ExternalLinkIcon size={14} />
                         </a>
@@ -432,7 +433,7 @@ const GlobalCountyScanner: React.FC = () => {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-between p-7 bg-slate-50 rounded-[2rem] border-2 border-slate-100 hover:border-indigo-400 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 active:scale-[0.98]"
+                        className="group flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 hover:border-indigo-400 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 active:scale-[0.98]"
                       >
                         <div className="flex items-center gap-6 overflow-hidden min-w-0">
                           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner transition-all duration-300 shrink-0 ${
@@ -440,21 +441,23 @@ const GlobalCountyScanner: React.FC = () => {
                           }`}>
                             {link.title.toLowerCase().includes('faq') ? <InfoIcon size={24} /> : (link.reliability === 'VERIFIED_GOV' ? <ShieldIcon size={24} /> : <GlobeIcon size={24} />)}
                           </div>
-                          <div className="overflow-hidden">
-                            <div className="flex items-center gap-2 mb-1">
-                                <p className="text-[15px] font-black text-slate-900 uppercase tracking-tight truncate pr-2">
-                                  {link.title}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col mb-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight leading-tight">
+                                    {link.title}
+                                  </p>
+                                  {link.reliability === 'VERIFIED_GOV' && (
+                                     <span className="text-[7px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded uppercase tracking-widest shrink-0 whitespace-nowrap">Gov Verified</span>
+                                  )}
+                                </div>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">
+                                  {link.url.includes('google') ? 'Web Search Node' : (link.url.includes('.gov') ? 'Official County Portal' : 'Public Asset Node')}
                                 </p>
-                                {link.reliability === 'VERIFIED_GOV' && (
-                                   <span className="text-[8px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded uppercase tracking-widest shrink-0">Gov Verified</span>
-                                )}
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-400 transition-colors truncate">
-                              {link.url.includes('google') ? 'Verified Web Search' : (link.url.includes('.gov') ? 'Official County Portal' : 'Public Directory')}
-                            </p>
                           </div>
                         </div>
-                        <ArrowRightIcon size={24} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0 ml-4" />
+                        <ArrowRightIcon size={20} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0 ml-4" />
                       </a>
                     ))}
                   </div>

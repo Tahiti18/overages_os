@@ -26,7 +26,9 @@ import {
   HashIcon,
   CalendarIcon,
   DollarSignIcon,
-  MapPinIcon
+  MapPinIcon,
+  GavelIcon,
+  ClockIcon
 } from 'lucide-react';
 import { Document } from '../types';
 import { extractDocumentData } from '../lib/gemini';
@@ -53,6 +55,7 @@ const DOCUMENT_TYPES = [
   { value: 'ID', label: 'Government ID' },
   { value: 'AFFIDAVIT', label: 'Affidavit' },
   { value: 'APPLICATION', label: 'Claim Application' },
+  { value: 'JUDICIAL_FILING', label: 'Judicial Filing (MD)' },
   { value: 'OTHER', label: 'Other Attachment' }
 ];
 
@@ -239,6 +242,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
 
   const getFieldIcon = (key: string) => {
     const k = key.toLowerCase();
+    if (k.includes('court') || k.includes('case')) return <GavelIcon size={14} />;
+    if (k.includes('redemption') || k.includes('expiry')) return <ClockIcon size={14} />;
     if (k.includes('id') || k.includes('parcel')) return <HashIcon size={14} />;
     if (k.includes('date')) return <CalendarIcon size={14} />;
     if (k.includes('amount') || k.includes('price')) return <DollarSignIcon size={14} />;

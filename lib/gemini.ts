@@ -1,7 +1,7 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-// AI Core v3.8 - Temporal Intelligence & Link Validation Library
+// AI Core v3.9 - Jurisdiction-Aware Legal Intelligence Library
 
 /**
  * Scans for surplus lists AND analyzes the historical temporal patterns of the jurisdiction.
@@ -208,8 +208,8 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
   const county = jurisdiction?.county || "Unknown";
 
   const jurisdictionDirectives = {
-    'MD': "Maryland is a JUDICIAL state. Prioritize identifying Circuit Court headers, Case Numbers, and Attorney certifications (Rule 14-B compliance). Look for 'Motion for Distribution of Surplus'.",
-    'GA': "Georgia is a REDEMPTION state. Identify if the document is a Tax Deed or Quitclaim. Focus on the 12-month redemption period status and expiration date.",
+    'MD': "Maryland is a JUDICIAL state. MANDATORY: Identify the 'Circuit Court Case Number' (e.g., C-XX-CV-XXXXXX). Determine if the document is a 'Motion for Distribution of Surplus' or another 'Judicial Filing'. Extract judicial headers.",
+    'GA': "Georgia is a REDEMPTION state. MANDATORY: Identify if this is a 'Tax Deed'. Confirm the '12-month Redemption Period' start date and calculate the 'Redemption Expiry Date'. Look for 'Right of Redemption' clauses.",
     'FL': "Florida has a 120-day junior lien window (HB 141). Look for 'Surplus Application' forms and notarized 'Affidavit of Ownership'.",
     'TX': "Texas has strict 2-year redemption for homesteads. Identify Homestead Affidavits and check for HOA priority seniority issues."
   }[state] || "Standard US property tax surplus context.";
@@ -226,7 +226,7 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
         },
       ],
       config: {
-        systemInstruction: `You are a World-Class Senior Legal Document Auditor. Analyze for: 1. Owner names 2. Parcel IDs 3. Financials 4. Liens 5. Jurisdiction-specific compliance markers.`,
+        systemInstruction: `You are a World-Class Senior Legal Document Auditor. Analyze for: 1. Owner names 2. Parcel IDs 3. Financials 4. Liens 5. Jurisdiction-specific compliance markers. If state-specific fields like Case Numbers (MD) or Redemption Dates (GA) are found, populate the relevant extended fields.`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -236,6 +236,8 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
             address: { type: Type.STRING },
             surplus_amount: { type: Type.NUMBER },
             tax_sale_date: { type: Type.STRING },
+            court_case_number: { type: Type.STRING, description: "Identify for Maryland Judicial records." },
+            redemption_expiry_date: { type: Type.STRING, description: "Calculate for Georgia Tax Deeds." },
             document_type: { type: Type.STRING },
             tags: { type: Type.ARRAY, items: { type: Type.STRING } },
             confidence_score: { type: Type.NUMBER },

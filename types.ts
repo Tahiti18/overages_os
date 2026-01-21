@@ -62,6 +62,8 @@ export interface Claimant {
   verified_by_user_id?: string;
   verified_by_email?: string;
   contact_info?: string;
+  verification_rationale?: string; // AI generated explanation
+  confidence_score?: number;
 }
 
 export interface Property {
@@ -81,6 +83,10 @@ export interface Property {
   created_at: string;
   liens?: Lien[];
   claimants?: Claimant[];
+  // AI Enhancements
+  priority_score?: number; // 0-100
+  risk_level?: 'LOW' | 'MEDIUM' | 'HIGH';
+  est_payout_days?: number;
 }
 
 export interface Document {

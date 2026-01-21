@@ -51,3 +51,21 @@ export const extractDocumentData = async (base64Data: string, mimeType: string) 
     return null;
   }
 };
+
+export const performSkipTracing = async (ownerName: string, lastKnownAddress: string) => {
+  const ai = getAIClient();
+  const prompt = `Research the current contact information, potential heirs, and obituary status for: ${ownerName}, formerly associated with the address: ${lastKnownAddress}. Focus on finding potential claimants for property surplus recovery. Return a comprehensive summary of findings including social links, obituary mentions, and potential relative names.`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: {
+      tools: [{ googleSearch: {} }],
+    },
+  });
+
+  const text = response.text || "No information found.";
+  const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+
+  return { text, sources };
+};

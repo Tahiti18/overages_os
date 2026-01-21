@@ -13,7 +13,8 @@ import {
   SearchIcon as SearchIconLucide,
   PlusCircleIcon,
   LayoutListIcon,
-  MapIcon
+  MapIcon,
+  SparklesIcon
 } from 'lucide-react';
 import { Property, CaseStatus } from '../types';
 import PropertyMap from './PropertyMap';
@@ -183,7 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                     <th className="px-8 py-4">Property / APN</th>
                     <th className="px-8 py-4">Jurisdiction</th>
                     <th className="px-8 py-4">Surplus Amount</th>
-                    <th className="px-8 py-4">Deadline</th>
+                    <th className="px-8 py-4">Next Step</th>
                     <th className="px-8 py-4">Status</th>
                     <th className="px-8 py-4 text-right">Actions</th>
                   </tr>
@@ -207,52 +208,16 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                         <p className="text-sm font-bold text-indigo-700">${property.surplus_amount.toLocaleString()}</p>
                       </td>
                       <td className="px-8 py-5">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-slate-700">{property.deadline_date}</span>
-                          <span className="text-[10px] text-orange-600 font-bold uppercase tracking-tight">Immediate Action</span>
-                        </div>
+                        {property.status === CaseStatus.NEW ? (
+                          <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 w-fit">
+                            <SparklesIcon size={12} className="animate-pulse" />
+                            <span className="text-[10px] font-bold uppercase tracking-tight">AI Research Needed</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-slate-700">{property.deadline_date}</span>
+                            <span className="text-[10px] text-orange-600 font-bold uppercase tracking-tight">Claim Deadline</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-8 py-5">
-                        <span className={`text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest border ${getStatusColor(property.status)}`}>
-                          {property.status.replace(/_/g, ' ')}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                        <button className="text-slate-300 group-hover:text-indigo-600 transition-colors p-2">
-                          <ArrowRightIcon size={20} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="py-32 text-center animate-in zoom-in-95 duration-500">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 text-slate-300 mb-6 border-4 border-white shadow-inner">
-                {isLiveMode ? <DatabaseIcon size={32} className="animate-pulse text-indigo-400" /> : <SearchIcon size={32} />}
-              </div>
-              <h4 className="text-lg font-bold text-slate-800">
-                {isLiveMode ? 'Active Data Connection' : 'No Results Found'}
-              </h4>
-              <p className="text-slate-500 text-sm max-w-xs mx-auto mt-1 leading-relaxed">
-                {isLiveMode 
-                  ? 'Prospector AI is listening for live tax sale events. New surplus records will appear here as they are processed.'
-                  : 'No properties currently match your filters.'}
-              </p>
-              {isLiveMode && (
-                <div className="mt-8 flex justify-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  <span className="w-2 h-2 rounded-full bg-green-500/50"></span>
-                  <span className="w-2 h-2 rounded-full bg-green-500/20"></span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Dashboard;

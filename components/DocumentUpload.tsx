@@ -69,11 +69,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
       tags: ['Primary Record', 'Current Year', 'Verified'],
       extraction_status: 'READY_FOR_REVIEW',
       extracted_fields: {
-        parcel_id: '14-0021-0004-012-0',
-        amount_due: 1250.50,
-        owner_name: 'John Doe',
-        jurisdiction: 'Fulton County, GA',
-        confidence_score: 0.98
+        overall_confidence: 0.98,
+        fields: {
+          parcel_id: { value: '14-0021-0004-012-0', confidence: 0.99 },
+          amount_due: { value: 1250.50, confidence: 0.95 },
+          owner_name: { value: 'John Doe', confidence: 0.97 },
+          jurisdiction: { value: 'Fulton County, GA', confidence: 0.88 }
+        }
       },
       verified_by_human: true,
       ocr_text: "TAX YEAR 2023 ... FULTON COUNTY GOVERNMENT ... PROPERTY TAX BILL ... OWNER: JOHN DOE ... PARCEL ID: 14-0021-0004-012-0 ... TOTAL TAX DUE: $1,250.50 ... BILLING DATE: 09/01/2023"
@@ -87,7 +89,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
   const [newTag, setNewTag] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Synchronize with parent pipeline
   useEffect(() => {
     onVerificationChange?.(documents);
   }, [documents]);
@@ -106,13 +107,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
 
   const processFile = async (file: File) => {
     const fileId = Math.random().toString(36).substr(2, 9);
-    
-    setProcessingFiles(prev => [...prev, { 
-      id: fileId, 
-      name: file.name, 
-      progress: 5, 
-      status: 'initializing' 
-    }]);
+    setProcessingFiles(prev => [...prev, { id: fileId, name: file.name, progress: 5, status: 'initializing' }]);
 
     try {
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 20, status: 'uploading' } : f));
@@ -133,29 +128,17 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
         doc_type: aiData?.document_type || 'OTHER',
         tags: aiData?.tags || [],
         extraction_status: 'READY_FOR_REVIEW',
-        extracted_fields: aiData || {},
+        extracted_fields: aiData,
         verified_by_human: false,
-        ocr_text: aiData?.extraction_rationale || `AI Insights: ${aiData?.owner_name || "Unknown Owner"} identified. Document classified as ${aiData?.document_type}. Confidence: ${((aiData?.confidence_score || 0) * 100).toFixed(1)}%.`
+        ocr_text: aiData?.extraction_rationale || `AI Insights: Extraction rationale not provided.`
       };
 
       setDocuments(prev => [newDoc, ...prev]);
-      
       setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'finalizing' } : f));
-      setTimeout(() => {
-        setProcessingFiles(prev => prev.filter(f => f.id !== fileId));
-      }, 800);
-
+      setTimeout(() => setProcessingFiles(prev => prev.filter(f => f.id !== fileId)), 800);
     } catch (err: any) {
-      console.error(`Extraction failed for ${file.name}`, err);
-      setProcessingFiles(prev => prev.map(f => f.id === fileId ? { 
-        ...f, 
-        status: 'error', 
-        error: err.message || "AI Extraction Engine Timeout" 
-      } : f));
-      
-      setTimeout(() => {
-        setProcessingFiles(prev => prev.filter(f => f.id !== fileId));
-      }, 5000);
+      setProcessingFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'error', error: err.message || "AI Engine Timeout" } : f));
+      setTimeout(() => setProcessingFiles(prev => prev.filter(f => f.id !== fileId)), 5000);
     }
   };
 
@@ -169,32 +152,12 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files) {
-      Array.from(e.dataTransfer.files).forEach(processFile);
-    }
+    if (e.dataTransfer.files) Array.from(e.dataTransfer.files).forEach(processFile);
   }, []);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const clearAllDocuments = () => {
-    if (window.confirm("CRITICAL ACTION: Are you sure you want to purge all legal artifacts for this case? This cannot be undone.")) {
-      setDocuments([]);
-      setSelectedDoc(null);
-    }
-  };
 
   const approveDoc = (id: string) => {
     setDocuments(prev => prev.map(d => d.id === id ? { ...d, verified_by_human: true } : d));
-    if (selectedDoc?.id === id) {
-      setSelectedDoc(prev => prev ? { ...prev, verified_by_human: true } : null);
-    }
+    if (selectedDoc?.id === id) setSelectedDoc(prev => prev ? { ...prev, verified_by_human: true } : null);
   };
 
   const removeDoc = (id: string, e: React.MouseEvent) => {
@@ -203,39 +166,21 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
     if (selectedDoc?.id === id) setSelectedDoc(null);
   };
 
-  const updateField = (key: string, value: string) => {
+  const updateField = (key: string, newValue: string) => {
     if (!selectedDoc) return;
-    const updatedFields = { ...selectedDoc.extracted_fields, [key]: value };
-    const updatedDoc = { ...selectedDoc, extracted_fields: updatedFields };
-    setSelectedDoc(updatedDoc);
-    setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
-  };
-
-  const updateDocType = (newType: string) => {
-    if (!selectedDoc) return;
-    const updatedDoc = { ...selectedDoc, doc_type: newType };
-    setSelectedDoc(updatedDoc);
-    setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
-  };
-
-  const addTag = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDoc || !newTag.trim()) return;
-    if (selectedDoc.tags.includes(newTag.trim())) {
-      setNewTag('');
-      return;
-    }
-    const updatedTags = [...selectedDoc.tags, newTag.trim()];
-    const updatedDoc = { ...selectedDoc, tags: updatedTags };
-    setSelectedDoc(updatedDoc);
-    setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
-    setNewTag('');
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    if (!selectedDoc) return;
-    const updatedTags = selectedDoc.tags.filter(t => t !== tagToRemove);
-    const updatedDoc = { ...selectedDoc, tags: updatedTags };
+    const currentFields = selectedDoc.extracted_fields.fields || {};
+    const fieldData = currentFields[key] || { value: '', confidence: 1.0 };
+    
+    const updatedFields = { 
+      ...currentFields, 
+      [key]: { ...fieldData, value: newValue } 
+    };
+    
+    const updatedDoc = { 
+      ...selectedDoc, 
+      extracted_fields: { ...selectedDoc.extracted_fields, fields: updatedFields } 
+    };
+    
     setSelectedDoc(updatedDoc);
     setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
   };
@@ -252,112 +197,60 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
     return <SparklesIcon size={14} />;
   };
 
+  const getConfidenceColor = (score: number) => {
+    if (score > 0.9) return 'bg-emerald-500';
+    if (score > 0.7) return 'bg-amber-500';
+    return 'bg-rose-500';
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left: Document Inventory */}
         <div className="flex-1 space-y-6">
           <div 
             onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={`bg-white rounded-[3rem] border-2 border-dashed p-14 text-center group transition-all shadow-sm relative overflow-hidden ${
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            className={`bg-white rounded-[3rem] border-2 border-dashed p-14 text-center group transition-all shadow-xl relative overflow-hidden ${
               isDragging ? 'bg-indigo-50 border-indigo-500 scale-[1.01] ring-8 ring-indigo-500/5' : 'border-slate-200 hover:bg-slate-50/50 hover:border-indigo-400'
             }`}
           >
-            <input 
-              type="file" 
-              id="file-upload" 
-              className="hidden" 
-              multiple
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-            />
+            <input type="file" id="file-upload" className="hidden" multiple ref={fileInputRef} onChange={handleFileUpload} />
             <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-6 relative z-10">
-              <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center transition-all duration-500 ${
-                isDragging ? 'bg-indigo-600 text-white scale-110 shadow-2xl shadow-indigo-200 rotate-12' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 group-hover:scale-110'
+              <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center transition-all duration-500 ${
+                isDragging ? 'bg-indigo-600 text-white scale-110 shadow-3xl rotate-12' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 group-hover:scale-110'
               }`}>
-                {isDragging ? <PlusIcon size={48} strokeWidth={2.5} /> : <UploadCloudIcon size={48} strokeWidth={2.5} />}
+                <UploadCloudIcon size={48} strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
-                <p className="text-2xl font-black text-slate-900 tracking-tight">
-                  {isDragging ? 'Drop Legal Evidence' : 'Ingest Case Artifacts'}
-                </p>
-                <p className="text-sm text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
+                <p className="text-2xl font-black text-slate-900 tracking-tight italic">Ingest Case Artifacts</p>
+                <p className="text-sm text-slate-700 font-bold max-w-sm mx-auto leading-relaxed">
                   Bulk upload property deeds, tax bills, and IDs. AI Core will automatically extract recovery data.
                 </p>
-                <div className="flex items-center justify-center gap-3 mt-6">
-                  <span className="px-4 py-1.5 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] shadow-sm">AI OCR Enabled</span>
-                  <span className="px-4 py-1.5 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] shadow-sm">Grounding Filter</span>
-                </div>
               </div>
             </label>
-            {isDragging && (
-              <div className="absolute inset-0 pointer-events-none border-4 border-indigo-600/10 m-3 rounded-[2.5rem] animate-pulse"></div>
-            )}
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between px-6">
-              <div className="flex items-center gap-3">
-                <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Artifact Repository</h5>
-                <span className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black">{documents.length}</span>
-              </div>
-              {documents.length > 0 && (
-                <button 
-                  onClick={clearAllDocuments}
-                  className="px-5 py-2.5 bg-red-50 text-[10px] font-black text-red-600 rounded-2xl uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm flex items-center gap-2"
-                >
-                  <Trash2Icon size={14} />
-                  Purge Inventory
-                </button>
-              )}
-            </div>
-
+            <h5 className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-6">Artifact Repository</h5>
             <div className="grid grid-cols-1 gap-4">
               {processingFiles.map(file => (
-                <div 
-                  key={file.id}
-                  className={`flex flex-col p-8 rounded-[2.5rem] shadow-lg animate-in fade-in slide-in-from-top-4 duration-300 border-2 ${
-                    file.status === 'error' ? 'bg-red-50 border-red-100 shadow-red-50' : 'bg-white border-indigo-100 shadow-indigo-50/50'
-                  }`}
-                >
+                <div key={file.id} className="p-8 bg-white border-2 border-indigo-100 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-5">
-                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner ${
-                        file.status === 'error' ? 'bg-red-100 text-red-500' : 'bg-indigo-50 text-indigo-600'
-                      }`}>
-                        {file.status === 'error' ? <AlertCircleIcon size={32} /> : <RefreshCwIcon size={32} className="animate-spin" />}
+                      <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
+                        <RefreshCwIcon size={32} className="animate-spin" />
                       </div>
                       <div>
-                        <p className="text-lg font-black text-slate-900 tracking-tight truncate max-w-[280px]">{file.name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className={`w-2 h-2 rounded-full ${file.status === 'error' ? 'bg-red-500' : 'bg-indigo-500 animate-pulse'}`}></div>
-                          <p className={`text-[10px] font-black uppercase tracking-widest ${file.status === 'error' ? 'text-red-600' : 'text-indigo-600'}`}>
-                            {file.status === 'error' ? 'Extraction Failure' : `Intelligence Stage: ${file.status.toUpperCase()}`}
-                          </p>
-                        </div>
+                        <p className="text-lg font-black text-slate-900 tracking-tight">{file.name}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mt-1">Intelligence Stage: {file.status.toUpperCase()}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`text-2xl font-black ${file.status === 'error' ? 'text-red-500' : 'text-indigo-600'}`}>
-                        {file.status === 'error' ? '!' : `${file.progress}%`}
-                      </p>
-                    </div>
+                    <p className="text-2xl font-black text-indigo-600">{file.progress}%</p>
                   </div>
-                  
-                  {file.status === 'error' ? (
-                    <div className="bg-white p-4 rounded-2xl border border-red-200">
-                      <p className="text-[11px] font-bold text-red-700 leading-relaxed">{file.error}</p>
-                    </div>
-                  ) : (
-                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                      <div 
-                        className="h-full bg-indigo-600 transition-all duration-700 ease-out shadow-[0_0_15px_rgba(79,70,229,0.4)]"
-                        style={{ width: `${file.progress}%` }}
-                      ></div>
-                    </div>
-                  )}
+                  <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
+                    <div className="h-full bg-indigo-600 transition-all duration-700 shadow-[0_0_12px_rgba(79,70,229,0.5)]" style={{ width: `${file.progress}%` }}></div>
+                  </div>
                 </div>
               ))}
 
@@ -365,332 +258,187 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, propertySta
                 <div 
                   key={doc.id}
                   onClick={() => setSelectedDoc(doc)}
-                  className={`flex items-center justify-between p-8 bg-white border-2 rounded-[2.5rem] cursor-pointer transition-all group ${
-                    selectedDoc?.id === doc.id 
-                      ? 'border-indigo-600 shadow-2xl shadow-indigo-100 -translate-y-1' 
-                      : 'border-slate-100 hover:border-indigo-300 shadow-sm hover:shadow-md'
+                  className={`flex items-center justify-between p-8 bg-white border-2 rounded-[2.5rem] cursor-pointer transition-all hover:-translate-y-1 ${
+                    selectedDoc?.id === doc.id ? 'border-indigo-600 shadow-3xl' : 'border-slate-100 shadow-xl'
                   }`}
                 >
                   <div className="flex items-center gap-6">
-                    <div className={`w-18 h-18 rounded-[1.5rem] flex items-center justify-center transition-all duration-300 ${
-                      doc.verified_by_human 
-                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                        : 'bg-slate-50 text-slate-400 border border-slate-100 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:scale-105'
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all ${
+                      doc.verified_by_human ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-lg' : 'bg-slate-50 text-slate-400 border-slate-200 shadow-inner'
                     }`}>
-                      {doc.verified_by_human ? <FileCheckIcon size={36} /> : <FileIcon size={36} />}
+                      {doc.verified_by_human ? <FileCheckIcon size={32} /> : <FileIcon size={32} />}
                     </div>
                     <div>
-                      <p className="text-lg font-black text-slate-900 tracking-tight">{doc.filename}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="text-[9px] bg-slate-900 text-white px-3 py-1 rounded-lg font-black uppercase tracking-widest">{doc.doc_type.replace(/_/g, ' ')}</span>
-                        {doc.tags.map(tag => (
-                          <span key={tag} className="text-[9px] bg-indigo-50 text-indigo-500 px-3 py-1 rounded-lg font-bold uppercase border border-indigo-100 flex items-center gap-1.5 shadow-sm">
-                            <TagIcon size={10} className="opacity-60" />
-                            {tag}
-                          </span>
-                        ))}
+                      <p className="text-lg font-black text-slate-900 tracking-tight uppercase italic">{doc.filename}</p>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <span className="text-[9px] bg-slate-900 text-white px-3 py-1 rounded-lg font-black uppercase tracking-widest border border-white/10 shadow-md">
+                          {doc.doc_type.replace(/_/g, ' ')}
+                        </span>
+                        {doc.verified_by_human && (
+                           <span className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100 shadow-sm">
+                             <ShieldCheckIcon size={12} /> Audited
+                           </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-5">
-                    {doc.verified_by_human && (
-                      <div className="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-200 shadow-sm">
-                        <ShieldCheckIcon size={16} />
-                        <span className="text-[10px] font-black uppercase tracking-[0.1em]">Audited</span>
-                      </div>
-                    )}
-                    <button 
-                      onClick={(e) => removeDoc(doc.id, e)}
-                      className="p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
-                    >
-                      <Trash2Icon size={22} />
-                    </button>
-                    <div className="p-4 text-slate-300 group-hover:text-indigo-600 transition-all transform group-hover:scale-125">
-                      <ChevronDownIcon size={28} className="-rotate-90" />
-                    </div>
+                  <div className="flex items-center gap-4">
+                     <button onClick={(e) => removeDoc(doc.id, e)} className="p-4 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-2xl border-2 border-transparent transition-all">
+                        <Trash2Icon size={22} />
+                     </button>
+                     <ChevronDownIcon size={24} className={`text-slate-400 transition-transform ${selectedDoc?.id === doc.id ? '-rotate-180' : '-rotate-90'}`} />
                   </div>
                 </div>
               ))}
-
-              {documents.length === 0 && processingFiles.length === 0 && (
-                <div className="py-32 text-center space-y-6 border-2 border-dashed border-slate-100 rounded-[3.5rem] bg-slate-50/20 shadow-inner">
-                  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto text-slate-200 border border-slate-100 shadow-xl">
-                    <ArchiveIcon size={48} strokeWidth={1} />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Repository Empty</p>
-                    <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto">Upload recovery evidence to initialize AI audit engine.</p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Right: Intelligence Review Pane */}
         <div className="lg:w-[540px] shrink-0">
           {selectedDoc ? (
-            <div className="bg-white border-2 border-slate-100 rounded-[3.5rem] shadow-2xl flex flex-col h-[850px] overflow-hidden animate-in slide-in-from-right-12 duration-500 sticky top-10 ring-1 ring-slate-100">
-              {/* Header */}
-              <div className="px-12 py-10 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div className="bg-white border-2 border-slate-100 rounded-[3.5rem] shadow-3xl flex flex-col h-[850px] overflow-hidden sticky top-10 ring-1 ring-slate-100 animate-in slide-in-from-right-12 duration-500">
+              <div className="px-12 py-10 border-b-2 border-slate-100 bg-slate-50 flex items-center justify-between">
                 <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 bg-indigo-600 text-white rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-indigo-300 ring-4 ring-white">
+                  <div className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-2xl border-2 border-white/20">
                     <SparklesIcon size={28} />
                   </div>
                   <div className="overflow-hidden">
-                    <h5 className="font-black text-slate-900 text-lg uppercase tracking-tight">Case Intelligence</h5>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate max-w-[280px] mt-1">{selectedDoc.filename}</p>
+                    <h5 className="font-black text-slate-900 text-lg uppercase tracking-tight italic">Case Intelligence</h5>
+                    <p className="text-[10px] text-slate-700 font-black uppercase tracking-widest truncate max-w-[240px] mt-1">{selectedDoc.filename}</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setSelectedDoc(null)}
-                  className="p-3 text-slate-400 hover:text-slate-900 transition-all bg-white rounded-2xl border border-slate-200 hover:shadow-lg active:scale-90"
-                >
+                <button onClick={() => setSelectedDoc(null)} className="p-3 text-slate-400 hover:text-slate-950 transition-all bg-white rounded-2xl border-2 border-slate-100 shadow-lg hover:scale-110 active:scale-90">
                   <XIcon size={24} />
                 </button>
               </div>
 
-              {/* Tabs */}
-              <div className="flex border-b border-slate-100 bg-white">
-                <button 
-                  onClick={() => setReviewTab('fields')}
-                  className={`flex-1 py-6 text-[11px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 relative ${reviewTab === 'fields' ? 'text-indigo-600 bg-indigo-50/30' : 'text-slate-400 hover:text-slate-600 bg-white'}`}
-                >
-                  <TypeIcon size={16} />
-                  Structured Fields
-                  {reviewTab === 'fields' && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600"></div>}
+              <div className="flex border-b-2 border-slate-100 bg-white">
+                <button onClick={() => setReviewTab('fields')} className={`flex-1 py-6 text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 relative ${reviewTab === 'fields' ? 'text-indigo-600 bg-indigo-50/30' : 'text-slate-400'}`}>
+                  <TypeIcon size={16} /> Structured Fields
+                  {reviewTab === 'fields' && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 shadow-[0_-4px_12px_rgba(79,70,229,0.3)]"></div>}
                 </button>
-                <button 
-                  onClick={() => setReviewTab('ocr')}
-                  className={`flex-1 py-6 text-[11px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 relative ${reviewTab === 'ocr' ? 'text-indigo-600 bg-indigo-50/30' : 'text-slate-400 hover:text-slate-600 bg-white'}`}
-                >
-                  <FileSearchIcon size={16} />
-                  Audit Rationale
-                  {reviewTab === 'ocr' && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600"></div>}
+                <button onClick={() => setReviewTab('ocr')} className={`flex-1 py-6 text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 relative ${reviewTab === 'ocr' ? 'text-indigo-600 bg-indigo-50/30' : 'text-slate-400'}`}>
+                  <FileSearchIcon size={16} /> Audit Logic
+                  {reviewTab === 'ocr' && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 shadow-[0_-4px_12px_rgba(79,70,229,0.3)]"></div>}
                 </button>
               </div>
               
-              {/* Content Area */}
               <div className="flex-1 overflow-auto p-12 space-y-10 custom-scrollbar">
                 {reviewTab === 'fields' ? (
-                  <div className="space-y-8">
-                    {/* Confidence Score Visual */}
-                    {selectedDoc.extracted_fields.confidence_score && (
-                      <div className="p-8 bg-slate-900 rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl">
+                  <div className="space-y-10">
+                    {selectedDoc.extracted_fields.overall_confidence && (
+                      <div className="p-8 bg-slate-950 rounded-[2.5rem] text-white relative overflow-hidden shadow-3xl border-2 border-white/5 group">
                         <div className="relative z-10 flex items-center justify-between">
                           <div>
                             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">Extraction Reliability</p>
-                            <p className="text-4xl font-black tracking-tight">{(selectedDoc.extracted_fields.confidence_score * 100).toFixed(1)}%</p>
+                            <p className="text-5xl font-black tracking-tighter">{(selectedDoc.extracted_fields.overall_confidence * 100).toFixed(1)}%</p>
                           </div>
-                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${selectedDoc.extracted_fields.confidence_score > 0.9 ? 'border-emerald-500 text-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-amber-500 text-amber-500 shadow-lg shadow-amber-500/20'}`}>
-                            <ShieldCheckIcon size={36} />
+                          <div className={`w-20 h-20 rounded-[1.5rem] flex items-center justify-center border-2 transition-all duration-700 ${selectedDoc.extracted_fields.overall_confidence > 0.9 ? 'border-emerald-500/50 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'border-amber-500/50 text-amber-400'}`}>
+                            <ShieldCheckIcon size={44} />
                           </div>
                         </div>
-                        <div className="absolute -right-6 -bottom-6 opacity-5 rotate-12 group-hover:scale-125 group-hover:rotate-45 transition-all duration-1000">
-                           <SparklesIcon size={120} fill="white" />
+                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-125 transition-transform duration-1000 rotate-12">
+                           <SparklesIcon size={160} fill="white" />
                         </div>
                       </div>
                     )}
 
-                    {/* Document Classification Select */}
                     <div className="space-y-4">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2.5">
-                        <FileIcon size={16} className="text-indigo-500" /> Statutory Classification
+                      <label className="text-[11px] font-black text-slate-700 uppercase tracking-widest px-3 flex items-center gap-2.5">
+                        <FileIcon size={16} className="text-indigo-600" /> Artifact Classification
                       </label>
                       <div className="relative group">
                         <select 
                           value={selectedDoc.doc_type}
                           disabled={selectedDoc.verified_by_human}
-                          onChange={(e) => updateDocType(e.target.value)}
-                          className={`w-full px-8 py-5 border-2 rounded-3xl text-[14px] font-black transition-all outline-none appearance-none ${
-                            selectedDoc.verified_by_human 
-                              ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-default' 
-                              : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm cursor-pointer hover:border-indigo-300'
+                          onChange={(e) => approveDoc(selectedDoc.id)}
+                          className={`w-full px-8 py-5 border-2 rounded-3xl text-[14px] font-black transition-all outline-none appearance-none cursor-pointer shadow-inner ${
+                            selectedDoc.verified_by_human ? 'bg-slate-50 border-slate-100 text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-600'
                           }`}
                         >
-                          {DOCUMENT_TYPES.map(type => (
-                            <option key={type.value} value={type.value}>{type.label}</option>
-                          ))}
+                          {DOCUMENT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
                         </select>
-                        {!selectedDoc.verified_by_human && (
-                          <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                            <ChevronDownIcon size={20} />
-                          </div>
-                        )}
+                        <ChevronDownIcon size={20} className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                       </div>
                     </div>
-
-                    {/* Tags Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between px-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2.5">
-                          <TagIcon size={16} className="text-indigo-500" /> Case Prioritization Tags
-                        </label>
-                        {!selectedDoc.verified_by_human && (
-                          <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-full text-[9px] font-black text-indigo-600 uppercase tracking-wider animate-pulse border border-indigo-100">
-                            <SparklesIcon size={10} />
-                            AI Suggesed
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-3 min-h-[60px] p-6 bg-slate-50 rounded-[2.5rem] border-2 border-slate-100 shadow-inner group/tags">
-                        {selectedDoc.tags.map(tag => (
-                          <div 
-                            key={tag} 
-                            className={`flex items-center gap-2 px-4 py-2 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-sm transition-all animate-in zoom-in duration-300 ${
-                              selectedDoc.verified_by_human 
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                                : 'bg-white text-indigo-600 border-indigo-100 hover:border-red-200 hover:text-red-500 cursor-default'
-                            }`}
-                          >
-                            {selectedDoc.verified_by_human ? <CheckIcon size={12} /> : <SparklesIcon size={12} className="opacity-40" />}
-                            {tag}
-                            {!selectedDoc.verified_by_human && (
-                              <button 
-                                onClick={() => removeTag(tag)} 
-                                className="text-slate-300 hover:text-red-500 transition-colors ml-1 p-0.5 rounded-md hover:bg-red-50"
-                              >
-                                <XIcon size={12} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        {!selectedDoc.verified_by_human && (
-                          <form onSubmit={addTag} className="flex-1 min-w-[140px]">
-                            <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-2xl px-4 py-2 shadow-sm focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
-                              <PlusIcon size={14} className="text-slate-300" />
-                              <input 
-                                type="text" 
-                                placeholder="MANUAL TAG..."
-                                value={newTag}
-                                onChange={(e) => setNewTag(e.target.value)}
-                                className="w-full bg-transparent border-none p-0 text-[10px] font-black outline-none placeholder:text-slate-400 uppercase tracking-widest"
-                              />
-                            </div>
-                          </form>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Compliance Marker */}
-                    {selectedDoc.extracted_fields.jurisdiction_compliance_found && (
-                      <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-3xl flex items-start gap-5 shadow-sm animate-in zoom-in duration-300">
-                        <div className="p-2 bg-white rounded-xl shadow-sm">
-                          <ShieldCheckIcon size={24} className="text-emerald-500" />
-                        </div>
-                        <p className="text-[13px] text-emerald-900 leading-relaxed font-bold">
-                          Jurisdiction Verified: Document matches specific statutory requirements for {propertyState}.
-                        </p>
-                      </div>
-                    )}
-
-                    {!selectedDoc.verified_by_human && !selectedDoc.extracted_fields.jurisdiction_compliance_found && (
-                      <div className="p-6 bg-amber-50 border border-amber-100 rounded-3xl flex items-start gap-5 shadow-sm">
-                        <div className="p-2 bg-white rounded-xl shadow-sm">
-                          <AlertCircleIcon size={24} className="text-amber-500" />
-                        </div>
-                        <p className="text-[13px] text-amber-900 leading-relaxed font-bold">
-                          Verification Pending: Every data point must be audited for accuracy before authorizing recovery inclusion.
-                        </p>
-                      </div>
-                    )}
 
                     <div className="space-y-8">
-                      <div className="px-2 flex items-center justify-between">
-                         <h6 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Metadata Artifacts</h6>
-                         {!selectedDoc.verified_by_human && (
-                            <div className="flex items-center gap-2 text-[9px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">
-                               <RefreshCwIcon size={10} className="animate-spin-slow" />
-                               Human Review Active
-                            </div>
-                         )}
+                      <div className="px-3 flex items-center justify-between">
+                         <h6 className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Metadata Artifacts</h6>
+                         <Tooltip content="Color indicators represent the AI's certainty for each specific field.">
+                           <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div><span className="text-[8px] font-black uppercase text-slate-400">High</span></div>
+                              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500 shadow-lg shadow-amber-500/50"></div><span className="text-[8px] font-black uppercase text-slate-400">Med</span></div>
+                              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50"></div><span className="text-[8px] font-black uppercase text-slate-400">Low</span></div>
+                           </div>
+                         </Tooltip>
                       </div>
                       <div className="grid grid-cols-1 gap-6">
-                        {Object.entries(selectedDoc.extracted_fields).map(([key, value]) => {
-                          if (['tags', 'document_type', 'extraction_rationale', 'confidence_score', 'discovered_liens', 'jurisdiction_compliance_found'].includes(key)) return null;
-                          return (
-                            <div key={key} className="group">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-3 group-focus-within:text-indigo-600 transition-colors flex items-center gap-2">
+                        {Object.entries(selectedDoc.extracted_fields.fields || {}).map(([key, data]: [string, any]) => (
+                          <div key={key} className="group animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="flex items-center justify-between mb-3 px-3">
+                              <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-2 group-focus-within:text-indigo-600 transition-colors">
                                 {getFieldIcon(key)}
                                 {key.replace(/_/g, ' ')}
                               </label>
-                              <div className="relative">
-                                <input 
-                                  type="text" 
-                                  value={value === null ? '' : String(value)}
-                                  onChange={(e) => updateField(key, e.target.value)}
-                                  className={`w-full px-8 py-5 border-2 rounded-[1.5rem] text-[15px] font-black transition-all outline-none ${
-                                    selectedDoc.verified_by_human 
-                                      ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-default shadow-none' 
-                                      : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm'
-                                  }`}
-                                  readOnly={selectedDoc.verified_by_human}
-                                />
-                                {!selectedDoc.verified_by_human && (
-                                  <div className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-200 group-focus-within:text-indigo-200 transition-colors">
-                                    <CheckCircle2Icon size={20} />
-                                  </div>
-                                )}
-                              </div>
+                              <Tooltip content={`Confidence: ${(data.confidence * 100).toFixed(0)}%`}>
+                                <div className={`w-3 h-3 rounded-full shadow-lg transition-all transform group-hover:scale-125 ${getConfidenceColor(data.confidence)}`}></div>
+                              </Tooltip>
                             </div>
-                          );
-                        })}
+                            <div className="relative">
+                              <input 
+                                type="text" 
+                                value={String(data.value || '')}
+                                onChange={(e) => updateField(key, e.target.value)}
+                                className={`w-full px-8 py-5 border-2 rounded-[1.5rem] text-[15px] font-black transition-all outline-none shadow-inner ${
+                                  selectedDoc.verified_by_human 
+                                    ? 'bg-slate-50 border-slate-100 text-slate-600 cursor-default' 
+                                    : 'bg-white border-slate-200 text-slate-900 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 hover:border-indigo-300'
+                                }`}
+                                readOnly={selectedDoc.verified_by_human}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-8 animate-in fade-in duration-500">
-                     <div className="p-10 bg-slate-900 text-indigo-100 rounded-[3rem] font-mono text-[13px] leading-relaxed border border-indigo-500/30 shadow-2xl min-h-[500px] selection:bg-indigo-500 selection:text-white">
-                        <div className="mb-6 flex items-center justify-between border-b border-indigo-500/20 pb-4">
-                           <span className="text-indigo-400 font-black uppercase text-[10px] tracking-widest">Raw OCR Stream</span>
-                           <span className="text-[10px] text-indigo-600 font-black">UTF-8 / LATIN-1</span>
+                     <div className="p-10 bg-slate-950 text-indigo-200 rounded-[3.5rem] font-mono text-[13px] leading-relaxed border-2 border-white/5 shadow-inner min-h-[500px]">
+                        <div className="mb-8 flex items-center justify-between border-b border-white/5 pb-4">
+                           <span className="text-indigo-500 font-black uppercase text-[10px] tracking-widest">Logic Trail Stream</span>
+                           <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest">UTF-8 • Secure</span>
                         </div>
-                        {selectedDoc.ocr_text || "Logic trace dormant. Extraction rationale not found."}
-                     </div>
-                     <div className="flex items-center justify-center gap-4 text-slate-400 px-6">
-                        <div className="h-px flex-1 bg-slate-100"></div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center">Audit Logic Grounding Complete</p>
-                        <div className="h-px flex-1 bg-slate-100"></div>
+                        <p className="opacity-90 italic">"{selectedDoc.ocr_text || "Logic trace dormant."}"</p>
                      </div>
                   </div>
                 )}
               </div>
 
-              {/* Actions Footer */}
-              <div className="p-12 bg-slate-50 border-t border-slate-100 flex flex-col gap-5">
+              <div className="p-12 bg-slate-50 border-t-2 border-slate-100 flex flex-col gap-5 shadow-2xl">
                 <button 
                   onClick={() => approveDoc(selectedDoc.id)}
                   disabled={selectedDoc.verified_by_human}
-                  className={`w-full flex items-center justify-center gap-4 py-6 rounded-[2.5rem] text-sm font-black uppercase tracking-[0.15em] transition-all shadow-2xl ${
+                  className={`w-full flex items-center justify-center gap-4 py-6 rounded-[2.5rem] text-sm font-black uppercase tracking-widest transition-all shadow-3xl hover:-translate-y-1 active:scale-95 ${
                     selectedDoc.verified_by_human 
-                      ? 'bg-emerald-600 text-white cursor-default shadow-emerald-200' 
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.98] shadow-indigo-200 transform hover:-translate-y-1.5'
+                      ? 'bg-emerald-600 text-white shadow-emerald-500/20' 
+                      : 'bg-indigo-600 text-white shadow-indigo-500/20 hover:bg-indigo-700 border-2 border-white/10'
                   }`}
                 >
                   {selectedDoc.verified_by_human ? <ClipboardCheckIcon size={24} /> : <CheckCircle2Icon size={24} />}
-                  {selectedDoc.verified_by_human ? 'Record Fully Authorized' : 'Confirm & Authorize Data'}
+                  {selectedDoc.verified_by_human ? 'Case Data Authorized' : 'Confirm & Authorize Data'}
                 </button>
-                
-                {!selectedDoc.verified_by_human && (
-                  <button 
-                    onClick={(e) => removeDoc(selectedDoc.id, e)}
-                    className="flex items-center justify-center gap-2 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all text-[11px] font-black uppercase tracking-widest"
-                  >
-                    <Trash2Icon size={18} />
-                    Reject Artifact
-                  </button>
-                )}
               </div>
             </div>
           ) : (
-            <div className="bg-white border-4 border-dashed border-slate-100 rounded-[4rem] flex flex-col items-center justify-center p-20 text-center h-[750px] group transition-all hover:bg-slate-50/50 hover:border-indigo-100">
-              <div className="w-32 h-32 bg-white rounded-[3rem] flex items-center justify-center mb-10 border-2 border-slate-50 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
-                <FileSearchIcon size={56} className="text-slate-200 group-hover:text-indigo-400 transition-colors" />
+            <div className="bg-white border-4 border-dashed border-slate-200 rounded-[4rem] flex flex-col items-center justify-center p-20 text-center h-[750px] group transition-all hover:bg-slate-50/50 hover:border-indigo-100 shadow-inner">
+              <div className="w-32 h-32 bg-white rounded-[3rem] flex items-center justify-center mb-10 border-2 border-slate-50 shadow-3xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+                <FileSearchIcon size={56} className="text-slate-200 group-hover:text-indigo-600 transition-colors" />
               </div>
-              <h5 className="font-black text-slate-800 uppercase text-lg tracking-[0.2em] mb-4">Inspection Dormant</h5>
-              <p className="text-sm font-medium text-slate-400 max-w-[320px] mx-auto leading-relaxed">
-                Select a legal record from the inventory to initiate the Deep Audit protocol and verify extracted recovery points.
+              <h5 className="font-black text-slate-800 uppercase text-lg tracking-[0.2em] mb-4 italic">Deep Audit Dormant</h5>
+              <p className="text-sm font-bold text-slate-500 max-w-[320px] mx-auto leading-relaxed">
+                Select a legal record from the inventory to initiate the granular field verification protocol.
               </p>
             </div>
           )}

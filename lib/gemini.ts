@@ -199,7 +199,7 @@ export const discoverPropertyLiens = async (property: any) => {
 };
 
 /**
- * Extracts structured data from property-related legal documents with jurisdiction awareness.
+ * Extracts structured data from property-related legal documents with jurisdiction awareness and per-field confidence.
  */
 export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -221,30 +221,56 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
         {
           parts: [
             { inlineData: { data: base64Data, mimeType: mimeType } },
-            { text: `Analyze this document for property in ${county}, ${state}. ${jurisdictionDirectives}` },
+            { text: `Analyze this document for property in ${county}, ${state}. ${jurisdictionDirectives}. FOR EACH FIELD, provide a corresponding confidence score (0.0 - 1.0).` },
           ],
         },
       ],
       config: {
-        systemInstruction: `You are a World-Class Senior Legal Document Auditor. Analyze for: 1. Owner names 2. Parcel IDs 3. Financials 4. Liens 5. Jurisdiction-specific compliance markers. If state-specific fields like Case Numbers (MD) or Redemption Dates (GA) are found, populate the relevant extended fields.`,
+        systemInstruction: `You are a World-Class Senior Legal Document Auditor. Analyze for: 1. Owner names 2. Parcel IDs 3. Financials 4. Liens 5. Jurisdiction-specific compliance markers. If state-specific fields like Case Numbers (MD) or Redemption Dates (GA) are found, populate the relevant extended fields. IMPORTANT: You must return a "fields" object where each key is a record containing "value" and "confidence".`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            owner_name: { type: Type.STRING },
-            parcel_id: { type: Type.STRING },
-            address: { type: Type.STRING },
-            surplus_amount: { type: Type.NUMBER },
-            tax_sale_date: { type: Type.STRING },
-            court_case_number: { type: Type.STRING, description: "Identify for Maryland Judicial records." },
-            redemption_expiry_date: { type: Type.STRING, description: "Calculate for Georgia Tax Deeds." },
             document_type: { type: Type.STRING },
-            tags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            confidence_score: { type: Type.NUMBER },
+            overall_confidence: { type: Type.NUMBER },
             extraction_rationale: { type: Type.STRING },
-            jurisdiction_compliance_found: { type: Type.BOOLEAN, description: "True if state-specific required markers were identified." }
+            jurisdiction_compliance_found: { type: Type.BOOLEAN },
+            tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+            fields: {
+              type: Type.OBJECT,
+              properties: {
+                owner_name: { 
+                  type: Type.OBJECT, 
+                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
+                },
+                parcel_id: { 
+                  type: Type.OBJECT, 
+                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
+                },
+                address: { 
+                  type: Type.OBJECT, 
+                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
+                },
+                surplus_amount: { 
+                  type: Type.OBJECT, 
+                  properties: { value: { type: Type.NUMBER }, confidence: { type: Type.NUMBER } } 
+                },
+                tax_sale_date: { 
+                  type: Type.OBJECT, 
+                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
+                },
+                court_case_number: { 
+                  type: Type.OBJECT, 
+                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
+                },
+                redemption_expiry_date: { 
+                  type: Type.OBJECT, 
+                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
+                }
+              }
+            }
           },
-          required: ["owner_name", "parcel_id", "document_type", "confidence_score"],
+          required: ["document_type", "overall_confidence", "fields"],
         },
       },
     });

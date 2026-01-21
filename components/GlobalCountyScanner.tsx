@@ -26,12 +26,30 @@ import {
   ClockIcon,
   CalendarIcon,
   BellIcon,
-  TargetIcon
+  TargetIcon,
+  ChevronDownIcon,
+  LinkIcon
 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import { scanJurisdictionForSurplus, generateORRLetter } from '../lib/gemini';
 import { WatchedJurisdiction } from '../types';
 import Tooltip from './Tooltip';
+
+const COUNTIES_BY_STATE: Record<string, string[]> = {
+  GA: ['Fulton', 'DeKalb', 'Gwinnett', 'Cobb', 'Clayton', 'Chatham', 'Forsyth', 'Hall', 'Henry', 'Richmond', 'Muscogee', 'Douglas', 'Bibb'],
+  FL: ['Miami-Dade', 'Broward', 'Palm Beach', 'Hillsborough', 'Orange', 'Duval', 'Pinellas', 'Lee', 'Polk', 'Brevard', 'Volusia', 'Pasco'],
+  TX: ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Travis', 'Collin', 'Denton', 'Hidalgo', 'El Paso', 'Fort Bend', 'Montgomery', 'Williamson'],
+  MD: ['Baltimore City', 'Montgomery', 'Prince George\'s', 'Baltimore County', 'Anne Arundel', 'Howard', 'Harford', 'Frederick', 'Carroll'],
+  AL: ['Jefferson', 'Mobile', 'Madison', 'Montgomery', 'Shelby', 'Tuscaloosa', 'Baldwin', 'Lee', 'Morgan', 'Calhoun'],
+  NC: ['Wake', 'Mecklenburg', 'Guilford', 'Forsyth', 'Cumberland', 'Durham', 'Buncombe', 'Gaston', 'New Hanover', 'Union']
+};
+
+const COUNTY_RESOURCES: Record<string, { portal: string, faq: string }> = {
+  'Fulton': { portal: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds', faq: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds-frequently-asked-questions' },
+  'Miami-Dade': { portal: 'https://www.miamidade.gov/taxcollector/excess-proceeds.asp', faq: 'https://www.miamidade.gov/taxcollector/faq-tax-sale.asp' },
+  'Harris': { portal: 'https://www.hctax.net/Property/TaxSales', faq: 'https://www.hctax.net/Property/TaxSalesFAQ' },
+  'Baltimore City': { portal: 'https://propertytaxcard.baltimorecity.gov/', faq: 'https://finance.baltimorecity.gov/tax-sale' },
+};
 
 const GlobalCountyScanner: React.FC = () => {
   const { isLiveMode } = useOutletContext<{ isLiveMode: boolean }>();
@@ -43,6 +61,14 @@ const GlobalCountyScanner: React.FC = () => {
   const [orrLetter, setOrrLetter] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [watchlist, setWatchlist] = useState<WatchedJurisdiction[]>([]);
+
+  // Sync county dropdown when state changes
+  useEffect(() => {
+    const available = COUNTIES_BY_STATE[targetState] || [];
+    if (available.length > 0 && !available.includes(targetCounty)) {
+      setTargetCounty(available[0]);
+    }
+  }, [targetState]);
 
   // Load Watchlist from Local Storage for persistence
   useEffect(() => {
@@ -64,21 +90,26 @@ const GlobalCountyScanner: React.FC = () => {
     // Simulation Data for Non-Live Mode
     if (!isLiveMode) {
       setTimeout(() => {
+        const resources = COUNTY_RESOURCES[targetCounty] || { 
+          portal: `https://google.com/search?q=${targetCounty}+${targetState}+surplus+list`,
+          faq: `https://google.com/search?q=${targetCounty}+${targetState}+tax+sale+faq`
+        };
+
         setResults({
-          official_url: `https://www.${targetCounty.toLowerCase()}county.gov/treasurer/excess-proceeds`,
-          access_type: "MOAT_GATED",
+          official_url: resources.portal,
+          access_type: targetCounty === 'Fulton' || targetCounty === 'Baltimore City' ? "MOAT_GATED" : "OPEN_PDF",
           cadence: "Quarterly",
           last_updated: "2025-01-10",
           next_expected_drop: "2025-04-10",
-          cadence_rationale: "Fulton typically refreshes records 90 days post-Tax Sale, which occurs on the first Tuesday of each month.",
-          data_format: "Manual Portal / ORR",
+          cadence_rationale: `${targetCounty} typically refreshes records post-Tax Sale, which occurs on a scheduled cycle relative to judicial confirmations.`,
+          data_format: targetCounty === 'Fulton' ? "Manual Portal / ORR" : "Direct PDF Export",
           last_updated_mention: "January 2025",
-          treasurer_contact: "treasurer-info@fultoncounty.gov",
-          search_summary: `IDENTIFIED: ${targetCounty} County maintains a gatekept surplus list. Direct public URLs often return 404/Removed to discourage scraping. Access requires a formal Open Records Request (ORR). Cadence is strictly linked to judicial confirmations.`,
-          orr_instructions: "1. Visit the centralized county portal. 2. File a request for 'Current Excess Tax Funds List'. 3. Expected turnaround: 3-5 business days.",
+          treasurer_contact: `treasurer-info@${targetCounty.toLowerCase().replace(/\s+/g, '')}county.gov`,
+          search_summary: `IDENTIFIED: ${targetCounty} County maintains its records via ${targetCounty === 'Fulton' ? 'a gatekept portal' : 'a public-facing transparency dashboard'}. Access strategy optimized for ${targetState} statutory timelines.`,
+          orr_instructions: targetCounty === 'Fulton' ? "1. Visit the centralized county portal. 2. File a request for 'Current Excess Tax Funds List'. 3. Expected turnaround: 3-5 business days." : "No ORR needed. Download latest PDF from official transparency portal.",
           discovery_links: [
-            { title: "County Open Records Portal", url: "https://fultoncountyga.gov/open-records" },
-            { title: "Treasurer FAQ (Surplus Mention)", url: "#" }
+            { title: "County Records Portal", url: resources.portal },
+            { title: "Treasurer FAQ", url: resources.faq }
           ]
         });
         setIsScanning(false);
@@ -182,7 +213,7 @@ const GlobalCountyScanner: React.FC = () => {
                      </div>
                      <div className="flex items-center justify-between">
                         <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${watch.access_type === 'OPEN_PDF' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                           {watch.access_type.split('_')[0]}
+                           {watch.access_type?.split('_')[0] || 'DATA'}
                         </span>
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                      </div>
@@ -207,33 +238,43 @@ const GlobalCountyScanner: React.FC = () => {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
                 <MapPinIcon size={14} className="text-indigo-500" /> Target State
               </label>
-              <select 
-                value={targetState}
-                onChange={(e) => setTargetState(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 px-8 text-sm font-black text-slate-900 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none appearance-none cursor-pointer"
-              >
-                <option value="AL">Alabama</option>
-                <option value="FL">Florida</option>
-                <option value="GA">Georgia</option>
-                <option value="MD">Maryland</option>
-                <option value="TX">Texas</option>
-                <option value="NC">North Carolina</option>
-              </select>
+              <div className="relative">
+                <select 
+                  value={targetState}
+                  onChange={(e) => setTargetState(e.target.value)}
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 px-8 text-sm font-black text-slate-900 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none appearance-none cursor-pointer"
+                >
+                  <option value="AL">Alabama</option>
+                  <option value="FL">Florida</option>
+                  <option value="GA">Georgia</option>
+                  <option value="MD">Maryland</option>
+                  <option value="TX">Texas</option>
+                  <option value="NC">North Carolina</option>
+                </select>
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <ChevronDownIcon size={20} />
+                </div>
+              </div>
             </div>
             
             <div className="flex-1 w-full space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
                 <Building2Icon size={14} className="text-indigo-500" /> Target County
               </label>
-              <div className="relative group">
-                <SearchIcon size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" />
-                <input 
-                  type="text" 
+              <div className="relative">
+                <select 
                   value={targetCounty}
                   onChange={(e) => setTargetCounty(e.target.value)}
-                  placeholder="e.g. Fulton"
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 pl-14 pr-8 text-sm font-black text-slate-900 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none"
-                />
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 px-8 text-sm font-black text-slate-900 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none appearance-none cursor-pointer"
+                >
+                  {(COUNTIES_BY_STATE[targetState] || []).map(county => (
+                    <option key={county} value={county}>{county}</option>
+                  ))}
+                  <option value="Other (Manual Scan)">Other (Manual Scan)</option>
+                </select>
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <ChevronDownIcon size={20} />
+                </div>
               </div>
             </div>
 
@@ -360,29 +401,46 @@ const GlobalCountyScanner: React.FC = () => {
                   </div>
                 )}
 
-                <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-sm space-y-8">
-                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
-                    <FileTextIcon size={16} className="text-indigo-600" /> Discovery Links
-                  </h4>
-                  <div className="space-y-4">
+                <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-xl space-y-8 relative overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
+                      <LinkIcon size={16} className="text-indigo-600" /> Discovery Vault
+                    </h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
                     {results.discovery_links?.map((link: any, i: number) => (
                       <a 
                         key={i}
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between p-6 bg-slate-50 rounded-[1.75rem] border border-slate-100 group hover:border-indigo-400 hover:bg-white transition-all shadow-sm"
+                        className="group flex items-center justify-between p-6 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-indigo-400 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 active:scale-[0.98]"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-slate-400 group-hover:text-indigo-600 transition-colors">
-                            <DownloadIcon size={18} />
+                        <div className="flex items-center gap-5 overflow-hidden">
+                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-slate-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6 transition-all duration-300 shrink-0">
+                            {link.title.toLowerCase().includes('faq') ? <InfoIcon size={20} /> : <GlobeIcon size={20} />}
                           </div>
-                          <p className="text-xs font-black text-slate-900 uppercase tracking-tight truncate max-w-[140px]">{link.title}</p>
+                          <div className="overflow-hidden">
+                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight truncate pr-4">
+                              {link.title}
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">
+                              {link.url.includes('google') ? 'Web Search Results' : 'Official Portal'}
+                            </p>
+                          </div>
                         </div>
-                        <ArrowRightIcon size={16} className="text-slate-300 group-hover:text-indigo-600 transition-all" />
+                        <ArrowRightIcon size={20} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0" />
                       </a>
                     ))}
                   </div>
+
+                  {(!results.discovery_links || results.discovery_links.length === 0) && (
+                    <div className="py-12 text-center space-y-4">
+                       <LinkIcon size={32} className="text-slate-100 mx-auto" />
+                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No Direct Links Discovered</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

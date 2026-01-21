@@ -76,72 +76,73 @@ const WorkflowProtocol: React.FC = () => {
     <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-3">
-          <div className="flex items-center gap-3">
-             <div className={`p-3 rounded-2xl shadow-xl border ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30' : 'bg-indigo-950 text-indigo-400 border-indigo-500/30'}`}>
+          <div className="flex items-center gap-4">
+             <div className={`p-4 rounded-2xl shadow-2xl border-2 ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30' : 'bg-indigo-950 text-indigo-400 border-indigo-400/20'}`}>
                {isLiveMode ? <DatabaseIcon size={24} /> : <ZapIcon size={24} />}
              </div>
-             <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
+             <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-4">
                {isLiveMode ? 'Production Protocol' : 'Mission Roadmap'}
+               <span className="text-indigo-600 animate-pulse">●</span>
              </h2>
           </div>
-          <p className="text-slate-500 font-bold max-w-2xl leading-relaxed text-lg">
+          <p className="text-slate-600 font-bold max-w-2xl leading-relaxed text-lg">
             {isLiveMode 
               ? 'Real-time monitoring of your verified production pipeline. No simulated leads are displayed here.' 
               : 'A strategic A-to-Z command view of our surplus recovery pipeline. Simulation data active.'}
           </p>
         </div>
         
-        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-100 shadow-xl flex items-center gap-6">
-           <div className="text-center px-4 border-r border-slate-100">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cycle Time</p>
-              <p className="text-xl font-black text-slate-900">{isLiveMode ? 'N/A' : '128d'}</p>
+        <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-100 shadow-2xl flex items-center gap-8 ring-1 ring-slate-100">
+           <div className="text-center px-6 border-r-2 border-slate-50">
+              <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-1">Cycle Time</p>
+              <p className="text-2xl font-black text-slate-900">{isLiveMode ? 'N/A' : '128d'}</p>
            </div>
-           <div className="text-center px-4">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Live Loads</p>
-              <p className={`text-xl font-black ${isLiveMode ? 'text-emerald-600' : 'text-indigo-600'}`}>{isLiveMode ? '0' : '195'}</p>
+           <div className="text-center px-6">
+              <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-1">Live Loads</p>
+              <p className={`text-2xl font-black ${isLiveMode ? 'text-emerald-600' : 'text-indigo-600'}`}>{isLiveMode ? '0' : '195'}</p>
            </div>
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute left-10 top-10 bottom-10 w-1 bg-slate-200 rounded-full hidden lg:block"></div>
+      <div className="relative pt-8">
+        <div className="absolute left-10 top-10 bottom-10 w-1.5 bg-slate-100 rounded-full hidden lg:block shadow-inner"></div>
 
-        <div className="space-y-8">
+        <div className="space-y-12">
           {STAGES.map((stage, idx) => (
-            <div key={stage.id} className="relative flex flex-col lg:flex-row gap-10 group">
-              <div className={`w-20 h-20 rounded-[2rem] text-white flex items-center justify-center shrink-0 z-10 shadow-2xl transition-all group-hover:scale-110 group-hover:rotate-6 ${isLiveMode ? 'bg-slate-950 border border-emerald-500/30' : stage.color}`}>
-                <stage.icon size={32} strokeWidth={2.5} />
+            <div key={stage.id} className="relative flex flex-col lg:flex-row gap-12 group">
+              <div className={`w-20 h-20 rounded-[2rem] text-white flex items-center justify-center shrink-0 z-10 shadow-3xl transition-all group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-indigo-500/20 border-4 border-white ${isLiveMode ? 'bg-slate-950 border-emerald-500/20' : stage.color}`}>
+                <stage.icon size={36} strokeWidth={2.5} />
               </div>
               
-              <div className="flex-1 bg-white rounded-[2.5rem] border-2 border-slate-100 p-10 shadow-sm hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all">
-                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+              <div className="flex-1 bg-white rounded-[3rem] border-2 border-slate-100 p-12 shadow-2xl hover:border-indigo-400 hover:shadow-3xl hover:shadow-indigo-500/10 transition-all ring-1 ring-slate-100">
+                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10 pb-8 border-b-2 border-slate-50">
                     <div>
-                       <div className="flex items-center gap-3 mb-2">
-                          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Stage 0{idx + 1}</span>
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                          <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${isLiveMode ? 'text-emerald-500' : 'text-indigo-500'}`}>
+                       <div className="flex items-center gap-4 mb-3">
+                          <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-lg border border-slate-200 shadow-sm">Stage 0{idx + 1}</span>
+                          <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(79,70,229,0.5)]"></div>
+                          <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${isLiveMode ? 'text-emerald-600' : 'text-indigo-600'}`}>
                             {isLiveMode ? 'LIVE PRODUCTION' : stage.indicator}
                           </span>
                        </div>
-                       <h3 className="text-2xl font-black text-slate-900 tracking-tight">{stage.title}</h3>
+                       <h3 className="text-3xl font-black text-slate-900 tracking-tight italic uppercase">{stage.title}</h3>
                     </div>
-                    <div className="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl flex items-center gap-4">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Units</p>
-                       <p className={`text-2xl font-black ${isLiveMode ? 'text-slate-300' : 'text-slate-900'}`}>
+                    <div className="bg-slate-50 border-2 border-slate-100 px-8 py-4 rounded-2xl flex items-center gap-6 shadow-inner">
+                       <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Active Units</p>
+                       <p className={`text-3xl font-black ${isLiveMode ? 'text-slate-300' : 'text-slate-950'}`}>
                          {isLiveMode ? '0' : stage.count}
                        </p>
                     </div>
                  </div>
 
-                 <p className="text-slate-500 font-medium mb-10 leading-relaxed text-lg max-w-2xl">{stage.desc}</p>
+                 <p className="text-slate-600 font-bold mb-12 leading-relaxed text-xl max-w-3xl italic">"{stage.desc}"</p>
 
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {stage.steps.map((step, i) => (
-                      <div key={i} className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3 group/step transition-all hover:bg-white hover:border-indigo-200">
-                         <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover/step:text-indigo-600 group-hover/step:border-indigo-200 shadow-sm">
-                            <CheckCircle2Icon size={14} />
+                      <div key={i} className="bg-slate-50/50 p-6 rounded-[1.5rem] border-2 border-slate-100 flex items-center gap-4 group/step transition-all hover:bg-white hover:border-indigo-400 hover:shadow-xl hover:-translate-y-1">
+                         <div className="w-10 h-10 rounded-xl bg-white border-2 border-slate-200 flex items-center justify-center text-slate-400 group-hover/step:text-indigo-600 group-hover/step:border-indigo-300 shadow-md transition-all">
+                            <CheckCircle2Icon size={18} strokeWidth={3} />
                          </div>
-                         <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight leading-tight">{step}</span>
+                         <span className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{step}</span>
                       </div>
                     ))}
                  </div>

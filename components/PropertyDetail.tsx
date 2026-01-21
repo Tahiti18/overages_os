@@ -12,7 +12,6 @@ import {
   CheckIcon, ChevronRightIcon,
   DollarSignIcon,
   ActivityIcon,
-  // Added missing icons for line 229 and 341
   PlusCircleIcon,
   DatabaseIcon
 } from 'lucide-react';
@@ -155,14 +154,14 @@ const PropertyDetail: React.FC = () => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-6">
-          <Link to="/" className="p-4 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm active:scale-95">
+          <Link to="/" className="p-4 bg-white hover:bg-slate-50 rounded-2xl border-2 border-slate-100 transition-all text-slate-400 hover:text-indigo-600 shadow-md active:scale-95">
             <ChevronLeftIcon size={20} />
           </Link>
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic">{property.address}</h2>
             <div className="flex items-center gap-4 mt-1">
-              <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest">APN: {property.parcel_id} • Score: {property.priority_score}</p>
-              <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${
+              <p className="text-slate-600 text-[11px] font-black uppercase tracking-widest">APN: {property.parcel_id} • Score: {property.priority_score}</p>
+              <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border-2 shadow-sm ${
                 property.status === CaseStatus.READY_FOR_REVIEW ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-slate-100 text-slate-500 border-slate-200'
               }`}>
                 {property.status.replace(/_/g, ' ')}
@@ -177,12 +176,12 @@ const PropertyDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 flex items-center gap-10 px-10 overflow-x-auto shadow-sm no-scrollbar">
+      <div className="bg-white rounded-[2.5rem] border-2 border-slate-100 flex items-center gap-10 px-10 overflow-x-auto shadow-md no-scrollbar">
         {tabs.map((tab) => (
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)} 
-            className={`flex items-center gap-3 py-6 border-b-4 font-black text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`flex items-center gap-3 py-6 border-b-4 font-black text-[10px] uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
           >
             <tab.icon size={16} /> {tab.label}
           </button>
@@ -193,23 +192,23 @@ const PropertyDetail: React.FC = () => {
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between h-40">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+               <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-100 shadow-lg flex flex-col justify-between h-44 hover:-translate-y-1 transition-all hover:shadow-xl">
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
                     <Building2Icon size={14} /> Sale Gross
                   </p>
-                  <p className="text-3xl font-black text-slate-900 tracking-tighter">${property.sale_price.toLocaleString()}</p>
+                  <p className="text-4xl font-black text-slate-900 tracking-tighter">${property.sale_price.toLocaleString()}</p>
                </div>
-               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between h-40">
-                  <p className="text-[10px] font-black text-red-400 uppercase tracking-widest flex items-center gap-2">
+               <div className="bg-white p-8 rounded-[2.5rem] border-2 border-rose-100 shadow-lg flex flex-col justify-between h-44 hover:-translate-y-1 transition-all hover:shadow-xl">
+                  <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
                     <ArrowDownIcon size={14} /> Senior Liens
                   </p>
-                  <p className="text-3xl font-black text-red-600 tracking-tighter">-${property.total_debt.toLocaleString()}</p>
+                  <p className="text-4xl font-black text-rose-600 tracking-tighter">-${property.total_debt.toLocaleString()}</p>
                </div>
-               <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-100 flex flex-col justify-between h-40">
+               <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-100 flex flex-col justify-between h-44 hover:-translate-y-1 transition-all ring-1 ring-indigo-400/20">
                   <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest flex items-center gap-2">
                     <DollarSignIcon size={14} /> Recovery Pool
                   </p>
-                  <p className="text-3xl font-black text-white tracking-tighter">${property.surplus_amount.toLocaleString()}</p>
+                  <p className="text-4xl font-black text-white tracking-tighter">${property.surplus_amount.toLocaleString()}</p>
                </div>
             </div>
             <LienWaterfall property={property} initialSurplus={property.surplus_amount} />
@@ -218,14 +217,14 @@ const PropertyDetail: React.FC = () => {
 
         {activeTab === 'claimants' && (
           <div className="space-y-10 animate-in fade-in duration-500">
-             <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex items-center justify-between">
+             <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-xl flex items-center justify-between">
                 <div className="flex items-center gap-8">
-                   <div className="w-20 h-20 bg-indigo-50 rounded-[1.75rem] flex items-center justify-center text-indigo-600 shadow-inner">
+                   <div className="w-20 h-20 bg-indigo-50 rounded-[1.75rem] flex items-center justify-center text-indigo-600 shadow-inner border border-indigo-100">
                       <UserCheckIcon size={40} />
                    </div>
                    <div>
                       <h4 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Verification Protocol</h4>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Status: {property.claimants?.every(c => c.is_verified) ? 'Fully Authorized' : 'Audit In-Progress'}</p>
+                      <p className="text-xs text-slate-600 font-bold uppercase tracking-widest mt-1">Status: {property.claimants?.every(c => c.is_verified) ? 'Fully Authorized' : 'Audit In-Progress'}</p>
                    </div>
                 </div>
                 <button className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all">
@@ -235,10 +234,10 @@ const PropertyDetail: React.FC = () => {
 
              <div className="grid grid-cols-1 gap-8">
                 {property.claimants?.map(c => (
-                  <div key={c.id} className={`bg-white border-2 rounded-[4rem] overflow-hidden transition-all duration-500 shadow-sm relative ${c.is_verified ? 'border-emerald-500/30' : 'border-slate-100'}`}>
+                  <div key={c.id} className={`bg-white border-2 rounded-[4rem] overflow-hidden transition-all duration-500 shadow-xl relative ${c.is_verified ? 'border-emerald-200' : 'border-slate-100'}`}>
                      <div className="p-12 flex flex-col xl:flex-row gap-12">
                         <div className="flex items-center gap-8 xl:w-1/3">
-                           <div className={`w-32 h-32 rounded-[2.5rem] flex items-center justify-center font-black text-5xl border-4 transition-all duration-700 ${c.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-500 shadow-xl' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>
+                           <div className={`w-32 h-32 rounded-[2.5rem] flex items-center justify-center font-black text-5xl border-4 transition-all duration-700 ${c.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-500 shadow-xl' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                              {c.name[0]}
                            </div>
                            <div className="space-y-2">
@@ -249,33 +248,33 @@ const PropertyDetail: React.FC = () => {
                                     <ShieldCheckIcon size={14} /> Verified Owner
                                   </span>
                                 ) : (
-                                  <span className="flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                                  <span className="flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full border border-amber-200 text-[10px] font-black uppercase tracking-widest animate-pulse">
                                     <ShieldAlertIcon size={14} /> Pending Review
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">{c.relationship} • {c.contact_info}</p>
+                              <p className="text-xs font-bold text-slate-600 uppercase tracking-widest mt-2">{c.relationship} • {c.contact_info}</p>
                            </div>
                         </div>
 
-                        <div className="flex-1 bg-slate-50/50 rounded-[3rem] p-10 border border-slate-100 space-y-6">
+                        <div className="flex-1 bg-slate-50/50 rounded-[3rem] p-10 border-2 border-slate-100 space-y-6 shadow-inner">
                            <div className="flex items-center justify-between">
-                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
+                              <h5 className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-3">
                                 <FileCheckIcon size={16} className="text-indigo-600" /> Linked Evidence
                               </h5>
                            </div>
                            <div className="flex flex-wrap gap-4">
                               {verifiedDocs.length > 0 ? verifiedDocs.map(d => (
-                                <div key={d.id} className="bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                                <div key={d.id} className="bg-white px-6 py-4 rounded-2xl border-2 border-slate-200 shadow-md flex items-center gap-4 hover:border-indigo-400 transition-all">
                                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                                       <CheckIcon size={18} strokeWidth={3} />
                                    </div>
                                    <div>
                                       <p className="text-[11px] font-black text-slate-800 uppercase leading-none mb-1">{d.filename}</p>
-                                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{d.doc_type}</p>
+                                      <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">{d.doc_type}</p>
                                    </div>
                                 </div>
-                              )) : <p className="text-xs font-bold text-slate-400 italic">No verified artifacts currently linked.</p>}
+                              )) : <p className="text-xs font-bold text-slate-500 italic">No verified artifacts currently linked.</p>}
                            </div>
                         </div>
 
@@ -284,12 +283,12 @@ const PropertyDetail: React.FC = () => {
                              <button 
                                onClick={() => verifyClaimant(c.id)} 
                                disabled={!canVerify}
-                               className={`w-full py-6 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 ${canVerify ? 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02] active:scale-95' : 'bg-slate-200 text-slate-400 opacity-60 cursor-not-allowed'}`}
+                               className={`w-full py-6 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 ${canVerify ? 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 shadow-indigo-500/20' : 'bg-slate-200 text-slate-400 opacity-60 cursor-not-allowed'}`}
                              >
                                <SignatureIcon size={20} /> Verify Identity
                              </button>
                            ) : (
-                             <div className="bg-emerald-600 text-white rounded-[2rem] p-8 w-full shadow-2xl shadow-emerald-100 border border-emerald-500">
+                             <div className="bg-emerald-600 text-white rounded-[2rem] p-8 w-full shadow-2xl shadow-emerald-200/50 border border-emerald-500 animate-in zoom-in-95 duration-500">
                                 <p className="text-[9px] font-black text-emerald-200 uppercase tracking-widest mb-4">Authorized Agent</p>
                                 <div className="flex items-center gap-4 mb-4">
                                   <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
@@ -315,8 +314,8 @@ const PropertyDetail: React.FC = () => {
 
         {activeTab === 'audit' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-             <div className="bg-white border border-slate-200 rounded-[3rem] shadow-sm overflow-hidden">
-                <div className="p-10 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+             <div className="bg-white border-2 border-slate-100 rounded-[3rem] shadow-xl overflow-hidden">
+                <div className="p-10 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
                    <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-4 italic">
                      <ListChecksIcon size={24} className="text-indigo-600" /> Statutory Audit Log
                    </h4>
@@ -326,19 +325,19 @@ const PropertyDetail: React.FC = () => {
                    {auditEvents.map((event) => (
                      <div key={event.id} className="p-10 hover:bg-slate-50/50 transition-colors flex items-start gap-8">
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 ${
-                          event.action === 'CLAIMANT_VERIFIED_OWNER' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-inner' : 'bg-slate-50 text-slate-300 border-slate-100'
+                          event.action === 'CLAIMANT_VERIFIED_OWNER' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-inner' : 'bg-slate-50 text-slate-400 border-slate-200'
                         }`}>
                           {event.action === 'CLAIMANT_VERIFIED_OWNER' ? <ShieldCheckIcon size={24} /> : <ActivityIcon size={24} />}
                         </div>
                         <div className="flex-1 space-y-4">
                            <div className="flex items-center justify-between">
                               <p className="text-lg font-black text-slate-900 uppercase tracking-tight">{event.action.replace(/_/g, ' ')}</p>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{event.created_at}</span>
+                              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{event.created_at}</span>
                            </div>
                            <div className="flex flex-wrap gap-6">
                               <div className="flex items-center gap-2">
                                  <UserIcon size={14} className="text-slate-400" />
-                                 <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">{event.actor_email}</span>
+                                 <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{event.actor_email}</span>
                               </div>
                               <div className="flex items-center gap-2">
                                  <DatabaseIcon size={14} className="text-slate-400" />
@@ -366,7 +365,7 @@ const PropertyDetail: React.FC = () => {
              <div className="bg-slate-950 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden group border border-white/5">
                 <div className="relative z-10 space-y-6">
                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-indigo-600 rounded-2xl">
+                      <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg">
                          <MessageSquareIcon size={24} />
                       </div>
                       <h3 className="text-4xl font-black tracking-tighter uppercase italic">Outreach Architect</h3>
@@ -387,18 +386,18 @@ const PropertyDetail: React.FC = () => {
              </div>
              {outreachData && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in slide-in-from-bottom-8 duration-700">
-                   <div className="bg-white rounded-[3rem] border-2 border-slate-100 p-10 space-y-6 shadow-sm">
-                      <h5 className="font-black text-slate-900 uppercase text-[11px] tracking-widest flex items-center gap-3 border-b border-slate-50 pb-4"><MailIcon size={18} className="text-indigo-600"/> Recovery Letter</h5>
-                      <div className="font-serif text-sm text-slate-700 leading-relaxed whitespace-pre-wrap p-8 bg-slate-50 rounded-2xl border border-slate-100">{outreachData.direct_mail}</div>
+                   <div className="bg-white rounded-[3rem] border-2 border-slate-100 p-10 space-y-6 shadow-xl hover:-translate-y-1 transition-all">
+                      <h5 className="font-black text-slate-900 uppercase text-[11px] tracking-widest flex items-center gap-3 border-b border-slate-100 pb-4"><MailIcon size={18} className="text-indigo-600"/> Recovery Letter</h5>
+                      <div className="font-serif text-sm text-slate-800 leading-relaxed whitespace-pre-wrap p-8 bg-slate-50 rounded-2xl border-2 border-slate-100 shadow-inner">{outreachData.direct_mail}</div>
                    </div>
                    <div className="space-y-8">
-                      <div className="bg-white rounded-[3rem] border-2 border-slate-100 p-10 space-y-6 shadow-sm">
-                         <h5 className="font-black text-slate-900 uppercase text-[11px] tracking-widest flex items-center gap-3 border-b border-slate-50 pb-4"><MessageSquareIcon size={18} className="text-indigo-600"/> SMS Protocol</h5>
-                         <div className="text-sm font-bold text-slate-800 italic bg-slate-50 p-6 rounded-2xl border border-slate-100 leading-relaxed">"{outreachData.sms_script}"</div>
+                      <div className="bg-white rounded-[3rem] border-2 border-slate-100 p-10 space-y-6 shadow-xl hover:-translate-y-1 transition-all">
+                         <h5 className="font-black text-slate-900 uppercase text-[11px] tracking-widest flex items-center gap-3 border-b border-slate-100 pb-4"><MessageSquareIcon size={18} className="text-indigo-600"/> SMS Protocol</h5>
+                         <div className="text-sm font-bold text-slate-800 italic bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 shadow-inner leading-relaxed">"{outreachData.sms_script}"</div>
                       </div>
-                      <div className="bg-indigo-900 rounded-[3rem] p-10 text-white shadow-2xl space-y-6">
+                      <div className="bg-indigo-900 rounded-[3rem] p-10 text-white shadow-2xl space-y-6 hover:-translate-y-1 transition-all">
                          <h5 className="font-black flex items-center gap-3 uppercase text-[11px] tracking-widest text-indigo-300"><PhoneIcon size={18}/> Scripted Consultation</h5>
-                         <div className="text-sm font-medium leading-relaxed opacity-80 whitespace-pre-wrap">{outreachData.phone_script}</div>
+                         <div className="text-sm font-medium leading-relaxed opacity-90 whitespace-pre-wrap">{outreachData.phone_script}</div>
                       </div>
                    </div>
                 </div>

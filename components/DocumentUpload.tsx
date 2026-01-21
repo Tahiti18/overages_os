@@ -19,7 +19,9 @@ import {
   ArchiveIcon,
   FileCheckIcon,
   ShieldCheckIcon,
-  CheckIcon
+  CheckIcon,
+  ChevronDownIcon,
+  InfoIcon
 } from 'lucide-react';
 import { Document } from '../types';
 import { extractDocumentData } from '../lib/gemini';
@@ -37,6 +39,15 @@ interface ProcessingFile {
   status: 'initializing' | 'uploading' | 'extracting' | 'finalizing' | 'error';
   error?: string;
 }
+
+const DOCUMENT_TYPES = [
+  { value: 'DEED', label: 'Property Deed' },
+  { value: 'TAX_BILL', label: 'Tax Bill' },
+  { value: 'ID', label: 'Government ID' },
+  { value: 'AFFIDAVIT', label: 'Affidavit' },
+  { value: 'APPLICATION', label: 'Claim Application' },
+  { value: 'OTHER', label: 'Other Attachment' }
+];
 
 const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificationChange }) => {
   const [documents, setDocuments] = useState<Document[]>([
@@ -183,6 +194,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
     if (!selectedDoc) return;
     const updatedFields = { ...selectedDoc.extracted_fields, [key]: value };
     const updatedDoc = { ...selectedDoc, extracted_fields: updatedFields };
+    setSelectedDoc(updatedDoc);
+    setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
+  };
+
+  const updateDocType = (newType: string) => {
+    if (!selectedDoc) return;
+    const updatedDoc = { ...selectedDoc, doc_type: newType };
     setSelectedDoc(updatedDoc);
     setDocuments(prev => prev.map(d => d.id === selectedDoc.id ? updatedDoc : d));
   };
@@ -441,17 +459,44 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                       </div>
                     )}
 
-                    {/* Tags Section - Refined for AI suggested tags */}
+                    {/* Document Classification Select */}
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2">
+                        <FileIcon size={14} className="text-indigo-500" /> Core Classification
+                      </label>
+                      <div className="relative group">
+                        <select 
+                          value={selectedDoc.doc_type}
+                          disabled={selectedDoc.verified_by_human}
+                          onChange={(e) => updateDocType(e.target.value)}
+                          className={`w-full px-6 py-4 border-2 rounded-2xl text-[13px] font-black transition-all outline-none appearance-none ${
+                            selectedDoc.verified_by_human 
+                              ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-default' 
+                              : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm cursor-pointer'
+                          }`}
+                        >
+                          {DOCUMENT_TYPES.map(type => (
+                            <option key={type.value} value={type.value}>{type.label}</option>
+                          ))}
+                        </select>
+                        {!selectedDoc.verified_by_human && (
+                          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <ChevronDownIcon size={18} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Tags Section */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between px-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                          <TagIcon size={14} className="text-indigo-500" /> Case Classifications
+                          <TagIcon size={14} className="text-indigo-500" /> Case Metadata Tags
                         </label>
                         {!selectedDoc.verified_by_human && (
-                          <div className="flex items-center gap-1 text-[9px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 animate-pulse">
-                            <SparklesIcon size={10} />
-                            AI Suggested
-                          </div>
+                          <Tooltip content="Tags allow AI logic to prioritize recovery tasks.">
+                             <InfoIcon size={12} className="text-slate-300" />
+                          </Tooltip>
                         )}
                       </div>
                       
@@ -492,29 +537,27 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                           </form>
                         )}
                       </div>
-                      {!selectedDoc.verified_by_human && selectedDoc.tags.length > 0 && (
-                        <div className="flex justify-end px-2">
-                           <button 
-                             onClick={() => approveDoc(selectedDoc.id)}
-                             className="text-[9px] font-black text-indigo-400 hover:text-indigo-600 uppercase tracking-widest flex items-center gap-1.5 py-1 px-2 hover:bg-indigo-50 rounded-lg transition-all"
-                           >
-                             <CheckCircle2Icon size={12} />
-                             Confirm All AI Tags
-                           </button>
-                        </div>
-                      )}
                     </div>
 
                     {!selectedDoc.verified_by_human && (
                       <div className="p-5 bg-amber-50 border border-amber-100 rounded-3xl flex items-start gap-4">
                         <AlertCircleIcon size={22} className="text-amber-500 shrink-0 mt-0.5" />
                         <p className="text-[12px] text-amber-900 leading-relaxed font-bold">
-                          Data verification required. Compare extraction points with original artifact before authorizing final waterfall inclusion.
+                          Data verification required. Review the AI-extracted metadata below. Manual overrides are tracked for the audit trail.
                         </p>
                       </div>
                     )}
 
                     <div className="space-y-6">
+                      <div className="px-2 flex items-center justify-between">
+                         <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Extracted Properties</h6>
+                         {!selectedDoc.verified_by_human && (
+                            <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-400 uppercase tracking-widest animate-pulse">
+                               <SparklesIcon size={10} />
+                               AI Draft Mode
+                            </div>
+                         )}
+                      </div>
                       {Object.entries(selectedDoc.extracted_fields).map(([key, value]) => {
                         if (['tags', 'document_type', 'extraction_rationale', 'confidence_score', 'discovered_liens'].includes(key)) return null;
                         return (
@@ -529,7 +572,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                                 onChange={(e) => updateField(key, e.target.value)}
                                 className={`w-full px-6 py-4 border-2 rounded-2xl text-[13px] font-black transition-all outline-none ${
                                   selectedDoc.verified_by_human 
-                                    ? 'bg-slate-50 border-slate-100 text-slate-500' 
+                                    ? 'bg-slate-50 border-slate-100 text-slate-500 cursor-default shadow-none' 
                                     : 'bg-white border-slate-100 text-slate-800 focus:border-indigo-600 focus:ring-8 focus:ring-indigo-500/5 shadow-sm'
                                 }`}
                                 readOnly={selectedDoc.verified_by_human}
@@ -571,7 +614,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                   }`}
                 >
                   {selectedDoc.verified_by_human ? <ClipboardCheckIcon size={20} /> : <CheckCircle2Icon size={20} />}
-                  {selectedDoc.verified_by_human ? 'Artifact Fully Audited' : 'Authorize Recovery Data'}
+                  {selectedDoc.verified_by_human ? 'Artifact Verified' : 'Authorize Metadata & Confirm AI'}
                 </button>
                 
                 {!selectedDoc.verified_by_human && (
@@ -580,7 +623,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
                     className="flex items-center justify-center gap-2 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest"
                   >
                     <Trash2Icon size={16} />
-                    Reject & Delete
+                    Discard Unverified Record
                   </button>
                 )}
               </div>
@@ -592,7 +635,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificat
               </div>
               <h5 className="font-black text-slate-800 uppercase text-sm tracking-[0.2em] mb-3">Intelligence Inspector Dormant</h5>
               <p className="text-sm font-medium text-slate-400 max-w-[260px] leading-relaxed">
-                Select a legal artifact from the case inventory to initiate deep audit and verification protocols.
+                Select a legal artifact from the case inventory to initiate deep audit and metadata verification protocols.
               </p>
             </div>
           )}

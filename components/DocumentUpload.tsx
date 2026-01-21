@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { 
   FileIcon, 
   UploadCloudIcon, 
@@ -27,6 +27,7 @@ import Tooltip from './Tooltip';
 
 interface DocumentUploadProps {
   propertyId: string;
+  onVerificationChange?: (docs: Document[]) => void;
 }
 
 interface ProcessingFile {
@@ -37,7 +38,7 @@ interface ProcessingFile {
   error?: string;
 }
 
-const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onVerificationChange }) => {
   const [documents, setDocuments] = useState<Document[]>([
     {
       id: 'd1',
@@ -64,6 +65,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId }) => {
   const [reviewTab, setReviewTab] = useState<'fields' | 'ocr'>('fields');
   const [newTag, setNewTag] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Notify parent of state changes
+  useEffect(() => {
+    onVerificationChange?.(documents);
+  }, [documents]);
 
   const readFileAsBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useLocation, useOutletContext } from 'react-router-dom';
 import { 
   Building2Icon, UserCircleIcon, FileTextIcon, HistoryIcon, ScaleIcon,
@@ -7,9 +7,9 @@ import {
   InfoIcon, ArrowDownIcon, SparklesIcon, CalculatorIcon, ArchiveIcon,
   ShieldCheckIcon, UserCheckIcon, ClockIcon, MailIcon, MessageSquareIcon,
   Wand2Icon, CopyIcon, PhoneIcon, Loader2Icon, ShieldAlertIcon,
-  UserXIcon, FingerprintIcon
+  UserXIcon, FingerprintIcon, ZapIcon
 } from 'lucide-react';
-import { Property, CaseStatus, User, UserRole, Claimant } from '../types';
+import { Property, CaseStatus, User, UserRole, Claimant, Document } from '../types';
 import DocumentUpload from './DocumentUpload';
 import SkipTracingHub from './SkipTracingHub';
 import LienWaterfall from './LienWaterfall';
@@ -17,12 +17,20 @@ import SmartDocumentPackager from './SmartDocumentPackager';
 import Tooltip from './Tooltip';
 import { generateOutreachArchitect } from '../lib/gemini';
 
+// Mock Jurisdiction Rules for Auto-Transition logic
+const JURISDICTION_REQUIREMENTS: Record<string, string[]> = {
+  'GA-Fulton': ['ID', 'DEED', 'TAX_BILL'],
+  'FL-Miami-Dade': ['ID', 'AFFIDAVIT', 'APPLICATION'],
+  'TX-Harris': ['ID', 'DEED', 'AFFIDAVIT']
+};
+
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useOutletContext<{ user: User }>();
   const [activeTab, setActiveTab] = useState<'overview' | 'claimants' | 'research' | 'documents' | 'audit' | 'packager' | 'outreach'>('overview');
   const [outreachLoading, setOutreachLoading] = useState(false);
   const [outreachData, setOutreachData] = useState<any>(null);
+  const [showStatusToast, setShowStatusToast] = useState(false);
 
   const [property, setProperty] = useState<Property>({
     id: id || '1',
@@ -40,6 +48,26 @@ const PropertyDetail: React.FC = () => {
       verification_rationale: "Name on Tax Deed matches skip-tracing record. Secondary social media verification confirmed address history." 
     }]
   });
+
+  const handleDocumentVerificationChange = (allDocs: Document[]) => {
+    const key = `${property.state}-${property.county}`;
+    const requiredTypes = JURISDICTION_REQUIREMENTS[key] || JURISDICTION_REQUIREMENTS['GA-Fulton'];
+    
+    // Check if all required types have at least one verified document
+    const verifiedTypes = new Set(
+      allDocs
+        .filter(d => d.verified_by_human)
+        .map(d => d.doc_type)
+    );
+
+    const isComplete = requiredTypes.every(type => verifiedTypes.has(type));
+
+    if (isComplete && property.status !== CaseStatus.READY_FOR_REVIEW && property.status !== CaseStatus.APPROVED_TO_FILE) {
+      setProperty(prev => ({ ...prev, status: CaseStatus.READY_FOR_REVIEW }));
+      setShowStatusToast(true);
+      setTimeout(() => setShowStatusToast(false), 5000);
+    }
+  };
 
   const tabs = [
     { id: 'overview', label: 'Waterfall', icon: CalculatorIcon },
@@ -59,7 +87,6 @@ const PropertyDetail: React.FC = () => {
   };
 
   const verifyClaimant = (claimantId: string) => {
-    // Explicit role check: only ADMIN or REVIEWER can authorize
     if (user.role !== UserRole.ADMIN && user.role !== UserRole.REVIEWER) {
       alert("Unauthorized: You do not have the REVIEWER or ADMIN role required to authorize a Verified Owner.");
       return;
@@ -81,13 +108,36 @@ const PropertyDetail: React.FC = () => {
   const canVerify = user.role === UserRole.ADMIN || user.role === UserRole.REVIEWER;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20 relative">
+      {/* Auto-Transition Toast */}
+      {showStatusToast && (
+        <div className="fixed top-24 right-10 z-[60] animate-in slide-in-from-right-10 duration-500">
+           <div className="bg-slate-900 border border-indigo-500/30 text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-5 ring-8 ring-indigo-500/10">
+              <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center animate-pulse">
+                 <ZapIcon size={24} fill="white" />
+              </div>
+              <div>
+                 <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Intelligence Pipeline Update</p>
+                 <p className="text-sm font-black">Case Promoted: <span className="text-indigo-400">Ready for Review</span></p>
+                 <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest">All jurisdictional document requirements satisfied.</p>
+              </div>
+           </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link to="/" className="p-3 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm"><ChevronLeftIcon size={20} /></Link>
           <div>
             <h2 className="text-2xl font-black text-slate-900">{property.address}</h2>
-            <p className="text-slate-400 text-sm font-mono mt-1 uppercase">ID: {property.parcel_id} • Priority: {property.priority_score || 92}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-slate-400 text-sm font-mono uppercase">ID: {property.parcel_id} • Priority: {property.priority_score || 92}</p>
+              <div className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${
+                property.status === CaseStatus.READY_FOR_REVIEW ? 'bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm animate-pulse' : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}>
+                {property.status.replace(/_/g, ' ')}
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -160,7 +210,6 @@ const PropertyDetail: React.FC = () => {
                            )}
                         </div>
                      </div>
-                     {/* AI REVIEWER DIGEST */}
                      <div className="bg-slate-50 p-8 border-t border-slate-100">
                         <div className="flex items-center gap-3 mb-4">
                            <SparklesIcon size={18} className="text-indigo-600" />
@@ -239,7 +288,7 @@ const PropertyDetail: React.FC = () => {
         {activeTab === 'overview' && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"><div className="lg:col-span-2 space-y-8"><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sale Price</p><p className="text-2xl font-black text-slate-900">${property.sale_price.toLocaleString()}</p></div><div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Debt</p><p className="text-2xl font-black text-red-600">${property.total_debt.toLocaleString()}</p></div><div className="bg-indigo-600 p-6 rounded-3xl border border-indigo-500 shadow-2xl shadow-indigo-200"><p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Gross Surplus</p><p className="text-2xl font-black text-white">${property.surplus_amount.toLocaleString()}</p></div></div><LienWaterfall initialSurplus={property.surplus_amount} /></div></div>}
         {activeTab === 'research' && <SkipTracingHub ownerName="John Doe" address={property.address} />}
         {activeTab === 'packager' && <SmartDocumentPackager property={property} waterfallData={{ finalSurplus: 81500 }} />}
-        {activeTab === 'documents' && <DocumentUpload propertyId={property.id} />}
+        {activeTab === 'documents' && <DocumentUpload propertyId={property.id} onVerificationChange={handleDocumentVerificationChange} />}
       </div>
     </div>
   );

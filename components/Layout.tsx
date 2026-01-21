@@ -24,7 +24,8 @@ import {
   MapIcon,
   GavelIcon,
   CreditCardIcon,
-  GiftIcon
+  GiftIcon,
+  DatabaseIcon
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import LiveAgent from './LiveAgent';
@@ -56,6 +57,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   ];
 
   const intelligenceSuite = [
+    { label: 'County Scanner', path: '/scanner', icon: DatabaseIcon, color: 'text-emerald-400', desc: 'Raw List Discovery', tip: 'Scan entire counties for buried surplus and excess proceeds lists.' },
     { label: 'Skip-Trace Hub', path: '/research', icon: GlobeIcon, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
     { label: 'Waterfall Engine', path: '/waterfall', icon: CalculatorIcon, color: 'text-emerald-400', desc: 'Financial Logic', tip: 'Simulate lien priority and final recovery amounts.' },
     { label: 'Counsel Hub', path: '/counsel', icon: GavelIcon, color: 'text-purple-400', desc: 'Legal Network', tip: 'Research and engage specialized surplus attorneys.' },
@@ -210,7 +212,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         </header>
 
         <div className="flex-1 overflow-auto p-10 bg-slate-50/50">
-          <Outlet context={{ user }} />
+          <Outlet context={{ user, isLiveMode }} />
         </div>
       </main>
 

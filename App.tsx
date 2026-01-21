@@ -11,6 +11,7 @@ import GlobalResearch from './components/GlobalResearch';
 import GlobalWaterfall from './components/GlobalWaterfall';
 import GlobalPackager from './components/GlobalPackager';
 import GlobalCounsel from './components/GlobalCounsel';
+import GlobalCountyScanner from './components/GlobalCountyScanner';
 import ComplianceCalendar from './components/ComplianceCalendar';
 import WorkflowProtocol from './components/WorkflowProtocol';
 import MarketIntelligence from './components/MarketIntelligence';
@@ -57,6 +58,7 @@ const App: React.FC = () => {
           <Route path="/waterfall" element={<GlobalWaterfall />} />
           <Route path="/packager" element={<GlobalPackager />} />
           <Route path="/counsel" element={<GlobalCounsel />} />
+          <Route path="/scanner" element={<GlobalCountyScanner />} />
           <Route path="/calendar" element={<ComplianceCalendar />} />
           <Route path="/billing" element={<SubscriptionManager user={MOCK_USER} />} />
           <Route path="/affiliate" element={<AffiliatePortal user={MOCK_USER} />} />

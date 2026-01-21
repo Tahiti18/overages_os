@@ -1,7 +1,50 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-// AI Core v3.0 - Central Intelligence Library
+// AI Core v3.5 - Central Intelligence Library
+
+/**
+ * Scans the web for raw surplus/excess proceeds lists for a specific jurisdiction.
+ */
+export const scanJurisdictionForSurplus = async (state: string, county: string) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Find the official URL for the most recent "Property Tax Surplus List", "Excess Proceeds List", or "Tax Sale Overages" for ${county} County, ${state}. Identify if the list is available as a PDF or Excel download. Also find the contact information for the County Treasurer or Clerk responsible for these funds.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        systemInstruction: "You are a Jurisdictional Data Scout. Your goal is to find the exact landing page or file URL where surplus funds are listed by the government.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            official_url: { type: Type.STRING },
+            data_format: { type: Type.STRING, description: "PDF, Excel, Web Table, or Unknown" },
+            last_updated_mention: { type: Type.STRING },
+            treasurer_contact: { type: Type.STRING },
+            search_summary: { type: Type.STRING },
+            discovery_links: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  url: { type: Type.STRING }
+                }
+              }
+            }
+          },
+          required: ["official_url", "data_format", "search_summary"]
+        },
+      },
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.error("Jurisdiction Scan Error:", error);
+    throw error;
+  }
+};
 
 /**
  * Researches and identifies attorneys specializing in property tax surplus/overage recovery.

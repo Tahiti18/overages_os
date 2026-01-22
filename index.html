@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Safe Shim for process.env -->
     <script>
+      // Ensure process.env exists without overwriting existing platform-injected values
       window.process = window.process || { env: {} };
       window.process.env = window.process.env || {};
     </script>

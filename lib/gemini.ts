@@ -1,16 +1,26 @@
 
-// AI Core v4.1 - OpenRouter Integration for Gemini Flash
-// Supports both OPENROUTER_API_KEY and generic API_KEY environment variables.
+// AI Core v4.2 - OpenRouter Integration for Gemini Flash
+// Supports multiple API key variable patterns for maximum deployment compatibility.
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL_NAME = "google/gemini-2.0-flash-001"; 
 
+function getApiKey(): string | undefined {
+  const env = (window as any).process?.env || {};
+  return (
+    env.OPENROUTER_API_KEY || 
+    env.API_KEY || 
+    env.VITE_OPENROUTER_API_KEY || 
+    env.VITE_API_KEY ||
+    (window as any).OPENROUTER_API_KEY
+  );
+}
+
 async function callOpenRouter(messages: any[], jsonMode = false, tools = []) {
-  // Try both common environment variable names
-  const apiKey = process.env.OPENROUTER_API_KEY || process.env.API_KEY;
+  const apiKey = getApiKey();
   
   if (!apiKey) {
-    throw new Error("No API Key found. Please configure OPENROUTER_API_KEY or API_KEY in your environment.");
+    throw new Error("AI Connectivity Error: No API Key detected. Ensure OPENROUTER_API_KEY or API_KEY is set in your environment variables.");
   }
 
   const body: any = {
@@ -85,10 +95,10 @@ export const researchSpecializedCounsel = async (state: string, county: string) 
 };
 
 /**
- * Generates audio narration (FALLBACK: Standard TTS used if OpenRouter/Gemini doesn't support direct audio generation).
+ * Fallback for voice guides (requires native key for real-time).
  */
 export const generateVoiceGuide = async (text: string) => {
-  console.warn("Native Multimodal Audio requires a Direct Google AI Studio Key. Fallback to text-only processing.");
+  console.warn("Native Multimodal Audio requires a Direct Google AI Studio Key.");
   return null; 
 };
 

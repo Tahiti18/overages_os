@@ -68,9 +68,23 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const [isAiConnected, setIsAiConnected] = useState(false);
 
   useEffect(() => {
-    // Check for either the specific OpenRouter name or the standard API_KEY name
-    const hasKey = !!(process.env.OPENROUTER_API_KEY || process.env.API_KEY);
-    setIsAiConnected(hasKey);
+    // Thorough check for the API key across common patterns
+    const checkKey = () => {
+      const env = (window as any).process?.env || {};
+      const hasKey = !!(
+        env.OPENROUTER_API_KEY || 
+        env.API_KEY || 
+        env.VITE_OPENROUTER_API_KEY || 
+        env.VITE_API_KEY ||
+        (window as any).OPENROUTER_API_KEY
+      );
+      setIsAiConnected(hasKey);
+    };
+
+    checkKey();
+    // Re-check once after a small delay to handle async environment injection
+    const timer = setTimeout(checkKey, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   const GavelIcon = (props: any) => (

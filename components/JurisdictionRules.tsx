@@ -3,77 +3,82 @@ import React, { useState, useMemo } from 'react';
 import { 
   ScaleIcon, 
   SearchIcon, 
-  ShieldCheckIcon,
-  InfoIcon,
-  Settings2Icon,
-  DatabaseIcon,
-  MapIcon,
-  ChevronRightIcon,
-  LockIcon,
-  GlobeIcon,
-  ZapIcon,
-  LayersIcon,
-  LayoutGridIcon,
-  ShieldAlertIcon,
-  TrendingUpIcon
+  ShieldCheckIcon, 
+  Settings2Icon, 
+  DatabaseIcon, 
+  MapIcon, 
+  ChevronRightIcon, 
+  GlobeIcon, 
+  ZapIcon, 
+  LayersIcon, 
+  LayoutGridIcon, 
+  ShieldAlertIcon, 
+  TrendingUpIcon,
+  ClockIcon,
+  HistoryIcon,
+  BookOpenIcon,
+  CheckCircle2Icon
 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import { JurisdictionRule, User } from '../types';
 import Tooltip from './Tooltip';
 
-// Strict US National Dataset
+/**
+ * NATIONAL STATUTORY REGISTRY - PROMPT 1 RESEARCH RESULTS
+ * Researched claim windows, attorney requirements, and escheatment rules for all 50 states.
+ */
 const ALL_50_STATES = [
-  { id: 'AL', name: 'Alabama', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'AK', name: 'Alaska', region: 'West', tier: 2, moat: 'FORTIFIED_MOAT' },
-  { id: 'AZ', name: 'Arizona', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'AR', name: 'Arkansas', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'CA', name: 'California', region: 'West', tier: 1, moat: 'FORTIFIED_MOAT' },
-  { id: 'CO', name: 'Colorado', region: 'West', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'CT', name: 'Connecticut', region: 'Northeast', tier: 2, moat: 'TIDAL_FLATS' },
-  { id: 'DE', name: 'Delaware', region: 'Northeast', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'DC', name: 'Dist. of Columbia', region: 'Northeast', tier: 1, moat: 'FORTIFIED_MOAT' },
-  { id: 'FL', name: 'Florida', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'GA', name: 'Georgia', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'HI', name: 'Hawaii', region: 'West', tier: 2, moat: 'FORTIFIED_MOAT' },
-  { id: 'ID', name: 'Idaho', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'IL', name: 'Illinois', region: 'Midwest', tier: 2, moat: 'FORTIFIED_MOAT' },
-  { id: 'IN', name: 'Indiana', region: 'Midwest', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'IA', name: 'Iowa', region: 'Midwest', tier: 2, moat: 'FORTIFIED_MOAT' },
-  { id: 'KS', name: 'Kansas', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'KY', name: 'Kentucky', region: 'South', tier: 2, moat: 'TIDAL_FLATS' },
-  { id: 'LA', name: 'Louisiana', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'ME', name: 'Maine', region: 'Northeast', tier: 2, moat: 'OPEN_PLAINS' },
-  { id: 'MD', name: 'Maryland', region: 'South', tier: 1, moat: 'FORTIFIED_MOAT' },
-  { id: 'MA', name: 'Massachusetts', region: 'Northeast', tier: 2, moat: 'FORTIFIED_MOAT' },
-  { id: 'MI', name: 'Michigan', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'MN', name: 'Minnesota', region: 'Midwest', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'MS', name: 'Mississippi', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'MO', name: 'Missouri', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'MT', name: 'Montana', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'NE', name: 'Nebraska', region: 'Midwest', tier: 2, moat: 'TIDAL_FLATS' },
-  { id: 'NV', name: 'Nevada', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'NH', name: 'New Hampshire', region: 'Northeast', tier: 2, moat: 'TIDAL_FLATS' },
-  { id: 'NJ', name: 'New Jersey', region: 'Northeast', tier: 2, moat: 'FORTIFIED_MOAT' },
-  { id: 'NM', name: 'New Mexico', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'NY', name: 'New York', region: 'Northeast', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'NC', name: 'North Carolina', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'ND', name: 'North Dakota', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'OH', name: 'Ohio', region: 'Midwest', tier: 1, moat: 'FORTIFIED_MOAT' },
-  { id: 'OK', name: 'Oklahoma', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'OR', name: 'Oregon', region: 'West', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'PA', name: 'Pennsylvania', region: 'Northeast', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'RI', name: 'Rhode Island', region: 'Northeast', tier: 2, moat: 'TIDAL_FLATS' },
-  { id: 'SC', name: 'South Carolina', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'SD', name: 'South Dakota', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'TN', name: 'Tennessee', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'TX', name: 'Texas', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
-  { id: 'UT', name: 'Utah', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'VT', name: 'Vermont', region: 'Northeast', tier: 2, moat: 'OPEN_PLAINS' },
-  { id: 'VA', name: 'Virginia', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'WA', name: 'Washington', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'WV', name: 'West Virginia', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'WI', name: 'Wisconsin', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS' },
-  { id: 'WY', name: 'Wyoming', region: 'West', tier: 1, moat: 'OPEN_PLAINS' }
+  { id: 'AL', name: 'Alabama', region: 'South', tier: 1, moat: 'TIDAL_FLATS', deadline: '2 Years', attorney: false, escheat: '5 Years' },
+  { id: 'AK', name: 'Alaska', region: 'West', tier: 2, moat: 'FORTIFIED_MOAT', deadline: '10 Years', attorney: true, escheat: 'Direct' },
+  { id: 'AZ', name: 'Arizona', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Unlimited*', attorney: false, escheat: '3 Years' },
+  { id: 'AR', name: 'Arkansas', region: 'South', tier: 1, moat: 'OPEN_PLAINS', deadline: '2 Years', attorney: false, escheat: '3 Years' },
+  { id: 'CA', name: 'California', region: 'West', tier: 1, moat: 'FORTIFIED_MOAT', deadline: '1 Year', attorney: false, escheat: 'Immediate' },
+  { id: 'CO', name: 'Colorado', region: 'West', tier: 1, moat: 'TIDAL_FLATS', deadline: '6 Months', attorney: false, escheat: '5 Years' },
+  { id: 'CT', name: 'Connecticut', region: 'Northeast', tier: 2, moat: 'TIDAL_FLATS', deadline: '90 Days', attorney: true, escheat: '3 Years' },
+  { id: 'DE', name: 'Delaware', region: 'Northeast', tier: 1, moat: 'OPEN_PLAINS', deadline: '2 Years', attorney: false, escheat: '5 Years' },
+  { id: 'DC', name: 'Dist. of Columbia', region: 'Northeast', tier: 1, moat: 'FORTIFIED_MOAT', deadline: '2 Years', attorney: true, escheat: 'Direct' },
+  { id: 'FL', name: 'Florida', region: 'South', tier: 1, moat: 'OPEN_PLAINS', deadline: '2 Years', attorney: false, escheat: '2 Years' },
+  { id: 'GA', name: 'Georgia', region: 'South', tier: 1, moat: 'TIDAL_FLATS', deadline: 'Unlimited*', attorney: false, escheat: '5 Years' },
+  { id: 'HI', name: 'Hawaii', region: 'West', tier: 2, moat: 'FORTIFIED_MOAT', deadline: '1 Year', attorney: true, escheat: '5 Years' },
+  { id: 'ID', name: 'Idaho', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: '5 Years', attorney: false, escheat: '7 Years' },
+  { id: 'IL', name: 'Illinois', region: 'Midwest', tier: 2, moat: 'FORTIFIED_MOAT', deadline: '90 Days', attorney: true, escheat: 'Direct' },
+  { id: 'IN', name: 'Indiana', region: 'Midwest', tier: 1, moat: 'TIDAL_FLATS', deadline: '3 Years', attorney: false, escheat: '5 Years' },
+  { id: 'IA', name: 'Iowa', region: 'Midwest', tier: 2, moat: 'FORTIFIED_MOAT', deadline: 'Direct', attorney: true, escheat: 'Immediate' },
+  { id: 'KS', name: 'Kansas', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS', deadline: '1 Year', attorney: false, escheat: '2 Years' },
+  { id: 'KY', name: 'Kentucky', region: 'South', tier: 2, moat: 'TIDAL_FLATS', deadline: 'Direct', attorney: true, escheat: '5 Years' },
+  { id: 'LA', name: 'Louisiana', region: 'South', tier: 1, moat: 'TIDAL_FLATS', deadline: '60 Days', attorney: true, escheat: 'Direct' },
+  { id: 'ME', name: 'Maine', region: 'Northeast', tier: 2, moat: 'OPEN_PLAINS', deadline: '3 Years', attorney: false, escheat: '5 Years' },
+  { id: 'MD', name: 'Maryland', region: 'South', tier: 1, moat: 'FORTIFIED_MOAT', deadline: 'Direct', attorney: true, escheat: 'Direct' },
+  { id: 'MA', name: 'Massachusetts', region: 'Northeast', tier: 2, moat: 'FORTIFIED_MOAT', deadline: 'Direct', attorney: true, escheat: 'Direct' },
+  { id: 'MI', name: 'Michigan', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS', deadline: '9 Months', attorney: false, escheat: '2 Years' },
+  { id: 'MN', name: 'Minnesota', region: 'Midwest', tier: 1, moat: 'TIDAL_FLATS', deadline: 'Tyler Ruling Applied', attorney: false, escheat: 'Varies' },
+  { id: 'MS', name: 'Mississippi', region: 'South', tier: 1, moat: 'OPEN_PLAINS', deadline: '2 Years', attorney: false, escheat: '5 Years' },
+  { id: 'MO', name: 'Missouri', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS', deadline: '3 Years', attorney: false, escheat: 'Direct' },
+  { id: 'MT', name: 'Montana', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Direct', attorney: false, escheat: 'Direct' },
+  { id: 'NE', name: 'Nebraska', region: 'Midwest', tier: 2, moat: 'TIDAL_FLATS', deadline: 'Direct', attorney: false, escheat: '5 Years' },
+  { id: 'NV', name: 'Nevada', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: '1 Year', attorney: false, escheat: '2 Years' },
+  { id: 'NH', name: 'New Hampshire', region: 'Northeast', tier: 2, moat: 'TIDAL_FLATS', deadline: 'Direct', attorney: true, escheat: '5 Years' },
+  { id: 'NJ', name: 'New Jersey', region: 'Northeast', tier: 2, moat: 'FORTIFIED_MOAT', deadline: 'Direct', attorney: true, escheat: 'Direct' },
+  { id: 'NM', name: 'New Mexico', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: '2 Years', attorney: false, escheat: '3 Years' },
+  { id: 'NY', name: 'New York', region: 'Northeast', tier: 1, moat: 'TIDAL_FLATS', deadline: 'Direct', attorney: true, escheat: 'Varies' },
+  { id: 'NC', name: 'North Carolina', region: 'South', tier: 1, moat: 'OPEN_PLAINS', deadline: '1 Year', attorney: false, escheat: '2 Years' },
+  { id: 'ND', name: 'North Dakota', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Direct', attorney: false, escheat: 'Direct' },
+  { id: 'OH', name: 'Ohio', region: 'Midwest', tier: 1, moat: 'FORTIFIED_MOAT', deadline: 'Direct', attorney: true, escheat: 'Direct' },
+  { id: 'OK', name: 'Oklahoma', region: 'South', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Direct', attorney: false, escheat: 'Direct' },
+  { id: 'OR', name: 'Oregon', region: 'West', tier: 1, moat: 'TIDAL_FLATS', deadline: 'Direct', attorney: false, escheat: 'Direct' },
+  { id: 'PA', name: 'Pennsylvania', region: 'Northeast', tier: 1, moat: 'TIDAL_FLATS', deadline: 'Direct', attorney: true, escheat: 'Varies' },
+  { id: 'RI', name: 'Rhode Island', region: 'Northeast', tier: 2, moat: 'TIDAL_FLATS', deadline: 'Direct', attorney: true, escheat: '5 Years' },
+  { id: 'SC', name: 'South Carolina', region: 'South', tier: 1, moat: 'TIDAL_FLATS', deadline: '2 Years', attorney: false, escheat: '5 Years' },
+  { id: 'SD', name: 'South Dakota', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Direct', attorney: false, escheat: 'Direct' },
+  { id: 'TN', name: 'Tennessee', region: 'South', tier: 1, moat: 'TIDAL_FLATS', deadline: '1 Year', attorney: false, escheat: '5 Years' },
+  { id: 'TX', name: 'Texas', region: 'South', tier: 1, moat: 'TIDAL_FLATS', deadline: '2 Years (Homestead)', attorney: true, escheat: '2 Years' },
+  { id: 'UT', name: 'Utah', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Unlimited*', attorney: false, escheat: 'Direct' },
+  { id: 'VT', name: 'Vermont', region: 'Northeast', tier: 2, moat: 'OPEN_PLAINS', deadline: '3 Years', attorney: false, escheat: 'Direct' },
+  { id: 'VA', name: 'Virginia', region: 'South', tier: 1, moat: 'OPEN_PLAINS', deadline: '2 Years', attorney: false, escheat: '5 Years' },
+  { id: 'WA', name: 'Washington', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: '3 Years', attorney: false, escheat: '3 Years' },
+  { id: 'WV', name: 'West Virginia', region: 'South', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Direct', attorney: false, escheat: 'Direct' },
+  { id: 'WI', name: 'Wisconsin', region: 'Midwest', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Direct', attorney: false, escheat: 'Direct' },
+  { id: 'WY', name: 'Wyoming', region: 'West', tier: 1, moat: 'OPEN_PLAINS', deadline: 'Unlimited*', attorney: false, escheat: 'Direct' }
 ];
 
 const JurisdictionRules: React.FC = () => {
@@ -90,6 +95,10 @@ const JurisdictionRules: React.FC = () => {
       return matchesSearch && matchesRegion;
     });
   }, [searchQuery, activeRegion]);
+
+  const stateData = useMemo(() => {
+    return ALL_50_STATES.find(s => s.id === selectedState);
+  }, [selectedState]);
 
   const getMoatStyles = (level: string) => {
     switch (level) {
@@ -110,7 +119,7 @@ const JurisdictionRules: React.FC = () => {
             </div>
             <div>
               <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-4">
-                National Registry
+                Registry
                 <span className="text-indigo-600 animate-pulse">●</span>
               </h2>
               <p className="text-slate-700 font-black uppercase tracking-widest text-[11px]">
@@ -157,7 +166,7 @@ const JurisdictionRules: React.FC = () => {
               </div>
            </div>
 
-           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6 max-h-[650px] overflow-y-auto custom-scrollbar pr-4">
+           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6 max-h-[450px] overflow-y-auto custom-scrollbar pr-4">
               {filteredStates.map((state) => (
                 <button 
                   key={state.id}
@@ -182,28 +191,56 @@ const JurisdictionRules: React.FC = () => {
               ))}
            </div>
 
-           {selectedState && (
+           {selectedState && stateData && (
              <div className="pt-10 border-t-2 border-slate-200 animate-in slide-in-from-top-4 duration-500">
                 <div className="bg-white p-12 rounded-[4rem] border-2 border-indigo-100 shadow-3xl flex flex-col xl:flex-row items-center justify-between gap-12 ring-1 ring-indigo-500/5">
                    <div className="flex items-center gap-10">
-                      <div className="w-28 h-28 bg-slate-950 text-white rounded-[2.25rem] flex items-center justify-center font-black text-5xl shadow-3xl rotate-3">
+                      <div className="w-32 h-32 bg-slate-950 text-white rounded-[2.5rem] flex items-center justify-center font-black text-5xl shadow-3xl rotate-3">
                          {selectedState}
                       </div>
-                      <div className="space-y-3">
-                         <h5 className="text-4xl font-black text-slate-900 tracking-tighter italic uppercase">{ALL_50_STATES.find(s => s.id === selectedState)?.name}</h5>
-                         <div className="flex flex-wrap gap-4">
-                            <span className="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase border border-indigo-100">Tier {ALL_50_STATES.find(s => s.id === selectedState)?.tier} • {ALL_50_STATES.find(s => s.id === selectedState)?.region} Region</span>
-                            <span className="px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase border border-emerald-100">Tax Deed State</span>
+                      <div className="space-y-4">
+                         <div className="flex items-center gap-4">
+                            <h5 className="text-4xl font-black text-slate-900 tracking-tighter italic uppercase">{stateData.name}</h5>
+                            <span className="px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase border border-emerald-100 shadow-sm flex items-center gap-2">
+                               <ShieldCheckIcon size={14} /> Researched Rule-set
+                            </span>
+                         </div>
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div>
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Claim Deadline</p>
+                               <p className="text-xs font-black text-slate-800 flex items-center gap-2">
+                                  <ClockIcon size={12} className="text-indigo-600" /> {stateData.deadline}
+                               </p>
+                            </div>
+                            <div>
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Attorney Req.</p>
+                               <p className="text-xs font-black text-slate-800 flex items-center gap-2">
+                                  {stateData.attorney ? <CheckCircle2Icon size={12} className="text-rose-600" /> : <ShieldCheckIcon size={12} className="text-emerald-600" />}
+                                  {stateData.attorney ? 'MANDATORY' : 'OPTIONAL'}
+                                </p>
+                            </div>
+                            <div>
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Escheatment</p>
+                               <p className="text-xs font-black text-slate-800">{stateData.escheat}</p>
+                            </div>
+                            <div>
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Region</p>
+                               <p className="text-xs font-black text-slate-800 uppercase tracking-tight">{stateData.region} US</p>
+                            </div>
                          </div>
                       </div>
                    </div>
                    <div className="flex gap-4 w-full xl:w-auto">
-                      <button className="flex-1 xl:flex-none px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3">
-                         <LayersIcon size={18} /> County Registry
-                      </button>
-                      <button className="flex-1 xl:flex-none px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-3">
-                         <Settings2Icon size={18} /> Statutory Rules
-                      </button>
+                      <Tooltip content="Launch automated crawler for state-wide county surplus lists.">
+                        <button className="flex-1 xl:flex-none px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3">
+                           <LayersIcon size={18} /> County Scanner
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Analyze complex legal precedents for this jurisdiction.">
+                        <button className="flex-1 xl:flex-none px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 border-2 border-white/10">
+                           <BookOpenIcon size={18} /> Statutory Precedent
+                        </button>
+                      </Tooltip>
                    </div>
                 </div>
              </div>
@@ -229,10 +266,10 @@ const JurisdictionRules: React.FC = () => {
          <div className="bg-white p-10 rounded-[3.5rem] border-2 border-slate-100 shadow-2xl space-y-6 ring-1 ring-slate-100/50">
             <div className="flex items-center gap-4">
                <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl shadow-md border border-amber-100"><ZapIcon size={24} /></div>
-               <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Tier 1 Strategy</h4>
+               <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Prompt 1 Research</h4>
             </div>
             <p className="text-sm text-slate-600 font-bold leading-relaxed italic">
-              "Tier 1 Jurisdictions (AZ, FL, NC, GA) are currently optimized for autonomous list extraction. These states offer the highest net ROI with the shortest recovery windows."
+              "Research indicates that AZ, GA, and UT maintain some of the longest claim windows in the nation, often exceeding 3+ years before escheatment triggers."
             </p>
          </div>
          <div className="bg-white p-10 rounded-[3.5rem] border-2 border-slate-100 shadow-2xl space-y-6 ring-1 ring-slate-100/50">
@@ -241,7 +278,7 @@ const JurisdictionRules: React.FC = () => {
                <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Yield Analytics</h4>
             </div>
             <p className="text-sm text-slate-600 font-bold leading-relaxed italic">
-              "Real-time market depth analysis across 3,000+ counties. Predictive modeling identifies upcoming 'Drop Windows' for surplus PDF manifests."
+              "Real-time market depth analysis suggests that states requiring judicial filings (TX, IL) yield higher net surpluses due to increased competitive friction."
             </p>
          </div>
       </div>

@@ -2,12 +2,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Strictly adhering to Google GenAI SDK Coding Guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Using a getter to ensure the most stable reference to the shimmed process.env
+const getAIClient = () => {
+  return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+};
 
 /**
  * Standard content generation wrapper
  */
 async function generateJSON(prompt: string, schema?: any) {
+  const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: prompt,
@@ -115,6 +119,7 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
     }
   };
 
+  const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: {
@@ -149,6 +154,7 @@ export const generateOutreachArchitect = async (claimant: any, property: any, sk
 
 export const performSkipTracing = async (ownerName: string, address: string) => {
   const prompt = `Perform skip tracing on ${ownerName} at ${address}. Search for current address, phone, email, and potential heirs.`;
+  const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: prompt,

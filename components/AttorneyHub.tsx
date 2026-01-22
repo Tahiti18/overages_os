@@ -1,25 +1,25 @@
 
 import React, { useState } from 'react';
 import { 
-  GavelIcon, 
-  SearchIcon, 
-  ShieldCheckIcon, 
-  ExternalLinkIcon, 
-  Loader2Icon, 
-  UserPlusIcon, 
-  ScaleIcon, 
-  GlobeIcon,
-  PhoneIcon,
-  MailIcon,
-  SparklesIcon,
-  RefreshCwIcon,
-  CheckIcon,
-  SendIcon,
-  BriefcaseIcon,
-  HomeIcon,
-  UsersIcon,
-  FileSearchIcon,
-  FilterIcon
+  Gavel, 
+  Search, 
+  ShieldCheck, 
+  ExternalLink, 
+  Loader2, 
+  UserPlus, 
+  Scale, 
+  Globe, 
+  Phone, 
+  Mail, 
+  Sparkles, 
+  RefreshCw, 
+  Check, 
+  Send, 
+  Briefcase, 
+  Home, 
+  Users, 
+  FileSearch, 
+  Filter
 } from 'lucide-react';
 import { researchSpecializedCounsel } from '../lib/gemini';
 import Tooltip from './Tooltip';
@@ -30,10 +30,10 @@ interface AttorneyHubProps {
 }
 
 const SPECIALIZATIONS = [
-  { id: 'surplus', label: 'Surplus Recovery', icon: ScaleIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  { id: 'probate', label: 'Probate Law', icon: UsersIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { id: 'tax', label: 'Tax Law', icon: FileSearchIcon, color: 'text-rose-600', bg: 'bg-rose-50' },
-  { id: 'litigation', label: 'Real Estate Litigation', icon: HomeIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' }
+  { id: 'surplus', label: 'Surplus Recovery', icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  { id: 'probate', label: 'Probate Law', icon: Users, color: 'text-amber-600', bg: 'bg-amber-50' },
+  { id: 'tax', label: 'Tax Law', icon: FileSearch, color: 'text-rose-600', bg: 'bg-rose-50' },
+  { id: 'litigation', label: 'Real Estate Litigation', icon: Home, color: 'text-emerald-600', bg: 'bg-emerald-50' }
 ];
 
 const AttorneyHub: React.FC<AttorneyHubProps> = ({ state, county }) => {
@@ -68,14 +68,15 @@ const AttorneyHub: React.FC<AttorneyHubProps> = ({ state, county }) => {
     const subject = `New Case Referral: ${activeSpecialization} - ${county}, ${state}`;
     const body = `Hello ${attorney.name},
 
-I am contacting you regarding a potential ${activeSpecialization} matter in ${county}, ${state}. 
+I am reaching out from the Prospector AI platform regarding a potential ${activeSpecialization} case in ${county}, ${state}.
 
-Our platform has identified a case requiring specialized legal oversight in your domain. We are impressed with your firm's credentials and would like to discuss a potential referral.
+We have identified a recovery opportunity that matches your firm's expertise. We would like to confirm your current capacity for a formal referral in this jurisdiction.
 
-Could you please confirm your current availability for new cases in this jurisdiction?
+Please let us know your standard fee structure for ${activeSpecialization} matters and the best time for a brief consultation.
 
 Best regards,
-Prospector AI Platform Operations`;
+Lead Recovery Agent
+Prospector AI Platform`;
 
     const mailtoUrl = `mailto:${attorney.contact_info}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoUrl, '_blank');
@@ -89,23 +90,22 @@ Prospector AI Platform Operations`;
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="p-4 bg-indigo-600 rounded-[1.5rem] shadow-2xl shadow-indigo-950/40">
-                  <GavelIcon size={32} strokeWidth={2.5} />
+                  <Gavel size={32} strokeWidth={2.5} />
                 </div>
                 <div>
                   <h3 className="text-4xl font-black tracking-tight uppercase italic leading-none">Counsel Terminal</h3>
-                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mt-2">Jurisdiction: {county}, {state}</p>
+                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mt-2">Active Research: {county}, {state}</p>
                 </div>
               </div>
               <p className="text-indigo-100 font-bold text-xl leading-relaxed italic opacity-90">
-                Identify specialized legal partners. Use the filters below to find probate experts for heir-based cases or tax specialists for complex priority audits.
+                Strategic Legal Discovery. Identify specialized partners for complex surplus recovery, probate issues, or senior lien litigation.
               </p>
             </div>
 
-            {/* Enhanced Specialization Filter Bar */}
             <div className="space-y-4">
                <div className="flex items-center gap-3">
-                  <FilterIcon size={14} className="text-indigo-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Target Legal Domain</span>
+                  <Filter size={14} className="text-indigo-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Set Specialization Filter</span>
                </div>
                <div className="flex flex-wrap gap-3">
                   {SPECIALIZATIONS.map((spec) => (
@@ -125,19 +125,19 @@ Prospector AI Platform Operations`;
                </div>
             </div>
 
-            <Tooltip content={`Research the legal registry specifically for ${activeSpecialization} attorneys in this area.`}>
+            <Tooltip content={`Research the legal registry specifically for ${activeSpecialization} attorneys.`}>
               <button 
                 onClick={handleResearch} 
                 disabled={loading}
                 className="px-12 py-6 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-3xl shadow-indigo-950/40 hover:bg-indigo-500 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 border-2 border-white/10 w-full md:w-auto"
               >
-                {loading ? <Loader2Icon size={24} className="animate-spin" /> : <SparklesIcon size={24} className="text-amber-400" />}
-                {loading ? 'Consulting Registry...' : `Scan for ${activeSpecialization} Experts`}
+                {loading ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} className="text-amber-400" />}
+                {loading ? 'Accessing Legal Registry...' : `Scan for ${activeSpecialization} Counsel`}
               </button>
             </Tooltip>
           </div>
           <div className="hidden xl:block opacity-10 group-hover:opacity-20 transition-all duration-1000 rotate-12 group-hover:rotate-0">
-             <ScaleIcon size={260} />
+             <Scale size={260} />
           </div>
         </div>
         <div className="absolute -right-40 -bottom-40 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[160px]"></div>
@@ -167,12 +167,12 @@ Prospector AI Platform Operations`;
                 
                 <div className="space-y-4">
                    <div className="flex items-center gap-4 text-slate-600 p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner group-hover:bg-white transition-colors">
-                      <MailIcon size={16} className="text-indigo-500" />
+                      <Mail size={16} className="text-indigo-500" />
                       <span className="text-xs font-bold truncate tracking-tight">{attorney.contact_info}</span>
                    </div>
                    <div className="p-6 bg-indigo-50/30 rounded-[2rem] border-2 border-indigo-100/50 italic text-[13px] text-slate-600 leading-relaxed font-bold shadow-sm relative">
                       <div className="absolute -top-3 -left-2 bg-white p-1.5 rounded-lg border border-indigo-100">
-                         <SparklesIcon size={14} className="text-indigo-500" />
+                         <Sparkles size={14} className="text-indigo-500" />
                       </div>
                       "{attorney.rationale}"
                    </div>
@@ -181,26 +181,26 @@ Prospector AI Platform Operations`;
 
               <div className="pt-10 mt-8 border-t-2 border-slate-50 space-y-4">
                  <div className="flex items-center gap-4">
-                    <Tooltip content="Formally assign this counsel to the active case file in your CRM.">
+                    <Tooltip content="Assign this counsel to the case file for final filing.">
                         <button 
                           onClick={() => handleRetain(attorney.name)}
                           className={`flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl ${retaining === attorney.name ? 'bg-emerald-600 text-white' : 'bg-slate-950 text-white hover:bg-indigo-600 shadow-indigo-950/20'}`}
                         >
-                          {retaining === attorney.name ? <CheckIcon size={20} strokeWidth={3} /> : <UserPlusIcon size={20} />}
+                          {retaining === attorney.name ? <Check size={20} strokeWidth={3} /> : <UserPlus size={20} />}
                           {retaining === attorney.name ? 'Assigned' : 'Retain Counsel'}
                         </button>
                     </Tooltip>
                     <a href={attorney.website} target="_blank" rel="noreferrer" className="p-5 bg-white border-2 border-slate-100 text-slate-400 rounded-2xl hover:text-indigo-600 hover:border-indigo-400 transition-all shadow-lg hover:scale-110 active:scale-95">
-                        <ExternalLinkIcon size={22} />
+                        <ExternalLink size={22} />
                     </a>
                  </div>
                  
-                 <Tooltip content={`Open an email draft to ${attorney.name} for a case referral.`}>
+                 <Tooltip content={`Generate a referral email to ${attorney.name}.`}>
                     <button 
                       onClick={() => handleContact(attorney)}
                       className="w-full flex items-center justify-center gap-3 py-4 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border-2 border-transparent hover:border-indigo-400 shadow-sm"
                     >
-                      <SendIcon size={14} />
+                      <Send size={14} />
                       Contact Attorney
                     </button>
                  </Tooltip>
@@ -213,12 +213,12 @@ Prospector AI Platform Operations`;
       {results.length === 0 && !loading && (
         <div className="py-40 text-center border-4 border-dashed border-slate-100 rounded-[4rem] bg-slate-50/20 shadow-inner flex flex-col items-center justify-center space-y-10 group hover:bg-white hover:border-indigo-200 transition-all duration-700">
            <div className="w-32 h-32 bg-white rounded-[2.5rem] flex items-center justify-center shadow-3xl border-2 border-slate-50 text-slate-100 group-hover:text-indigo-600 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
-              <ScaleIcon size={64} />
+              <Scale size={64} />
            </div>
            <div className="space-y-4">
-              <p className="text-slate-400 font-black uppercase text-xl tracking-[0.2em] italic">Registry Standing By</p>
+              <p className="text-slate-400 font-black uppercase text-xl tracking-[0.2em] italic">Counsel Hub Standing By</p>
               <p className="text-sm text-slate-500 font-bold max-w-sm mx-auto leading-relaxed">
-                Select a legal specialization and launch the <span className="text-indigo-600">Scan Engine</span> to identify authorized legal partners in this jurisdiction.
+                Select a legal domain and execute the <span className="text-indigo-600">Deep Search Protocol</span> to populate the regional counselor grid.
               </p>
            </div>
         </div>

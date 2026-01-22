@@ -21,11 +21,11 @@ import {
 import { CaseStatus } from '../types';
 import Tooltip from './Tooltip';
 
-// ALL 50 US STATES - STRICT DOMESTIC VALIDATION
+// STRICT 50-STATE DOMESTIC REGISTRY
 const US_STATES = [
   { id: 'AL', name: 'Alabama' }, { id: 'AK', name: 'Alaska' }, { id: 'AZ', name: 'Arizona' }, { id: 'AR', name: 'Arkansas' },
   { id: 'CA', name: 'California' }, { id: 'CO', name: 'Colorado' }, { id: 'CT', name: 'Connecticut' }, { id: 'DE', name: 'Delaware' },
-  { id: 'DC', name: 'Dist. of Columbia' }, { id: 'FL', name: 'Florida' }, { id: 'GA', name: 'Georgia' }, { id: 'HI', name: 'Hawaii' },
+  { id: 'DC', name: 'District of Columbia' }, { id: 'FL', name: 'Florida' }, { id: 'GA', name: 'Georgia' }, { id: 'HI', name: 'Hawaii' },
   { id: 'ID', name: 'Idaho' }, { id: 'IL', name: 'Illinois' }, { id: 'IN', name: 'Indiana' }, { id: 'IA', name: 'Iowa' },
   { id: 'KS', name: 'Kansas' }, { id: 'KY', name: 'Kentucky' }, { id: 'LA', name: 'Louisiana' }, { id: 'ME', name: 'Maine' },
   { id: 'MD', name: 'Maryland' }, { id: 'MA', name: 'Massachusetts' }, { id: 'MI', name: 'Michigan' }, { id: 'MN', name: 'Minnesota' },
@@ -52,7 +52,7 @@ const PropertyForm: React.FC = () => {
     surplus_amount: 0
   });
 
-  // PRE-FILL LOGIC: Handles "Promotion" from Fleet Scanner
+  // PRE-FILL LOGIC: Handles "Promotion" from Fleet Discovery Scanner
   useEffect(() => {
     const prefill = location.state?.prefill;
     if (prefill) {
@@ -71,7 +71,7 @@ const PropertyForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Production Case Initialized:', formData);
+    console.log('Ingesting production case file:', formData);
     navigate('/');
   };
 
@@ -90,7 +90,7 @@ const PropertyForm: React.FC = () => {
              </div>
              <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Discovery Intake</h2>
           </div>
-          <p className="text-slate-700 font-bold text-xl leading-relaxed italic opacity-80">"Promoting researched discovery leads to active production pipeline."</p>
+          <p className="text-slate-700 font-bold text-xl leading-relaxed italic opacity-80">"Promoting high-intent discovery leads to active production pipeline."</p>
         </div>
         <Tooltip content="Cancel and return to dashboard.">
           <button 
@@ -102,43 +102,37 @@ const PropertyForm: React.FC = () => {
         </Tooltip>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white border-2 border-slate-100 rounded-[4rem] shadow-[0_60px_120px_-30px_rgba(0,0,0,0.12)] overflow-hidden ring-1 ring-slate-100 ring-inset">
+      <form onSubmit={handleSubmit} className="bg-white border-2 border-slate-100 rounded-[4rem] shadow-3xl overflow-hidden ring-1 ring-slate-100">
         <div className="p-16 space-y-16">
-          {/* Section 1: Jurisdiction Identity */}
           <section className="space-y-10">
             <div className="flex items-center justify-between border-b-2 border-slate-50 pb-6">
               <h3 className="text-[13px] font-black text-indigo-600 uppercase tracking-[0.3em] flex items-center gap-4 italic">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-inner"><Globe size={22} /></div>
-                Domestic Origin Mapping
+                Jurisdictional Context
               </h3>
-              {formData.surplus_amount > 100000 && <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-amber-200 shadow-sm"><Zap size={12} fill="currentColor" /> High Yield Profile</span>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-indigo-600 transition-colors flex items-center gap-3">
-                  National State Target <ChevronRight size={12} className="text-indigo-300" />
-                </label>
-                <div className="relative group">
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-indigo-600 transition-colors">National State Target</label>
+                <div className="relative">
                   <select 
-                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-[1.75rem] py-6 px-10 text-[16px] font-black focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all shadow-inner appearance-none cursor-pointer"
+                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-[1.75rem] py-6 px-10 text-[16px] font-black focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all appearance-none cursor-pointer"
                     value={formData.state}
                     onChange={(e) => setFormData({...formData, state: e.target.value})}
                   >
                     {US_STATES.map(s => <option key={s.id} value={s.id}>{s.name} ({s.id})</option>)}
                   </select>
-                  <ChevronDown size={24} className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-indigo-600" />
+                  <ChevronDown size={24} className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
               </div>
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-indigo-600 transition-colors flex items-center gap-3">
-                  Jurisdictional County <ChevronRight size={12} className="text-indigo-300" />
-                </label>
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-indigo-600 transition-colors">Jurisdictional County</label>
                 <div className="relative">
                    <MapPinIcon size={20} className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
                    <input 
                     type="text" 
-                    placeholder="e.g. Mecklenburg, Harris, King..."
+                    placeholder="e.g. Mecklenburg, Harris, Fulton..."
                     value={formData.county}
                     className="w-full bg-slate-50 border-2 border-slate-200 rounded-[1.75rem] py-6 pl-16 pr-10 text-[16px] font-black focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all shadow-inner placeholder:text-slate-300 placeholder:italic"
                     required
@@ -150,10 +144,10 @@ const PropertyForm: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-indigo-600 transition-colors">Property Folio / Parcel ID (APN)</label>
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-indigo-600 transition-colors">Property Parcel ID / Folio</label>
                 <input 
                   type="text" 
-                  placeholder="XX-XXXX-XXXX-XX"
+                  placeholder="XX-XXXX-XXXX"
                   value={formData.parcel_id}
                   className="w-full bg-slate-50 border-2 border-slate-200 rounded-[1.75rem] py-6 px-10 text-[16px] font-black focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all shadow-inner uppercase tracking-widest placeholder:normal-case"
                   required
@@ -164,7 +158,7 @@ const PropertyForm: React.FC = () => {
                 <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-indigo-600 transition-colors">Legal Site Address</label>
                 <input 
                   type="text" 
-                  placeholder="Street Address, City, Zip"
+                  placeholder="Street Address, City, State, Zip"
                   value={formData.address}
                   className="w-full bg-slate-50 border-2 border-slate-200 rounded-[1.75rem] py-6 px-10 text-[16px] font-black focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 outline-none transition-all shadow-inner uppercase italic placeholder:normal-case"
                   required
@@ -174,15 +168,14 @@ const PropertyForm: React.FC = () => {
             </div>
           </section>
 
-          {/* Section 2: Financial Balance */}
           <section className="space-y-10 pt-16 border-t-2 border-slate-50">
             <h3 className="text-[13px] font-black text-emerald-600 uppercase tracking-[0.3em] flex items-center gap-4 italic">
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100 shadow-inner"><DollarSignIcon size={22} /></div>
-              Domestic Surplus Balance
+              Surplus Calculation Matrix
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-emerald-600 transition-colors">Auction Sold Price ($)</label>
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-emerald-600 transition-colors">Auction Sale Price ($)</label>
                 <input 
                   type="number" 
                   value={formData.sale_price || ''}
@@ -192,7 +185,7 @@ const PropertyForm: React.FC = () => {
                 />
               </div>
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-rose-600 transition-colors">Senior Debt / Taxes ($)</label>
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-rose-600 transition-colors">Senior Debt / Delinquency ($)</label>
                 <input 
                   type="number" 
                   value={formData.total_debt || ''}
@@ -202,14 +195,11 @@ const PropertyForm: React.FC = () => {
                 />
               </div>
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3">Authorized Recovery Pool</label>
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3">Est. Recoverable Pool</label>
                 <div className="w-full bg-slate-950 border-2 border-slate-900 rounded-[1.75rem] py-6 px-10 text-[24px] font-black text-emerald-400 shadow-3xl flex items-center justify-between ring-8 ring-slate-950/5 relative overflow-hidden group">
-                  <div className="relative z-10 flex items-center gap-4">
-                     <span className="opacity-40 text-[10px] uppercase tracking-widest font-black italic">Net:</span>
-                     <span className="tracking-tighter">${formData.surplus_amount.toLocaleString()}</span>
-                  </div>
-                  <CheckCircle2 size={24} className="relative z-10 text-emerald-500" />
-                  <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12 transition-transform group-hover:scale-150 duration-700">
+                   <span className="tracking-tighter">${formData.surplus_amount.toLocaleString()}</span>
+                   <CheckCircle2 size={24} className="text-emerald-500" />
+                   <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12 transition-transform group-hover:scale-150 duration-700">
                      <TrendingUp size={80} fill="white" />
                   </div>
                 </div>
@@ -217,15 +207,14 @@ const PropertyForm: React.FC = () => {
             </div>
           </section>
 
-          {/* Section 3: Timeline */}
           <section className="space-y-10 pt-16 border-t-2 border-slate-50">
             <h3 className="text-[13px] font-black text-amber-600 uppercase tracking-[0.3em] flex items-center gap-4 italic">
               <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center border border-amber-100 shadow-inner"><CalendarIcon size={22} /></div>
-              Statutory Deadline Protocol
+              Statutory Deadline Engine
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-amber-600 transition-colors">Date of Tax Sale / Deed Auction</label>
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-amber-600 transition-colors">Date of Tax Auction / Sale</label>
                 <input 
                   type="date" 
                   value={formData.tax_sale_date}
@@ -233,28 +222,28 @@ const PropertyForm: React.FC = () => {
                   onChange={(e) => setFormData({...formData, tax_sale_date: e.target.value})}
                 />
               </div>
-              <div className="p-10 bg-slate-50 border-2 border-slate-100 rounded-[3rem] flex gap-8 shadow-inner items-start group hover:bg-white hover:border-indigo-100 transition-all duration-500">
-                <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100 shrink-0 group-hover:rotate-6 transition-transform"><InfoIcon size={28} /></div>
-                <p className="text-sm text-slate-700 font-bold leading-relaxed italic group-hover:text-slate-900 transition-colors">
-                  AI Compliance Engine: Based on your selection of <span className="text-indigo-600 font-black">{US_STATES.find(s => s.id === formData.state)?.name || 'Target State'}</span>, our engine will automatically sync redemption and escheatment windows.
+              <div className="p-10 bg-slate-50 border-2 border-slate-100 rounded-[3rem] flex gap-8 shadow-inner items-start group hover:bg-white transition-all">
+                <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-xl shrink-0"><InfoIcon size={28} /></div>
+                <p className="text-sm text-slate-700 font-bold leading-relaxed italic">
+                  Statutory Rule Logic: Selecting <span className="text-indigo-600 font-black">{US_STATES.find(s => s.id === formData.state)?.name || 'a US State'}</span> will automatically trigger our engine to calculate escheatment and redemption periods.
                 </p>
               </div>
             </div>
           </section>
         </div>
 
-        <div className="p-16 bg-slate-50 border-t-2 border-slate-100 flex items-center justify-end gap-10 shadow-2xl relative z-10">
+        <div className="p-16 bg-slate-50 border-t-2 border-slate-100 flex items-center justify-end gap-10">
           <button 
             type="button" 
             onClick={() => navigate('/')}
-            className="px-12 py-5 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-rose-600 transition-all hover:bg-white rounded-2xl border-2 border-transparent hover:border-rose-100 active:scale-95"
+            className="px-12 py-5 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-rose-600 transition-all rounded-2xl border-2 border-transparent hover:border-rose-100"
           >
-            Discard Protocol
+            Discard File
           </button>
-          <Tooltip content="Ingest this discovery into the production case management grid.">
+          <Tooltip content="Ingest this claim context into the production management grid.">
             <button 
               type="submit"
-              className="bg-indigo-600 text-white px-20 py-7 rounded-[2rem] font-black text-xs uppercase tracking-[0.25em] hover:bg-indigo-700 transition-all shadow-3xl shadow-indigo-900/40 flex items-center gap-5 active:scale-[0.98] hover:-translate-y-2 border-2 border-white/10"
+              className="bg-indigo-600 text-white px-20 py-7 rounded-[2rem] font-black text-xs uppercase tracking-[0.25em] hover:bg-indigo-700 transition-all shadow-3xl shadow-indigo-900/40 flex items-center gap-5 active:scale-[0.98] border-2 border-white/10"
             >
               <Database size={24} />
               Initialize Case Protocol

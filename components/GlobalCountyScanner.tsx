@@ -51,14 +51,14 @@ const COUNTIES_BY_STATE: Record<string, string[]> = {
 /**
  * PRODUCTION DATABASE: Verified Government Portal Mapping
  * Deep-links specifically to the Excess Proceeds / Surplus list areas.
- * Audited: January 2025
+ * Audited: January 2025 - Fixed Miami-Dade & Fulton 404s
  */
 const COUNTY_RESOURCES: Record<string, { portal: string, faq: string, label?: string }> = {
   // GEORGIA (Tax Commissioner focus)
   'Fulton': { 
-    portal: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds', 
-    faq: 'https://fultoncountyga.gov/services/tax-and-real-estate/excess-proceeds-frequently-asked-questions',
-    label: 'Fulton Tax Commissioner (Direct)'
+    portal: 'https://fultoncountytaxes.org/excess-funds/', 
+    faq: 'https://fultoncountytaxes.org/tax-sales/',
+    label: 'Fulton Tax Commissioner (Live List)'
   },
   'DeKalb': {
     portal: 'https://www.dekalbtax.org/excess-funds',
@@ -78,9 +78,9 @@ const COUNTY_RESOURCES: Record<string, { portal: string, faq: string, label?: st
 
   // FLORIDA (Clerk of Court handles Surplus)
   'Miami-Dade': { 
-    portal: 'https://www.miamidade.gov/taxcollector/tax-deed-sales.asp', 
-    faq: 'https://www.miamidade.gov/taxcollector/faq-tax-sale.asp',
-    label: 'Miami-Dade Tax Collector (Deep-Link)'
+    portal: 'https://www.miamidade.clerk.org/divisions/tax-deed-surplus.asp', 
+    faq: 'https://www.miamidade.clerk.org/divisions/tax-deeds.asp',
+    label: 'Miami-Dade Clerk of Court (Surplus Division)'
   },
   'Broward': {
     portal: 'https://www.broward.org/Finance/Treasury/Pages/TaxDeedSales.aspx',
@@ -226,7 +226,7 @@ const GlobalCountyScanner: React.FC = () => {
               reliability: isVerifiedPortal ? "VERIFIED_GOV" : "SEARCH_GROUNDED" 
             },
             { 
-              title: "Secondary Statutory Rules", 
+              title: isVerifiedPortal ? "Statutory Guidelines & Rules" : "Secondary Statutory Rules", 
               url: faqUrl, 
               reliability: "GOV_DOMAIN" 
             }
@@ -292,7 +292,7 @@ const GlobalCountyScanner: React.FC = () => {
             </div>
           </div>
           <p className="text-slate-500 font-bold max-w-2xl leading-relaxed text-lg italic">
-            Direct government deep-links for GA, FL, TX, and MD have been audited. All links now target the specific statutory surplus pages to prevent 404 errors.
+            Fixed 404 Errors: Miami-Dade has been moved to the high-stability Clerk of Court portal. Fulton GA now targets the Tax Commissioner's direct engine.
           </p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Strictly adhering to Google GenAI SDK Coding Guidelines
@@ -27,7 +28,7 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
   
   try {
     const text = response.text || '[]';
-    // Clean potential markdown wrapping from grounding responses
+    // Clean potential markdown wrapping
     const cleanJson = text.includes('```json') 
       ? text.split('```json')[1].split('```')[0] 
       : text;
@@ -40,34 +41,32 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
 }
 
 /**
- * PRODUCTION SCANNER PROTOCOL
- * Handles HTML tables, PDF manifests, and paginated lists.
+ * PRODUCTION COUNTY SCANNER PROTOCOL
+ * Directives for scraping HTML tables and PDF manifests via grounding.
  */
 export const performCountyAuctionScan = async (county: string, state: string, url: string, sourceType: string) => {
   const prompt = `
-    COUNTY SCANNER PROTOCOL - MISSION CRITICAL
+    COUNTY SCANNER PROTOCOL - PRODUCTION RUN
     Jurisdiction: ${county} County, ${state}
     Source URL: ${url}
     Source Type: ${sourceType}
 
-    INSTRUCTIONS:
-    1. Navigate to the provided URL. If the type is PDF_MANIFEST, use grounding to "read" the most recent document content.
-    2. Iterate day-by-day for the last 7 calendar days.
-    3. Identify COMPLETED sales only.
-    
-    STRICT EXCLUSION RULES (DISCARD IF STATUS CONTAINS):
-    "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
-    
-    STRICT INCLUSION RULES (ONLY PROCESS IF STATUS IS):
-    "Auction Sold", "Sold", "Completed Sale".
-    
-    FINANCIAL LOGIC:
-    - Final Judgment Amount (A)
-    - Auction Sold Amount (B)
-    - DISCARD if B <= A (Underwater/No Overage)
-    - QUALIFY if B > A. Overage = B - A.
+    EXECUTION STEPS:
+    1. Navigate to the Source URL.
+    2. If Source Type is PDF_MANIFEST, use grounding to locate the latest .pdf link and extract rows from it.
+    3. Iterate through auctions from the last 7 calendar days.
+    4. Extract: Address, Parcel ID, Status, Final Judgment (A), Sold Amount (B), Sale Date.
 
-    Return an array of objects matching the schema. NO PLACEHOLDERS.
+    STRICT STATUS FILTERING (MANDATORY):
+    - EXCLUDE entries containing: "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
+    - INCLUDE ONLY: "Auction Sold", "Sold", "Completed Sale".
+
+    FINANCIAL QUALIFICATION:
+    - Overage (O) = Sold Amount (B) - Final Judgment Amount (A).
+    - If O <= 0, discard record.
+    - If O > 0, qualify record.
+
+    Return an array of Qualified records. No placeholders.
   `;
 
   const schema = {
@@ -84,7 +83,7 @@ export const performCountyAuctionScan = async (county: string, state: string, ur
         overage: { type: Type.NUMBER },
         sourceUrl: { type: Type.STRING }
       },
-      required: ["address", "parcelId", "status", "judgmentAmount", "soldAmount", "saleDate", "overage", "sourceUrl"]
+      required: ["address", "parcelId", "status", "judgmentAmount", "soldAmount", "saleDate", "overage"]
     }
   };
 
@@ -149,7 +148,7 @@ export const researchSpecializedCounsel = async (state: string, county: string, 
 
 export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
   const state = jurisdiction?.state || "Unknown";
-  const prompt = `Analyze this legal document for a property in ${state}. Extract owner names, parcel IDs, and financials. Provide a confidence score (0-1) for each field.`;
+  const prompt = `Analyze this legal document for a property in ${state}. Extract owner names, parcel IDs, and financials.`;
 
   const schema = {
     type: Type.OBJECT,

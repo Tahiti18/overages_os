@@ -43,7 +43,7 @@ const MOCK_USER: User = {
 };
 
 const App: React.FC = () => {
-  // Defaulting to Live Engine (true) as requested for the impressive 'clean slate' start
+  // CRITICAL: System now defaults to TRUE. No fake data will appear until switched to Demo.
   const [isLiveMode, setIsLiveMode] = useState(true);
 
   return (

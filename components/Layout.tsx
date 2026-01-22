@@ -26,7 +26,9 @@ import {
   HardDrive,
   Bell,
   Lock,
-  Terminal
+  Terminal,
+  ShieldAlert,
+  Play
 } from 'lucide-react';
 import { User, UserRole, SystemNotification } from '../types';
 import LiveAgent from './LiveAgent';
@@ -40,7 +42,6 @@ interface LayoutProps {
   setIsLiveMode: (val: boolean) => void;
 }
 
-// Defining NavItem interface for consistent navigation item typing
 interface NavItem {
   label: string;
   path: string;
@@ -50,27 +51,6 @@ interface NavItem {
   color?: string;
   desc?: string;
 }
-
-const SIMULATION_NOTIFICATIONS: SystemNotification[] = [
-  {
-    id: 'n1',
-    type: 'DROP_ALERT',
-    title: '[SIMULATION] Imminent PDF Drop: Miami-Dade',
-    message: 'Predictive Sync indicates a surplus list release in 22 hours. Example behavior of Open Plains alerts.',
-    timestamp: '1h ago',
-    is_read: false,
-    priority: 'URGENT'
-  },
-  {
-    id: 'n2',
-    type: 'DEADLINE',
-    title: '[SIMULATION] Compliance Window Closing',
-    message: 'Filing for Case #14-02 expires in 48 hours. Example of deadline tracking behavior.',
-    timestamp: '4h ago',
-    is_read: false,
-    priority: 'HIGH'
-  }
-];
 
 const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const location = useLocation();
@@ -82,21 +62,11 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
   useEffect(() => {
     const checkKey = () => {
-      const env = (window as any).process?.env || {};
-      const manualKey = localStorage.getItem('prospector_auth_key');
-      const hasKey = !!(
-        manualKey ||
-        env.OPENROUTER_API_KEY || 
-        env.API_KEY || 
-        env.VITE_OPENROUTER_API_KEY || 
-        env.VITE_API_KEY ||
-        (window as any).OPENROUTER_API_KEY
-      );
+      const hasKey = !!(process.env && process.env.API_KEY);
       setIsAiConnected(hasKey);
     };
-
     checkKey();
-    const timer = setInterval(checkKey, 2000); // Poll for key changes (like after a reload)
+    const timer = setInterval(checkKey, 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -104,7 +74,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-gavel"><path d="m14.5 12.5-8 8a2.11 2.11 0 0 1-3-3l8-8"/><path d="m16 16 2 2"/><path d="m19 13 2 2"/><path d="m5 5 3 3"/><path d="m2 11 3 3"/><path d="m15.5 15.5 3-3a2.11 2.11 0 0 0-3-3l-3 3a2.11 2.11 0 0 0 3 3Z"/></svg>
   );
 
-  // Applied NavItem interface to mainNav
   const mainNav: NavItem[] = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard, tip: 'Overview of all active surplus recovery cases.' },
     { label: 'Artifact Vault', path: '/vault', icon: HardDrive, tip: 'Centralized repository for all extracted data and generated forms.' },
@@ -112,7 +81,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     { label: 'Workflow Protocol', path: '/workflow', icon: Layers, tip: 'Detailed view of the 5-stage automated recovery pipeline.' },
   ];
 
-  // Applied NavItem interface to intelligenceSuite
   const intelligenceSuite: NavItem[] = [
     { label: 'County Scanner', path: '/scanner', icon: Database, color: 'text-emerald-400', desc: 'Raw List Discovery', tip: 'Scan entire counties for buried surplus and excess proceeds lists.' },
     { label: 'Skip-Trace Hub', path: '/research', icon: Globe, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
@@ -121,7 +89,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     { label: 'Compliance Calendar', path: '/calendar', icon: Calendar, color: 'text-rose-400', desc: 'Legal Deadlines', tip: 'Track critical filing windows across all jurisdictions.' },
   ];
 
-  // Applied NavItem interface to adminNav
   const adminNav: NavItem[] = [
     { label: 'Protocol Auth', path: '/admin/auth', icon: Terminal, color: 'text-indigo-400', tip: 'Securely authorize your session API keys.' },
     { label: 'Rules Engine', path: '/admin/rules', icon: Scale, roles: [UserRole.ADMIN], tip: 'Configure jurisdiction-specific deadlines and requirements.' },
@@ -129,68 +96,57 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     { label: 'Billing & Tiers', path: '/billing', icon: CreditCard, tip: 'Manage your platform subscription and AI credits.' },
   ];
 
-  const currentNotifications = isLiveMode ? [] : SIMULATION_NOTIFICATIONS;
-
   return (
     <div className="flex h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-hidden">
-      <aside 
-        className={`bg-slate-950 text-white flex flex-col hidden md:flex shadow-3xl z-30 border-r-2 border-white/5 transition-all duration-500 ease-in-out ${isCollapsed ? 'w-24' : 'w-80'}`}
-      >
+      <aside className={`bg-slate-950 text-white flex flex-col hidden md:flex shadow-3xl z-30 border-r-2 border-white/5 transition-all duration-500 ease-in-out ${isCollapsed ? 'w-24' : 'w-80'}`}>
         <div className="p-8 flex items-center justify-between">
           <div className={`flex items-center gap-3 transition-all duration-500 ${isCollapsed ? 'opacity-0 scale-0 w-0 overflow-hidden' : 'opacity-100 scale-100'}`}>
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl rotate-3 shrink-0 border-2 border-white/20 transition-colors ${isLiveMode ? 'bg-emerald-600 shadow-emerald-500/40' : 'bg-indigo-600 shadow-indigo-500/40'}`}>
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl border-2 border-white/20 ${isLiveMode ? 'bg-emerald-600 shadow-emerald-500/40' : 'bg-indigo-600 shadow-indigo-500/40'}`}>
               <Zap size={20} fill="white" />
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-tight text-white">PROSPECTOR</h1>
-              <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em]">Overage OS</p>
+              <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em]">Environment: {isLiveMode ? 'PRD' : 'DEMO'}</p>
             </div>
           </div>
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className={`p-2.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all shadow-lg ${isCollapsed ? 'mx-auto' : ''}`}
-          >
+          <button onClick={() => setIsCollapsed(!isCollapsed)} className={`p-2.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all ${isCollapsed ? 'mx-auto' : ''}`}>
             {isCollapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 space-y-8 py-4 custom-scrollbar overflow-x-hidden">
-          <div className={`p-4 rounded-2xl border-2 mb-8 flex items-center justify-between transition-all duration-700 ${isLiveMode ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-slate-900 border-white/5'}`}>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className={`w-2.5 h-2.5 rounded-full ${isAiConnected ? (isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-500') : 'bg-rose-500'} shadow-lg`}></div>
-              </div>
-              {!isCollapsed && (
-                <div>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ${isAiConnected ? (isLiveMode ? 'text-emerald-400' : 'text-indigo-400') : 'text-rose-400'}`}>
-                    AI Sync Status
-                  </p>
-                  <p className="text-[10px] font-bold text-white uppercase">{isAiConnected ? 'Secure Session' : 'Disconnected'}</p>
-                </div>
-              )}
-            </div>
-            {!isCollapsed && (
-               <button 
-                 onClick={() => setIsLiveMode(!isLiveMode)}
-                 className={`p-1.5 rounded-lg transition-all ${isLiveMode ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
-               >
-                 <Activity size={14} />
-               </button>
-            )}
+          {/* ENVIRONMENT TOGGLE: CHURCH & STATE SEPARATION */}
+          <div className={`p-6 rounded-[2rem] border-2 mb-8 transition-all duration-700 ${isLiveMode ? 'bg-slate-900 border-emerald-500/20' : 'bg-indigo-600 border-white/20 shadow-2xl'}`}>
+             {!isCollapsed && (
+               <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                     <p className={`text-[10px] font-black uppercase tracking-widest ${isLiveMode ? 'text-emerald-400' : 'text-indigo-200'}`}>
+                        {isLiveMode ? 'Production Shield' : 'Simulation Engine'}
+                     </p>
+                     <div className={`w-2 h-2 rounded-full ${isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-white shadow-[0_0_10px_white]'}`}></div>
+                  </div>
+                  <button 
+                    onClick={() => setIsLiveMode(!isLiveMode)}
+                    className={`w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 border-2 ${
+                      isLiveMode ? 'bg-slate-800 text-emerald-400 border-emerald-500/20 hover:bg-slate-700' : 'bg-white text-indigo-900 border-white shadow-xl hover:bg-slate-100'
+                    }`}
+                  >
+                    {isLiveMode ? <Play size={12} fill="currentColor" /> : <ShieldCheck size={12} />}
+                    {isLiveMode ? 'Switch to Demo Mode' : 'Switch to Live Production'}
+                  </button>
+               </div>
+             )}
+             {isCollapsed && (
+                <button onClick={() => setIsLiveMode(!isLiveMode)} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isLiveMode ? 'bg-slate-800 text-emerald-400' : 'bg-white text-indigo-900 shadow-xl'}`}>
+                   {isLiveMode ? <Activity size={20} /> : <Zap size={20} fill="currentColor" />}
+                </button>
+             )}
           </div>
 
           <nav className="space-y-1">
-            {/* Added explicit filter for NavItem type to handle optional roles property */}
             {mainNav.filter((item: NavItem) => !item.roles || item.roles.includes(user.role)).map((item) => (
               <Tooltip key={item.path} content={item.tip} position="right">
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
-                    location.pathname === item.path 
-                      ? (isLiveMode ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20' : 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20')
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
+                <Link to={item.path} className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${location.pathname === item.path ? (isLiveMode ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20' : 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20') : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                   <item.icon size={22} className={location.pathname === item.path ? 'text-white' : 'group-hover:scale-110 transition-transform'} />
                   {!isCollapsed && <span className="text-sm font-black uppercase tracking-tight">{item.label}</span>}
                 </Link>
@@ -203,14 +159,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
              <div className="space-y-1">
                 {intelligenceSuite.map((item) => (
                   <Tooltip key={item.path} content={item.tip} position="right">
-                    <Link
-                      to={item.path}
-                      className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
-                        location.pathname === item.path 
-                          ? 'bg-white/10 text-white shadow-lg border border-white/5' 
-                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                      }`}
-                    >
+                    <Link to={item.path} className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${location.pathname === item.path ? 'bg-white/10 text-white shadow-lg border border-white/5' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                       <item.icon size={22} className={item.color} />
                       {!isCollapsed && (
                         <div className="flex flex-col">
@@ -226,17 +175,9 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
           <nav className="space-y-1 border-t border-white/5 pt-4">
             {!isCollapsed && <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-4">Control Plane</p>}
-            {/* Added role filter for adminNav to correctly hide restricted items */}
             {adminNav.filter((item: NavItem) => !item.roles || item.roles.includes(user.role)).map((item) => (
               <Tooltip key={item.path} content={item.tip} position="right">
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
-                    location.pathname === item.path 
-                      ? (isLiveMode ? 'bg-emerald-600 text-white shadow-xl' : 'bg-indigo-600 text-white shadow-xl')
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
+                <Link to={item.path} className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${location.pathname === item.path ? (isLiveMode ? 'bg-emerald-600 text-white shadow-xl' : 'bg-indigo-600 text-white shadow-xl') : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                   <item.icon size={22} className={item.color || 'text-slate-400'} />
                   {!isCollapsed && <span className="text-sm font-black uppercase tracking-tight">{item.label}</span>}
                 </Link>
@@ -256,11 +197,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                 <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{user.role}</p>
               </div>
             )}
-            {!isCollapsed && (
-               <button className="p-2 text-slate-600 hover:text-white transition-colors">
-                  <Menu size={18} />
-               </button>
-            )}
           </div>
         </div>
       </aside>
@@ -268,49 +204,31 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
       <main className="flex-1 flex flex-col overflow-hidden relative">
         <header className="h-24 bg-white border-b-2 border-slate-100 flex items-center justify-between px-10 shrink-0 z-20">
            <div className="flex items-center gap-6">
-              <div className="hidden lg:flex items-center gap-3">
-                 <div className={`w-3 h-3 rounded-full ${isAiConnected ? (isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-500') : 'bg-rose-500'} shadow-lg`}></div>
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">AI Protocol: {isAiConnected ? 'Secure' : 'Disconnected'}</span>
-                 {!isAiConnected && (
-                    <Link to="/admin/auth" className="text-[9px] font-black text-indigo-600 hover:underline uppercase ml-2 animate-pulse">
-                       Authorize Terminal
-                    </Link>
-                 )}
+              <div className="hidden lg:flex items-center gap-4">
+                 <div className={`px-4 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${isLiveMode ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'}`}>
+                    {isLiveMode ? <ShieldCheck size={14} /> : <Zap size={14} fill="currentColor" />}
+                    Environment: {isLiveMode ? 'PROD' : 'DEMO'}
+                 </div>
+                 <div className="flex items-center gap-3">
+                    <div className={`w-2.5 h-2.5 rounded-full ${isAiConnected ? (isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-500 shadow-[0_0_10px_indigo]') : 'bg-rose-500'} shadow-lg`}></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Protocol: {isAiConnected ? 'Secure' : 'Disconnected'}</span>
+                 </div>
               </div>
            </div>
 
            <div className="flex items-center gap-4">
-              <Tooltip content="Predictive Drop Alerts & Statutory Deadlines.">
-                <button 
-                  onClick={() => setIsNotifOpen(true)}
-                  className="relative p-3 bg-white text-slate-400 border-2 border-slate-100 rounded-2xl hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-md active:scale-90"
-                >
-                   <Bell size={20} />
-                   {currentNotifications.length > 0 && (
-                     <span className="absolute top-0 right-0 w-5 h-5 bg-rose-600 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-bounce">
-                       {currentNotifications.length}
-                     </span>
-                   )}
-                </button>
-              </Tooltip>
-
               <Tooltip content="Open the AI voice channel for real-time case consultation.">
                 <button 
                   onClick={() => setIsAgentOpen(true)}
-                  className={`${isLiveMode ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center gap-3 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/10`}
+                  className={`${isLiveMode ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'} text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/10`}
                 >
                    <Mic size={16} /> Live Agent
                 </button>
               </Tooltip>
               
-              <Tooltip content="View the comprehensive user manual and system logic guides.">
-                <button 
-                  onClick={() => setIsGuideOpen(true)}
-                  className="p-3 bg-white text-slate-400 border-2 border-slate-100 rounded-2xl hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-md active:scale-90"
-                >
-                   <Search size={20} />
-                </button>
-              </Tooltip>
+              <button onClick={() => setIsGuideOpen(true)} className="p-3 bg-white text-slate-400 border-2 border-slate-100 rounded-2xl hover:text-indigo-600 transition-all shadow-md active:scale-90">
+                 <Search size={20} />
+              </button>
            </div>
         </header>
 
@@ -321,7 +239,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
       <LiveAgent isOpen={isAgentOpen} onClose={() => setIsAgentOpen(false)} />
       <UserGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <NotificationHub isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} notifications={currentNotifications} />
+      <NotificationHub isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} notifications={[]} />
     </div>
   );
 };

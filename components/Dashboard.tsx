@@ -14,7 +14,9 @@ import {
   SearchIcon,
   ServerIcon,
   UnplugIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  ShieldAlertIcon,
+  ShieldCheckIcon
 } from 'lucide-react';
 import { Property, CaseStatus, User, UserRole } from '../types';
 import Tooltip from './Tooltip';
@@ -81,20 +83,22 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
   ];
 
   const filteredProperties = useMemo(() => {
-    if (isLiveMode) return [];
+    if (isLiveMode) return []; // STRICTURE: Never show initial mock data in Live Mode
     return properties.filter(p => searchQuery ? p.address.toLowerCase().includes(searchQuery.toLowerCase()) : true)
       .sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
   }, [searchQuery, isLiveMode, properties]);
 
-  const handleAssignChange = (propertyId: string, userId: string) => {
-    setProperties(prev => prev.map(p => 
-      p.id === propertyId ? { ...p, assigned_to_user_id: userId === 'unassigned' ? undefined : userId } : p
-    ));
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      <div className={`rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden group border-2 transition-all duration-700 ${isLiveMode ? 'bg-slate-950 border-emerald-500/20 shadow-emerald-500/10' : 'bg-slate-900 border-indigo-500/10 shadow-indigo-500/10'}`}>
+      {/* Alert if in Demo Mode */}
+      {!isLiveMode && (
+        <div className="bg-amber-50 border-2 border-amber-200 p-6 rounded-[2rem] flex items-center gap-4 text-amber-800 shadow-lg">
+           <ShieldAlertIcon className="animate-pulse" />
+           <p className="text-sm font-black uppercase tracking-widest">Environment Status: Demo Mode Active. Displaying Simulated Research Data.</p>
+        </div>
+      )}
+
+      <div className={`rounded-[3.5rem] p-12 text-white shadow-2xl relative overflow-hidden group border-2 transition-all duration-700 ${isLiveMode ? 'bg-slate-950 border-emerald-500/20 shadow-emerald-500/10' : 'bg-slate-900 border-indigo-500/10 shadow-indigo-500/10'}`}>
         <div className="absolute top-0 right-0 p-16 opacity-10 group-hover:scale-110 transition-transform duration-1000">
            {isLiveMode ? <ServerIcon size={180} fill="white" /> : <ZapIcon size={180} fill="white" />}
         </div>
@@ -103,17 +107,17 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
             <div className="flex items-center gap-4">
               <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border shadow-lg ${isLiveMode ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-indigo-600 text-white border-indigo-400/30'}`}>
                 <div className={`w-2 h-2 rounded-full ${isLiveMode ? 'bg-emerald-400 animate-pulse' : 'bg-white'}`}></div>
-                {isLiveMode ? 'Production Environment Active' : 'AI Core v3.0 Connected'}
+                {isLiveMode ? 'Production Environment Active' : 'Sandbox Intelligence Active'}
               </div>
               <span className="text-slate-300 text-[10px] font-black uppercase tracking-[0.2em]">Deployment ID: RAILWAY-PRD-92</span>
             </div>
             <h2 className="text-5xl font-black tracking-tighter max-w-2xl leading-tight">
-              {isLiveMode ? 'Standing by for Live Case Ingestion.' : 'Enterprise Recovery Intelligence.'}
+              {isLiveMode ? 'Standing by for Live Case Ingestion.' : 'Enterprise Recovery Simulation.'}
             </h2>
             <p className="text-slate-300 text-lg max-w-xl font-medium leading-relaxed">
               {isLiveMode 
-                ? 'Your deployment is synchronized with Google Gemini 3.0 clusters. Connect a County Treasurer feed to populate your production pipeline.' 
-                : 'Proprietary yielding engine active. Simulation records are ready for jurisdictional compliance training.'}
+                ? 'Your deployment is synchronized with Google Gemini 3.0 clusters. No data exists in the production buffer. Use the County Scanner to ingest real leads.' 
+                : 'Sandbox mode populates your dashboard with high-fidelity mock cases to demonstrate the full system capabilities.'}
             </p>
           </div>
           <button onClick={() => navigate('/properties/new')} className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:shadow-2xl transition-all flex items-center gap-4 border-2 border-slate-100 shadow-2xl">
@@ -138,12 +142,12 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
             ))}
           </div>
 
-          <div className="bg-white rounded-[3rem] border-2 border-slate-100 shadow-2xl overflow-hidden min-h-[400px]">
+          <div className="bg-white rounded-[4rem] border-2 border-slate-100 shadow-2xl overflow-hidden min-h-[400px]">
             {filteredProperties.length > 0 ? (
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50 border-b-2 border-slate-100 text-[10px] font-black text-slate-700 uppercase tracking-[0.2em]">
-                    <th className="px-10 py-6">Rank</th>
+                    <th className="px-10 py-6">Intelligence Rank</th>
                     <th className="px-10 py-6">Property Context</th>
                     <th className="px-10 py-6 text-center">Risk</th>
                     <th className="px-10 py-6">Est. Net</th>
@@ -190,9 +194,18 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                 <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center border-2 border-slate-100 shadow-2xl group">
                   <UnplugIcon size={48} className="text-slate-300 group-hover:scale-110 transition-transform" />
                 </div>
-                <div className="text-center space-y-3">
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Production Cache Empty</h3>
-                  <p className="text-slate-600 text-sm max-w-sm mx-auto font-medium">Your production environment is live, but no cases have been ingested.</p>
+                <div className="text-center space-y-3 px-10">
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight italic">Production Cache Empty</h3>
+                  <p className="text-slate-600 text-sm max-w-sm mx-auto font-bold leading-relaxed">
+                    This is the <span className="text-emerald-600">LIVE Production Environment</span>. No fake data is allowed here.
+                    <br/><br/>
+                    Toggle <span className="text-indigo-600">"Demo Mode"</span> in the sidebar if you wish to see a populated simulation.
+                  </p>
+                  <div className="pt-6">
+                     <button onClick={() => navigate('/scanner')} className="bg-emerald-600 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-emerald-700 transition-all">
+                       Launch Scanner to Fetch Leads
+                     </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -215,6 +228,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isLiveMode }) => {
                 <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
                    <div className={`h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(79,70,229,0.5)] ${isLiveMode ? 'w-0' : 'w-[85%]'}`}></div>
                 </div>
+              </div>
+              <div className="p-4 bg-slate-50 rounded-2xl border-2 border-slate-100">
+                <p className="text-[9px] font-bold text-slate-500 italic leading-relaxed">
+                  {isLiveMode ? "Awaiting first production lead to begin performance tracking." : "Simulation metrics calculated from FL/GA historical patterns."}
+                </p>
               </div>
             </div>
           </div>

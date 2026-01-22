@@ -40,6 +40,17 @@ interface LayoutProps {
   setIsLiveMode: (val: boolean) => void;
 }
 
+// Defining NavItem interface for consistent navigation item typing
+interface NavItem {
+  label: string;
+  path: string;
+  icon: any;
+  tip: string;
+  roles?: UserRole[];
+  color?: string;
+  desc?: string;
+}
+
 const SIMULATION_NOTIFICATIONS: SystemNotification[] = [
   {
     id: 'n1',
@@ -93,14 +104,16 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-gavel"><path d="m14.5 12.5-8 8a2.11 2.11 0 0 1-3-3l8-8"/><path d="m16 16 2 2"/><path d="m19 13 2 2"/><path d="m5 5 3 3"/><path d="m2 11 3 3"/><path d="m15.5 15.5 3-3a2.11 2.11 0 0 0-3-3l-3 3a2.11 2.11 0 0 0 3 3Z"/></svg>
   );
 
-  const mainNav = [
+  // Applied NavItem interface to mainNav
+  const mainNav: NavItem[] = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard, tip: 'Overview of all active surplus recovery cases.' },
     { label: 'Artifact Vault', path: '/vault', icon: HardDrive, tip: 'Centralized repository for all extracted data and generated forms.' },
     { label: 'Market Intelligence', path: '/intelligence', icon: BarChart, tip: 'Analyze national trends and find high-yield jurisdictions.' },
     { label: 'Workflow Protocol', path: '/workflow', icon: Layers, tip: 'Detailed view of the 5-stage automated recovery pipeline.' },
   ];
 
-  const intelligenceSuite = [
+  // Applied NavItem interface to intelligenceSuite
+  const intelligenceSuite: NavItem[] = [
     { label: 'County Scanner', path: '/scanner', icon: Database, color: 'text-emerald-400', desc: 'Raw List Discovery', tip: 'Scan entire counties for buried surplus and excess proceeds lists.' },
     { label: 'Skip-Trace Hub', path: '/research', icon: Globe, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
     { label: 'Waterfall Engine', path: '/waterfall', icon: Calculator, color: 'text-emerald-400', desc: 'Financial Logic', tip: 'Simulate lien priority and final recovery amounts.' },
@@ -108,7 +121,8 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     { label: 'Compliance Calendar', path: '/calendar', icon: Calendar, color: 'text-rose-400', desc: 'Legal Deadlines', tip: 'Track critical filing windows across all jurisdictions.' },
   ];
 
-  const adminNav = [
+  // Applied NavItem interface to adminNav
+  const adminNav: NavItem[] = [
     { label: 'Protocol Auth', path: '/admin/auth', icon: Terminal, color: 'text-indigo-400', tip: 'Securely authorize your session API keys.' },
     { label: 'Rules Engine', path: '/admin/rules', icon: Scale, roles: [UserRole.ADMIN], tip: 'Configure jurisdiction-specific deadlines and requirements.' },
     { label: 'Team', path: '/admin/users', icon: Users, roles: [UserRole.ADMIN], tip: 'Manage team access levels and review performance metrics.' },
@@ -166,7 +180,8 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
           </div>
 
           <nav className="space-y-1">
-            {mainNav.filter(item => !item.roles || item.roles.includes(user.role)).map((item) => (
+            {/* Added explicit filter for NavItem type to handle optional roles property */}
+            {mainNav.filter((item: NavItem) => !item.roles || item.roles.includes(user.role)).map((item) => (
               <Tooltip key={item.path} content={item.tip} position="right">
                 <Link
                   to={item.path}
@@ -211,7 +226,8 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
           <nav className="space-y-1 border-t border-white/5 pt-4">
             {!isCollapsed && <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-4">Control Plane</p>}
-            {adminNav.map((item) => (
+            {/* Added role filter for adminNav to correctly hide restricted items */}
+            {adminNav.filter((item: NavItem) => !item.roles || item.roles.includes(user.role)).map((item) => (
               <Tooltip key={item.path} content={item.tip} position="right">
                 <Link
                   to={item.path}

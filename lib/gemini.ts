@@ -28,7 +28,6 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
   
   try {
     const text = response.text || '{}';
-    // Sometimes search grounding can wrap JSON or add text, we try to clean it
     const cleanJson = text.includes('```json') 
       ? text.split('```json')[1].split('```')[0] 
       : text;
@@ -39,6 +38,55 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
     return null;
   }
 }
+
+/**
+ * Perform a real-time scan of a county auction source (URL).
+ * Follows the County Scanner Protocol for extraction and filtering.
+ */
+export const performCountyAuctionScan = async (county: string, state: string, url: string, sourceType: string) => {
+  const prompt = `
+    COUNTY SCANNER PROTOCOL START
+    Jurisdiction: ${county} County, ${state}
+    Source URL: ${url}
+    Source Type: ${sourceType}
+
+    TASK:
+    1. Navigate to the auction calendar or PDF list at the provided URL.
+    2. Identify auctions from the last 7 days.
+    3. Extract: Property Address, Parcel/Case Number, Status, Final Judgment Amount (A), Auction Sold Amount (B), Sale Date.
+    
+    STRICT FILTERING:
+    - EXCLUDE: "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
+    - INCLUDE ONLY: "Auction Sold", "Sold", "Completed Sale".
+    
+    CALCULATION:
+    - Only include records where Final Judgment Amount (A) > Auction Sold Amount (B).
+    - Overage = A - B.
+    
+    Return an array of objects matching the specified schema.
+    COUNTY SCANNER PROTOCOL END
+  `;
+
+  const schema = {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: {
+        address: { type: Type.STRING },
+        parcelId: { type: Type.STRING },
+        status: { type: Type.STRING },
+        judgmentAmount: { type: Type.NUMBER },
+        soldAmount: { type: Type.NUMBER },
+        saleDate: { type: Type.STRING },
+        overage: { type: Type.NUMBER },
+        sourceUrl: { type: Type.STRING }
+      },
+      required: ["address", "parcelId", "status", "judgmentAmount", "soldAmount", "saleDate", "overage", "sourceUrl"]
+    }
+  };
+
+  return await generateJSON(prompt, schema, true);
+};
 
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
   const prompt = `Analyze ${county} County, ${state} surplus list patterns. 
@@ -232,7 +280,6 @@ export const generateORRLetter = async (state: string, county: string, treasurer
 
 /**
  * Generates speech audio for a given text using the specialized TTS model.
- * Adheres to the Google GenAI SDK guidelines for modality and speech configuration.
  */
 export const generateVoiceGuide = async (text: string) => {
   const ai = getAIClient();
@@ -249,7 +296,6 @@ export const generateVoiceGuide = async (text: string) => {
     },
   });
   
-  // Extracting raw PCM data from the first candidate's first part
   const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   return base64Audio || null;
 };

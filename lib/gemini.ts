@@ -1,15 +1,16 @@
 
-// AI Core v4.0 - OpenRouter Integration for Gemini Flash
-// Note: This implementation uses standard fetch to support OpenRouter's OpenAI-compatible endpoint.
+// AI Core v4.1 - OpenRouter Integration for Gemini Flash
+// Supports both OPENROUTER_API_KEY and generic API_KEY environment variables.
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL_NAME = "google/gemini-2.0-flash-001"; // Standard OpenRouter string for Gemini Flash
+const MODEL_NAME = "google/gemini-2.0-flash-001"; 
 
 async function callOpenRouter(messages: any[], jsonMode = false, tools = []) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  // Try both common environment variable names
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.API_KEY;
   
   if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY is not configured in the environment.");
+    throw new Error("No API Key found. Please configure OPENROUTER_API_KEY or API_KEY in your environment.");
   }
 
   const body: any = {
@@ -23,8 +24,8 @@ async function callOpenRouter(messages: any[], jsonMode = false, tools = []) {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
-      "HTTP-Referer": window.location.origin, // Required by OpenRouter
-      "X-Title": "Prospector AI", // Required by OpenRouter
+      "HTTP-Referer": window.location.origin, 
+      "X-Title": "Prospector AI", 
     },
     body: JSON.stringify(body),
   });

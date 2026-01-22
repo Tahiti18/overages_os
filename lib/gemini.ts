@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 
 // Strictly adhering to Google GenAI SDK Coding Guidelines
 const getAIClient = () => {
@@ -18,6 +17,8 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
 
   if (useSearch) {
     config.tools = [{ googleSearch: {} }];
+    // Note: Per guidelines, response.text might not be strict JSON when grounding is active.
+    // We provide a schema to nudge the model, but handle parsing with a fallback.
   }
 
   const response = await ai.models.generateContent({
@@ -28,7 +29,7 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
   
   try {
     const text = response.text || '[]';
-    // Clean potential markdown wrapping
+    // Clean potential markdown wrapping often returned by grounded models
     const cleanJson = text.includes('```json') 
       ? text.split('```json')[1].split('```')[0] 
       : text;
@@ -36,37 +37,39 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
     return JSON.parse(cleanJson.trim());
   } catch (e) {
     console.error("AI Logic Exception: JSON Parse Failure", e);
-    return null;
+    // Return empty array to keep UI stable during ingestion
+    return [];
   }
 }
 
 /**
  * PRODUCTION COUNTY SCANNER PROTOCOL
- * Directives for scraping HTML tables and PDF manifests via grounding.
+ * Orchestrates multi-source scraping (HTML/PDF) via AI grounding.
  */
 export const performCountyAuctionScan = async (county: string, state: string, url: string, sourceType: string) => {
   const prompt = `
-    COUNTY SCANNER PROTOCOL - PRODUCTION RUN
+    COUNTY SCANNER PROTOCOL - MISSION CRITICAL
     Jurisdiction: ${county} County, ${state}
     Source URL: ${url}
     Source Type: ${sourceType}
 
-    EXECUTION STEPS:
-    1. Navigate to the Source URL.
-    2. If Source Type is PDF_MANIFEST, use grounding to locate the latest .pdf link and extract rows from it.
-    3. Iterate through auctions from the last 7 calendar days.
-    4. Extract: Address, Parcel ID, Status, Final Judgment (A), Sold Amount (B), Sale Date.
-
-    STRICT STATUS FILTERING (MANDATORY):
-    - EXCLUDE entries containing: "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
-    - INCLUDE ONLY: "Auction Sold", "Sold", "Completed Sale".
-
+    INSTRUCTIONS:
+    1. Navigate to the provided URL.
+    2. If Source Type is PDF_MANIFEST, use grounding to find the most recent PDF link and extract rows.
+    3. Scour the last 7 calendar days for COMPLETED sales.
+    
+    STRICT EXCLUSION RULES (DISCARD):
+    "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
+    
+    STRICT INCLUSION RULES (ONLY PROCESS):
+    "Auction Sold", "Sold", "Completed Sale".
+    
     FINANCIAL QUALIFICATION:
-    - Overage (O) = Sold Amount (B) - Final Judgment Amount (A).
-    - If O <= 0, discard record.
-    - If O > 0, qualify record.
+    - Final Judgment Amount (A)
+    - Auction Sold Amount (B)
+    - Overage = B - A. DISCARD IF OVERAGE <= 0.
 
-    Return an array of Qualified records. No placeholders.
+    Return a valid JSON array of qualified objects. No markdown.
   `;
 
   const schema = {
@@ -93,8 +96,7 @@ export const performCountyAuctionScan = async (county: string, state: string, ur
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
   const prompt = `Analyze ${county} County, ${state} surplus list patterns. 
   Identify the DIRECT URL for "Excess Proceeds".
-  Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.
-  Research the "Temporal Cadence" and predict the "Next Expected Update".`;
+  Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -104,17 +106,13 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
       cadence: { type: Type.STRING },
       last_updated: { type: Type.STRING },
       next_expected_drop: { type: Type.STRING },
-      cadence_rationale: { type: Type.STRING },
-      search_summary: { type: Type.STRING },
-      orr_instructions: { type: Type.STRING },
       discovery_links: {
         type: Type.ARRAY,
         items: {
           type: Type.OBJECT,
           properties: {
             title: { type: Type.STRING },
-            url: { type: Type.STRING },
-            reliability: { type: Type.STRING }
+            url: { type: Type.STRING }
           }
         }
       }
@@ -125,8 +123,7 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
 };
 
 export const researchSpecializedCounsel = async (state: string, county: string, specialization: string = "Surplus Recovery") => {
-  const prompt = `SEARCH GROUNDING REQUIRED: Find 3 real-world attorneys or law firms currently practicing "${specialization}" in ${county}, ${state}.
-  Include their actual firm name, expertise score (80-100), verified contact email or phone, and website URL.`;
+  const prompt = `SEARCH GROUNDING REQUIRED: Find 3 verified attorneys or firms practicing "${specialization}" in ${county}, ${state}.`;
 
   const schema = {
     type: Type.ARRAY,
@@ -148,7 +145,7 @@ export const researchSpecializedCounsel = async (state: string, county: string, 
 
 export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
   const state = jurisdiction?.state || "Unknown";
-  const prompt = `Analyze this legal document for a property in ${state}. Extract owner names, parcel IDs, and financials.`;
+  const prompt = `Extract owner names, parcel IDs, and financials from this legal document in ${state}.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -186,7 +183,7 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
 };
 
 export const generateOutreachArchitect = async (claimant: any, property: any, skipTraceData: string) => {
-  const prompt = `Generate recovery outreach (Mail, SMS, Phone) for ${claimant.name} for property at ${property.address} with surplus $${property.surplus_amount}. Context: ${skipTraceData}`;
+  const prompt = `Draft recovery outreach scripts for ${claimant.name} for property at ${property.address}. Surplus: $${property.surplus_amount}. Context: ${skipTraceData}`;
   const schema = {
     type: Type.OBJECT,
     properties: {
@@ -202,7 +199,7 @@ export const performSkipTracing = async (ownerName: string, address: string) => 
   const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Perform skip tracing on ${ownerName} at ${address}. Search for current address, phone, email, and potential heirs.`,
+    contents: `Perform deep research skip tracing on ${ownerName} at ${address}. Find current address and phone.`,
     config: { tools: [{ googleSearch: {} }] }
   });
   return { 
@@ -212,7 +209,7 @@ export const performSkipTracing = async (ownerName: string, address: string) => 
 };
 
 export const generateClaimPackage = async (property: any, waterfallData: any) => {
-  const prompt = `Generate court-ready demand letter, affidavit, and accounting for property at ${property.address}. Surplus: ${waterfallData.finalSurplus}`;
+  const prompt = `Assemble court-ready demand letter and affidavit for property at ${property.address}. Overage: ${waterfallData.finalSurplus}`;
   const schema = {
     type: Type.OBJECT,
     properties: {
@@ -225,7 +222,7 @@ export const generateClaimPackage = async (property: any, waterfallData: any) =>
 };
 
 export const discoverPropertyLiens = async (property: any) => {
-  const prompt = `Identify potential senior liens for the property at ${property.address} in ${property.county}, ${property.state}.`;
+  const prompt = `List potential senior liens for the property at ${property.address} in ${property.county}, ${property.state}.`;
   const schema = {
     type: Type.ARRAY,
     items: {
@@ -241,28 +238,17 @@ export const discoverPropertyLiens = async (property: any) => {
   return await generateJSON(prompt, schema, true);
 };
 
-export const generateORRLetter = async (state: string, county: string, treasurerContact: string) => {
-  const prompt = `Generate a formal ORR/FOIA letter for ${county} County, ${state} regarding Tax Sale Excess Proceeds.`;
-  const schema = {
-    type: Type.OBJECT,
-    properties: {
-      subject: { type: Type.STRING },
-      letter_body: { type: Type.STRING },
-      statute_reference: { type: Type.STRING }
-    }
-  };
-  return await generateJSON(prompt, schema);
-};
-
 export const generateVoiceGuide = async (text: string) => {
   const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Narrate professionalsly: ${text}` }] }],
+    contents: [{ parts: [{ text: `Narrate professionally: ${text}` }] }],
     config: {
-      responseModalities: ['AUDIO'],
+      responseModalities: [Modality.AUDIO],
       speechConfig: {
-        voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: 'Kore' },
+        },
       },
     },
   });

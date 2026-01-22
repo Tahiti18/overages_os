@@ -18,6 +18,7 @@ import MarketIntelligence from './components/MarketIntelligence';
 import SubscriptionManager from './components/SubscriptionManager';
 import AffiliatePortal from './components/AffiliatePortal';
 import DatabaseVault from './components/DatabaseVault';
+import AdminSettings from './components/AdminSettings';
 import { User, UserRole, SubscriptionTier } from './types';
 
 const MOCK_USER: User = {
@@ -56,6 +57,7 @@ const App: React.FC = () => {
           <Route path="/properties/:id" element={<PropertyDetail />} />
           <Route path="/admin/rules" element={<JurisdictionRules />} />
           <Route path="/admin/users" element={<UserAdmin />} />
+          <Route path="/admin/auth" element={<AdminSettings />} />
           <Route path="/research" element={<GlobalResearch />} />
           <Route path="/waterfall" element={<GlobalWaterfall />} />
           <Route path="/packager" element={<GlobalPackager />} />

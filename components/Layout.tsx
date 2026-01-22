@@ -24,7 +24,9 @@ import {
   Unplug,
   Activity,
   HardDrive,
-  Bell
+  Bell,
+  Lock,
+  Terminal
 } from 'lucide-react';
 import { User, UserRole, SystemNotification } from '../types';
 import LiveAgent from './LiveAgent';
@@ -68,10 +70,11 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const [isAiConnected, setIsAiConnected] = useState(false);
 
   useEffect(() => {
-    // Thorough check for the API key across common patterns
     const checkKey = () => {
       const env = (window as any).process?.env || {};
+      const manualKey = localStorage.getItem('prospector_auth_key');
       const hasKey = !!(
+        manualKey ||
         env.OPENROUTER_API_KEY || 
         env.API_KEY || 
         env.VITE_OPENROUTER_API_KEY || 
@@ -82,9 +85,8 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     };
 
     checkKey();
-    // Re-check once after a small delay to handle async environment injection
-    const timer = setTimeout(checkKey, 1000);
-    return () => clearTimeout(timer);
+    const timer = setInterval(checkKey, 2000); // Poll for key changes (like after a reload)
+    return () => clearInterval(timer);
   }, []);
 
   const GavelIcon = (props: any) => (
@@ -96,13 +98,6 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     { label: 'Artifact Vault', path: '/vault', icon: HardDrive, tip: 'Centralized repository for all extracted data and generated forms.' },
     { label: 'Market Intelligence', path: '/intelligence', icon: BarChart, tip: 'Analyze national trends and find high-yield jurisdictions.' },
     { label: 'Workflow Protocol', path: '/workflow', icon: Layers, tip: 'Detailed view of the 5-stage automated recovery pipeline.' },
-    { label: 'Rules Engine', path: '/admin/rules', icon: Scale, roles: [UserRole.ADMIN], tip: 'Configure jurisdiction-specific deadlines and requirements.' },
-    { label: 'Team', path: '/admin/users', icon: Users, roles: [UserRole.ADMIN], tip: 'Manage team access levels and review performance metrics.' },
-  ];
-
-  const adminNav = [
-    { label: 'Billing & Tiers', path: '/billing', icon: CreditCard, tip: 'Manage your platform subscription and AI credits.' },
-    { label: 'Affiliate Portal', path: '/affiliate', icon: Gift, tip: 'Earn recurring commission by referring other recovery agents.' },
   ];
 
   const intelligenceSuite = [
@@ -110,8 +105,14 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
     { label: 'Skip-Trace Hub', path: '/research', icon: Globe, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
     { label: 'Waterfall Engine', path: '/waterfall', icon: Calculator, color: 'text-emerald-400', desc: 'Financial Logic', tip: 'Simulate lien priority and final recovery amounts.' },
     { label: 'Counsel Hub', path: '/counsel', icon: GavelIcon, color: 'text-purple-400', desc: 'Legal Network', tip: 'Research and engage specialized surplus attorneys.' },
-    { label: 'Smart Packager', path: '/packager', icon: Archive, color: 'text-blue-400', desc: 'Auto-Assembly', tip: 'Generate court-ready claim artifacts and demand letters.' },
     { label: 'Compliance Calendar', path: '/calendar', icon: Calendar, color: 'text-rose-400', desc: 'Legal Deadlines', tip: 'Track critical filing windows across all jurisdictions.' },
+  ];
+
+  const adminNav = [
+    { label: 'Protocol Auth', path: '/admin/auth', icon: Terminal, color: 'text-indigo-400', tip: 'Securely authorize your session API keys.' },
+    { label: 'Rules Engine', path: '/admin/rules', icon: Scale, roles: [UserRole.ADMIN], tip: 'Configure jurisdiction-specific deadlines and requirements.' },
+    { label: 'Team', path: '/admin/users', icon: Users, roles: [UserRole.ADMIN], tip: 'Manage team access levels and review performance metrics.' },
+    { label: 'Billing & Tiers', path: '/billing', icon: CreditCard, tip: 'Manage your platform subscription and AI credits.' },
   ];
 
   const currentNotifications = isLiveMode ? [] : SIMULATION_NOTIFICATIONS;
@@ -143,12 +144,14 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
           <div className={`p-4 rounded-2xl border-2 mb-8 flex items-center justify-between transition-all duration-700 ${isLiveMode ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-slate-900 border-white/5'}`}>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className={`w-2.5 h-2.5 rounded-full ${isLiveMode ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`}></div>
+                <div className={`w-2.5 h-2.5 rounded-full ${isAiConnected ? (isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-500') : 'bg-rose-500'} shadow-lg`}></div>
               </div>
               {!isCollapsed && (
                 <div>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ${isLiveMode ? 'text-emerald-400' : 'text-slate-400'}`}>Integrity Pulse</p>
-                  <p className="text-[10px] font-bold text-white uppercase">{isLiveMode ? 'Live Production' : 'Simulation Mode'}</p>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ${isAiConnected ? (isLiveMode ? 'text-emerald-400' : 'text-indigo-400') : 'text-rose-400'}`}>
+                    AI Sync Status
+                  </p>
+                  <p className="text-[10px] font-bold text-white uppercase">{isAiConnected ? 'Secure Session' : 'Disconnected'}</p>
                 </div>
               )}
             </div>
@@ -207,6 +210,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
           </div>
 
           <nav className="space-y-1 border-t border-white/5 pt-4">
+            {!isCollapsed && <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-4">Control Plane</p>}
             {adminNav.map((item) => (
               <Tooltip key={item.path} content={item.tip} position="right">
                 <Link
@@ -217,7 +221,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                       : 'text-slate-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <item.icon size={22} />
+                  <item.icon size={22} className={item.color || 'text-slate-400'} />
                   {!isCollapsed && <span className="text-sm font-black uppercase tracking-tight">{item.label}</span>}
                 </Link>
               </Tooltip>
@@ -249,8 +253,13 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         <header className="h-24 bg-white border-b-2 border-slate-100 flex items-center justify-between px-10 shrink-0 z-20">
            <div className="flex items-center gap-6">
               <div className="hidden lg:flex items-center gap-3">
-                 <div className={`w-3 h-3 rounded-full ${isAiConnected ? (isLiveMode ? 'bg-emerald-500' : 'bg-indigo-500') : 'bg-rose-500'} shadow-lg animate-pulse`}></div>
+                 <div className={`w-3 h-3 rounded-full ${isAiConnected ? (isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-500') : 'bg-rose-500'} shadow-lg`}></div>
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">AI Protocol: {isAiConnected ? 'Secure' : 'Disconnected'}</span>
+                 {!isAiConnected && (
+                    <Link to="/admin/auth" className="text-[9px] font-black text-indigo-600 hover:underline uppercase ml-2 animate-pulse">
+                       Authorize Terminal
+                    </Link>
+                 )}
               </div>
            </div>
 

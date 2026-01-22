@@ -1,11 +1,16 @@
 
-// AI Core v4.2 - OpenRouter Integration for Gemini Flash
-// Supports multiple API key variable patterns for maximum deployment compatibility.
+// AI Core v4.3 - OpenRouter Integration for Gemini Flash
+// Prioritizes UI-entered keys from the Protocol Auth Panel.
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL_NAME = "google/gemini-2.0-flash-001"; 
 
 function getApiKey(): string | undefined {
+  // 1. Check Local Storage first (Manual Auth Panel)
+  const manualKey = localStorage.getItem('prospector_auth_key');
+  if (manualKey) return manualKey;
+
+  // 2. Check window/process env (System Injected)
   const env = (window as any).process?.env || {};
   return (
     env.OPENROUTER_API_KEY || 
@@ -20,7 +25,7 @@ async function callOpenRouter(messages: any[], jsonMode = false, tools = []) {
   const apiKey = getApiKey();
   
   if (!apiKey) {
-    throw new Error("AI Connectivity Error: No API Key detected. Ensure OPENROUTER_API_KEY or API_KEY is set in your environment variables.");
+    throw new Error("AI Connectivity Error: No API Key detected. Use the Protocol Auth panel to authorize this session.");
   }
 
   const body: any = {
@@ -49,9 +54,6 @@ async function callOpenRouter(messages: any[], jsonMode = false, tools = []) {
   return data.choices[0].message.content;
 }
 
-/**
- * Scans for surplus lists.
- */
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
   const prompt = `Analyze ${county} County, ${state} surplus list patterns. 
   Identify the DIRECT URL for "Excess Proceeds".
@@ -74,9 +76,6 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
   return JSON.parse(result);
 };
 
-/**
- * Generates a formal Open Records Request (ORR) letter.
- */
 export const generateORRLetter = async (state: string, county: string, treasurerContact: string) => {
   const prompt = `Generate a formal ORR/FOIA letter for ${county} County, ${state} regarding Tax Sale Excess Proceeds. 
   Return JSON: { "subject": "string", "letter_body": "string", "statute_reference": "string" }`;
@@ -84,9 +83,6 @@ export const generateORRLetter = async (state: string, county: string, treasurer
   return JSON.parse(result);
 };
 
-/**
- * Researches and identifies specialized attorneys.
- */
 export const researchSpecializedCounsel = async (state: string, county: string) => {
   const prompt = `Find specialized attorneys for "Property Tax Surplus Recovery" in ${county}, ${state}.
   Return a JSON array of objects with keys: name, firm, expertise_score (1-100), contact_info, website, rationale.`;
@@ -94,17 +90,11 @@ export const researchSpecializedCounsel = async (state: string, county: string) 
   return JSON.parse(result);
 };
 
-/**
- * Fallback for voice guides (requires native key for real-time).
- */
 export const generateVoiceGuide = async (text: string) => {
   console.warn("Native Multimodal Audio requires a Direct Google AI Studio Key.");
   return null; 
 };
 
-/**
- * Identifies potential liens or judgments.
- */
 export const discoverPropertyLiens = async (property: any) => {
   const prompt = `Identify potential senior liens for the property at ${property.address} in ${property.county}, ${property.state}.
   Return a JSON array: [{"type": "MORTGAGE_1 | HOA | JUDGMENT", "description": "string", "amount": number, "priority": number}]`;
@@ -112,9 +102,6 @@ export const discoverPropertyLiens = async (property: any) => {
   return JSON.parse(result);
 };
 
-/**
- * Extracts structured data from property documents.
- */
 export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
   const state = jurisdiction?.state || "Unknown";
   const prompt = `Analyze this legal document for a property in ${state}. Extract owner names, parcel IDs, and financials.

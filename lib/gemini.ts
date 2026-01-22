@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Strictly adhering to Google GenAI SDK Coding Guidelines
@@ -27,7 +26,8 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
   });
   
   try {
-    const text = response.text || '{}';
+    const text = response.text || '[]';
+    // Clean potential markdown wrapping from grounding responses
     const cleanJson = text.includes('```json') 
       ? text.split('```json')[1].split('```')[0] 
       : text;
@@ -40,31 +40,34 @@ async function generateJSON(prompt: string, schema?: any, useSearch: boolean = f
 }
 
 /**
- * Perform a real-time scan of a county auction source (URL).
- * Follows the County Scanner Protocol for extraction and filtering.
+ * PRODUCTION SCANNER PROTOCOL
+ * Handles HTML tables, PDF manifests, and paginated lists.
  */
 export const performCountyAuctionScan = async (county: string, state: string, url: string, sourceType: string) => {
   const prompt = `
-    COUNTY SCANNER PROTOCOL START
+    COUNTY SCANNER PROTOCOL - MISSION CRITICAL
     Jurisdiction: ${county} County, ${state}
     Source URL: ${url}
     Source Type: ${sourceType}
 
-    TASK:
-    1. Navigate to the auction calendar or PDF list at the provided URL.
-    2. Identify auctions from the last 7 days.
-    3. Extract: Property Address, Parcel/Case Number, Status, Final Judgment Amount (A), Auction Sold Amount (B), Sale Date.
+    INSTRUCTIONS:
+    1. Navigate to the provided URL. If the type is PDF_MANIFEST, use grounding to "read" the most recent document content.
+    2. Iterate day-by-day for the last 7 calendar days.
+    3. Identify COMPLETED sales only.
     
-    STRICT FILTERING:
-    - EXCLUDE: "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
-    - INCLUDE ONLY: "Auction Sold", "Sold", "Completed Sale".
+    STRICT EXCLUSION RULES (DISCARD IF STATUS CONTAINS):
+    "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
     
-    CALCULATION:
-    - Only include records where Final Judgment Amount (A) > Auction Sold Amount (B).
-    - Overage = A - B.
+    STRICT INCLUSION RULES (ONLY PROCESS IF STATUS IS):
+    "Auction Sold", "Sold", "Completed Sale".
     
-    Return an array of objects matching the specified schema.
-    COUNTY SCANNER PROTOCOL END
+    FINANCIAL LOGIC:
+    - Final Judgment Amount (A)
+    - Auction Sold Amount (B)
+    - DISCARD if B <= A (Underwater/No Overage)
+    - QUALIFY if B > A. Overage = B - A.
+
+    Return an array of objects matching the schema. NO PLACEHOLDERS.
   `;
 
   const schema = {
@@ -98,7 +101,7 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
     type: Type.OBJECT,
     properties: {
       official_url: { type: Type.STRING },
-      access_type: { type: Type.STRING, description: "OPEN_PDF | HYBRID_WEB | MOAT_GATED" },
+      access_type: { type: Type.STRING },
       cadence: { type: Type.STRING },
       last_updated: { type: Type.STRING },
       next_expected_drop: { type: Type.STRING },
@@ -124,9 +127,7 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
 
 export const researchSpecializedCounsel = async (state: string, county: string, specialization: string = "Surplus Recovery") => {
   const prompt = `SEARCH GROUNDING REQUIRED: Find 3 real-world attorneys or law firms currently practicing "${specialization}" in ${county}, ${state}.
-  You MUST return valid JSON. Do not return placeholders.
-  Include their actual firm name, expertise score (80-100), verified contact email or phone, and website URL.
-  Rationale should explain why they are a good fit for ${specialization} in this specific county.`;
+  Include their actual firm name, expertise score (80-100), verified contact email or phone, and website URL.`;
 
   const schema = {
     type: Type.ARRAY,
@@ -139,8 +140,7 @@ export const researchSpecializedCounsel = async (state: string, county: string, 
         contact_info: { type: Type.STRING },
         website: { type: Type.STRING },
         rationale: { type: Type.STRING }
-      },
-      required: ["name", "firm", "expertise_score", "contact_info", "website", "rationale"]
+      }
     }
   };
 
@@ -159,22 +159,10 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
       fields: {
         type: Type.OBJECT,
         properties: {
-          owner_name: { 
-            type: Type.OBJECT, 
-            properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-          },
-          parcel_id: { 
-            type: Type.OBJECT, 
-            properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-          },
-          address: { 
-            type: Type.OBJECT, 
-            properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-          },
-          surplus_amount: { 
-            type: Type.OBJECT, 
-            properties: { value: { type: Type.NUMBER }, confidence: { type: Type.NUMBER } } 
-          }
+          owner_name: { type: Type.OBJECT, properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } },
+          parcel_id: { type: Type.OBJECT, properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } },
+          address: { type: Type.OBJECT, properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } },
+          surplus_amount: { type: Type.OBJECT, properties: { value: { type: Type.NUMBER }, confidence: { type: Type.NUMBER } } }
         }
       }
     }
@@ -200,7 +188,6 @@ export const extractDocumentData = async (base64Data: string, mimeType: string, 
 
 export const generateOutreachArchitect = async (claimant: any, property: any, skipTraceData: string) => {
   const prompt = `Generate recovery outreach (Mail, SMS, Phone) for ${claimant.name} for property at ${property.address} with surplus $${property.surplus_amount}. Context: ${skipTraceData}`;
-  
   const schema = {
     type: Type.OBJECT,
     properties: {
@@ -209,19 +196,15 @@ export const generateOutreachArchitect = async (claimant: any, property: any, sk
       phone_script: { type: Type.STRING }
     }
   };
-
   return await generateJSON(prompt, schema);
 };
 
 export const performSkipTracing = async (ownerName: string, address: string) => {
-  const prompt = `Perform skip tracing on ${ownerName} at ${address}. Search for current address, phone, email, and potential heirs.`;
   const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }]
-    }
+    contents: `Perform skip tracing on ${ownerName} at ${address}. Search for current address, phone, email, and potential heirs.`,
+    config: { tools: [{ googleSearch: {} }] }
   });
   return { 
     text: response.text, 
@@ -231,7 +214,6 @@ export const performSkipTracing = async (ownerName: string, address: string) => 
 
 export const generateClaimPackage = async (property: any, waterfallData: any) => {
   const prompt = `Generate court-ready demand letter, affidavit, and accounting for property at ${property.address}. Surplus: ${waterfallData.finalSurplus}`;
-  
   const schema = {
     type: Type.OBJECT,
     properties: {
@@ -240,32 +222,28 @@ export const generateClaimPackage = async (property: any, waterfallData: any) =>
       accounting_statement: { type: Type.STRING }
     }
   };
-
   return await generateJSON(prompt, schema);
 };
 
 export const discoverPropertyLiens = async (property: any) => {
   const prompt = `Identify potential senior liens for the property at ${property.address} in ${property.county}, ${property.state}.`;
-  
   const schema = {
     type: Type.ARRAY,
     items: {
       type: Type.OBJECT,
       properties: {
-        type: { type: Type.STRING, description: "MORTGAGE_1 | HOA | JUDGMENT | GOVERNMENT" },
+        type: { type: Type.STRING },
         description: { type: Type.STRING },
         amount: { type: Type.NUMBER },
         priority: { type: Type.NUMBER }
       }
     }
   };
-
   return await generateJSON(prompt, schema, true);
 };
 
 export const generateORRLetter = async (state: string, county: string, treasurerContact: string) => {
   const prompt = `Generate a formal ORR/FOIA letter for ${county} County, ${state} regarding Tax Sale Excess Proceeds.`;
-  
   const schema = {
     type: Type.OBJECT,
     properties: {
@@ -274,28 +252,21 @@ export const generateORRLetter = async (state: string, county: string, treasurer
       statute_reference: { type: Type.STRING }
     }
   };
-
   return await generateJSON(prompt, schema);
 };
 
-/**
- * Generates speech audio for a given text using the specialized TTS model.
- */
 export const generateVoiceGuide = async (text: string) => {
   const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Narrate the following system documentation professionally: ${text}` }] }],
+    contents: [{ parts: [{ text: `Narrate professionalsly: ${text}` }] }],
     config: {
       responseModalities: ['AUDIO'],
       speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Kore' },
-        },
+        voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
       },
     },
   });
-  
   const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   return base64Audio || null;
 };

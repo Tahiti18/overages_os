@@ -12,16 +12,16 @@ import {
   LockIcon,
   GlobeIcon,
   ZapIcon,
-  FilterIcon,
   LayersIcon,
-  LayoutGridIcon
+  LayoutGridIcon,
+  ShieldAlertIcon,
+  TrendingUpIcon
 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import { JurisdictionRule, User } from '../types';
 import Tooltip from './Tooltip';
 
-// THE NATIONAL DIRECTORY: All 50 States mapped by statutory recovery logic
-const US_STATES_DATA = [
+const ALL_50_STATES = [
   { id: 'AL', name: 'Alabama', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
   { id: 'AK', name: 'Alaska', region: 'West', tier: 2, moat: 'FORTIFIED_MOAT' },
   { id: 'AZ', name: 'Arizona', region: 'West', tier: 1, moat: 'OPEN_PLAINS' },
@@ -30,6 +30,7 @@ const US_STATES_DATA = [
   { id: 'CO', name: 'Colorado', region: 'West', tier: 1, moat: 'TIDAL_FLATS' },
   { id: 'CT', name: 'Connecticut', region: 'Northeast', tier: 2, moat: 'TIDAL_FLATS' },
   { id: 'DE', name: 'Delaware', region: 'Northeast', tier: 1, moat: 'OPEN_PLAINS' },
+  { id: 'DC', name: 'Dist. of Columbia', region: 'Northeast', tier: 1, moat: 'FORTIFIED_MOAT' },
   { id: 'FL', name: 'Florida', region: 'South', tier: 1, moat: 'OPEN_PLAINS' },
   { id: 'GA', name: 'Georgia', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
   { id: 'HI', name: 'Hawaii', region: 'West', tier: 2, moat: 'FORTIFIED_MOAT' },
@@ -81,7 +82,7 @@ const JurisdictionRules: React.FC = () => {
   const [activeRegion, setActiveRegion] = useState<'ALL' | 'South' | 'West' | 'Midwest' | 'Northeast'>('ALL');
 
   const filteredStates = useMemo(() => {
-    return US_STATES_DATA.filter(s => {
+    return ALL_50_STATES.filter(s => {
       const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           s.id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesRegion = activeRegion === 'ALL' || s.region === activeRegion;
@@ -98,36 +99,27 @@ const JurisdictionRules: React.FC = () => {
     }
   };
 
-  const getMoatIcon = (level: string) => {
-    switch (level) {
-      case 'OPEN_PLAINS': return <ZapIcon size={14} className="fill-emerald-500" />;
-      case 'TIDAL_FLATS': return <GlobeIcon size={14} />;
-      case 'FORTIFIED_MOAT': return <LockIcon size={14} />;
-      default: return <InfoIcon size={14} />;
-    }
-  };
-
   return (
     <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in duration-700 pb-24">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className={`p-4 rounded-[1.5rem] shadow-2xl border-2 ring-8 ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30 ring-emerald-500/5' : 'bg-slate-950 text-indigo-400 border-white/10 ring-indigo-500/5'}`}>
+            <div className={`p-4 rounded-[1.5rem] shadow-2xl border-2 ring-8 ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30' : 'bg-slate-950 text-indigo-400 border-white/10'}`}>
               <MapIcon size={28} />
             </div>
             <div>
               <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-4">
-                National Map
+                National Registry
                 <span className="text-indigo-600 animate-pulse">●</span>
               </h2>
               <p className="text-slate-700 font-black uppercase tracking-widest text-[11px]">
-                Comprehensive 50-State Statutory Matrix
+                Full 50-State Statutory Recovery Matrix
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex bg-white p-2 rounded-[1.5rem] border-2 border-slate-100 shadow-xl ring-1 ring-slate-100 overflow-x-auto no-scrollbar">
+        <div className="flex bg-white p-2 rounded-2xl border-2 border-slate-100 shadow-xl overflow-x-auto no-scrollbar ring-1 ring-slate-100">
            {['ALL', 'South', 'West', 'Midwest', 'Northeast'].map((region) => (
              <button
                key={region}
@@ -143,51 +135,47 @@ const JurisdictionRules: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-[3.5rem] border-2 border-slate-100 shadow-2xl overflow-hidden p-1.5 ring-1 ring-slate-100/50">
-        <div className="bg-slate-50/50 rounded-[3rem] p-10 space-y-10 shadow-inner">
+        <div className="bg-slate-50/50 rounded-[3.25rem] p-12 space-y-12 shadow-inner">
            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3 italic">
-                  <DatabaseIcon size={22} className="text-indigo-600" />
-                  Tactical Discovery Matrix
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3 italic">
+                  <DatabaseIcon size={24} className="text-indigo-600" />
+                  Statutory Hub
                 </h3>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Filtering {filteredStates.length} Active Jurisdictions</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Surveillance: {filteredStates.length} Jurisdictions</p>
               </div>
-              <div className="relative group w-full md:w-96">
-                <SearchIcon size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+              <div className="relative group w-full md:w-[450px]">
+                <SearchIcon size={20} className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input 
                   type="text" 
-                  placeholder="Quick-Jump to State..." 
+                  placeholder="Target specific state or code..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white border-2 border-slate-200 rounded-2xl pl-14 pr-6 py-4 text-sm font-black outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 transition-all shadow-inner" 
+                  className="w-full bg-white border-2 border-slate-200 rounded-[1.75rem] pl-16 pr-8 py-5 text-base font-black outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-600 transition-all shadow-inner" 
                 />
               </div>
            </div>
 
-           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 max-h-[600px] overflow-y-auto custom-scrollbar pr-4">
-              {filteredStates.map((intel) => (
+           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6 max-h-[650px] overflow-y-auto custom-scrollbar pr-4">
+              {filteredStates.map((state) => (
                 <button 
-                  key={intel.id}
-                  onClick={() => setSelectedState(selectedState === intel.id ? null : intel.id)}
-                  className={`relative p-6 rounded-[2.25rem] border-2 text-left transition-all duration-500 hover:-translate-y-1.5 group shadow-xl ${
-                    selectedState === intel.id ? 'border-indigo-600 bg-white ring-8 ring-indigo-500/5' : 'border-slate-100 bg-white hover:border-indigo-200'
+                  key={state.id}
+                  onClick={() => setSelectedState(selectedState === state.id ? null : state.id)}
+                  className={`relative p-6 rounded-[2.5rem] border-2 text-left transition-all duration-500 hover:-translate-y-2 shadow-xl ${
+                    selectedState === state.id ? 'border-indigo-600 bg-white ring-8 ring-indigo-500/5' : 'border-slate-100 bg-white'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-4">
-                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl border-2 transition-colors ${
-                       selectedState === intel.id ? 'bg-slate-950 text-white border-slate-900' : 'bg-slate-50 text-slate-400 border-slate-100 group-hover:border-indigo-100'
+                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl border-2 ${
+                       selectedState === state.id ? 'bg-slate-950 text-white border-slate-900 shadow-lg' : 'bg-slate-50 text-slate-400'
                      }`}>
-                       {intel.id}
+                       {state.id}
                      </div>
-                     {intel.tier === 1 && (
-                       <Tooltip content="High Volume Surplus State">
-                          <ZapIcon size={14} className="text-amber-500 fill-amber-500" />
-                       </Tooltip>
-                     )}
+                     {state.tier === 1 && <ZapIcon size={14} className="text-amber-500 fill-amber-500" />}
                   </div>
-                  <h4 className="text-lg font-black text-slate-900 tracking-tight italic truncate">{intel.name}</h4>
-                  <div className={`mt-3 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border-2 w-fit ${getMoatStyles(intel.moat)}`}>
-                        {intel.moat.replace('_', ' ')}
+                  <h4 className="text-lg font-black text-slate-900 tracking-tight italic truncate mb-2">{state.name}</h4>
+                  <div className={`px-2.5 py-1 rounded-full text-[7px] font-black uppercase tracking-widest border-2 w-fit ${getMoatStyles(state.moat)}`}>
+                        {state.moat.replace('_', ' ')}
                   </div>
                 </button>
               ))}
@@ -195,68 +183,64 @@ const JurisdictionRules: React.FC = () => {
 
            {selectedState && (
              <div className="pt-10 border-t-2 border-slate-200 animate-in slide-in-from-top-4 duration-500">
-               <div className="bg-white p-10 rounded-[2.5rem] border-2 border-indigo-100 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 ring-1 ring-indigo-500/5">
-                  <div className="flex items-center gap-6">
-                     <div className="w-20 h-20 bg-slate-950 text-white rounded-[1.5rem] flex items-center justify-center font-black text-3xl shadow-3xl rotate-3">
-                        {selectedState}
-                     </div>
-                     <div>
-                        <h5 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase">{US_STATES_DATA.find(s => s.id === selectedState)?.name} Recovery Profile</h5>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">Tier {US_STATES_DATA.find(s => s.id === selectedState)?.tier} • {US_STATES_DATA.find(s => s.id === selectedState)?.region} Region</p>
-                     </div>
-                  </div>
-                  <div className="flex gap-4">
-                     <button className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-3">
-                        <Settings2Icon size={16} /> Configure Rules
-                     </button>
-                     <button className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-3">
-                        <LayersIcon size={16} /> Fleet Discovery
-                     </button>
-                  </div>
-               </div>
+                <div className="bg-white p-12 rounded-[4rem] border-2 border-indigo-100 shadow-3xl flex flex-col xl:flex-row items-center justify-between gap-12 ring-1 ring-indigo-500/5">
+                   <div className="flex items-center gap-10">
+                      <div className="w-28 h-28 bg-slate-950 text-white rounded-[2.25rem] flex items-center justify-center font-black text-5xl shadow-3xl rotate-3">
+                         {selectedState}
+                      </div>
+                      <div className="space-y-3">
+                         <h5 className="text-4xl font-black text-slate-900 tracking-tighter italic uppercase">{ALL_50_STATES.find(s => s.id === selectedState)?.name}</h5>
+                         <div className="flex flex-wrap gap-4">
+                            <span className="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase border border-indigo-100">Tier {ALL_50_STATES.find(s => s.id === selectedState)?.tier} • {ALL_50_STATES.find(s => s.id === selectedState)?.region} Region</span>
+                            <span className="px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase border border-emerald-100">Tax Deed State</span>
+                         </div>
+                      </div>
+                   </div>
+                   <div className="flex gap-4 w-full xl:w-auto">
+                      <button className="flex-1 xl:flex-none px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3">
+                         <LayersIcon size={18} /> County Registry
+                      </button>
+                      <button className="flex-1 xl:flex-none px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-3">
+                         <Settings2Icon size={18} /> Statutory Rules
+                      </button>
+                   </div>
+                </div>
              </div>
            )}
         </div>
       </div>
 
-      {/* Strategic Footer metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-         <div className="bg-slate-950 p-10 rounded-[3rem] text-white shadow-3xl border-2 border-white/5 relative overflow-hidden group hover:-translate-y-1 transition-all">
+         <div className="bg-slate-950 p-10 rounded-[3.5rem] text-white shadow-3xl border-2 border-white/5 relative overflow-hidden group">
             <div className="relative z-10 space-y-6">
                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl">
-                    <ShieldCheckIcon size={24} />
-                  </div>
-                  <h4 className="text-xl font-black uppercase tracking-tight italic">Constitutional Integrity</h4>
+                  <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl"><ShieldCheckIcon size={24} /></div>
+                  <h4 className="text-xl font-black uppercase tracking-tight italic">Constitutional Shield</h4>
                </div>
-               <p className="text-sm text-indigo-200/90 font-bold leading-relaxed">
-                  All 50 states are monitored for statutory changes following the Tyler v. Hennepin County Supreme Court ruling, ensuring 100% compliant claim filings.
+               <p className="text-sm text-indigo-200/80 font-bold leading-relaxed">
+                  Platform-wide compliance monitoring for the "Tyler v. Hennepin" ruling. We ensure every county in all 50 states adheres to the federal mandate regarding home equity protection.
                </p>
             </div>
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-150 transition-transform duration-1000 rotate-12">
-               <ScaleIcon size={140} fill="white" />
+               <ScaleIcon size={160} fill="white" />
             </div>
          </div>
-         <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-2xl space-y-6 hover:-translate-y-1 transition-all ring-1 ring-slate-100/50">
+         <div className="bg-white p-10 rounded-[3.5rem] border-2 border-slate-100 shadow-2xl space-y-6 ring-1 ring-slate-100/50">
             <div className="flex items-center gap-4">
-               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl shadow-md border border-emerald-100">
-                 <ZapIcon size={24} />
-               </div>
-               <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Tier 1 Rapid-Discovery</h4>
+               <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl shadow-md border border-amber-100"><ZapIcon size={24} /></div>
+               <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Tier 1 Strategy</h4>
             </div>
-            <p className="text-sm text-slate-600 font-bold leading-relaxed">
-               States flagged with a gold lightning bolt are "Direct Deed" jurisdictions. These provide the highest monthly surplus volume and the shortest recovery cycles.
+            <p className="text-sm text-slate-600 font-bold leading-relaxed italic">
+              "Tier 1 Jurisdictions (AZ, FL, NC, GA) are currently optimized for autonomous list extraction. These states offer the highest net ROI with the shortest recovery windows."
             </p>
          </div>
-         <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-2xl space-y-6 hover:-translate-y-1 transition-all ring-1 ring-slate-100/50">
+         <div className="bg-white p-10 rounded-[3.5rem] border-2 border-slate-100 shadow-2xl space-y-6 ring-1 ring-slate-100/50">
             <div className="flex items-center gap-4">
-               <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl shadow-md border border-amber-100">
-                 <GlobeIcon size={24} />
-               </div>
-               <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Regional Fleet Sync</h4>
+               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shadow-md border border-indigo-100"><TrendingUpIcon size={24} /></div>
+               <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">Yield Analytics</h4>
             </div>
-            <p className="text-sm text-slate-600 font-bold leading-relaxed">
-               Each region (South, Midwest, etc.) uses localized extraction bots tuned to the specific PDF and portal layouts used by county treasurers in those zones.
+            <p className="text-sm text-slate-600 font-bold leading-relaxed italic">
+              "Real-time market depth analysis across 3,000+ counties. Predictive modeling identifies upcoming 'Drop Windows' for surplus PDF manifests."
             </p>
          </div>
       </div>

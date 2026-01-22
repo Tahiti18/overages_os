@@ -26,59 +26,60 @@ import Tooltip from './Tooltip';
 
 /**
  * PRODUCTION-GRADE RESEARCHED US SURPLUS REGISTRY
- * Prioritized by search volume, annual volume, and statutory transparency.
+ * Prioritized by search volume, foreclosure volume, and statutory transparency.
+ * Coverage: All 50 US States.
  */
 const STATE_COUNTY_MAP: Record<string, string[]> = {
-  'AL': ['Jefferson', 'Mobile', 'Madison', 'Montgomery', 'Shelby', 'Baldwin', 'Tuscaloosa', 'Lee'],
-  'AK': ['Anchorage', 'Fairbanks North Star', 'Matanuska-Susitna'],
-  'AZ': ['Maricopa', 'Pima', 'Pinal', 'Yavapai', 'Mohave', 'Yuma', 'Coconino', 'Cochise'],
-  'AR': ['Pulaski', 'Benton', 'Washington', 'Sebastian', 'Faulkner', 'Saline', 'Craighead'],
-  'CA': ['Los Angeles', 'San Diego', 'Orange', 'Riverside', 'San Bernardino', 'Santa Clara', 'Alameda', 'Sacramento', 'Contra Costa', 'Fresno', 'Ventura', 'San Francisco'],
-  'CO': ['El Paso', 'Denver', 'Arapahoe', 'Jefferson', 'Adams', 'Larimer', 'Boulder', 'Douglas', 'Weld'],
-  'CT': ['Fairfield', 'Hartford', 'New Haven', 'New London', 'Litchfield'],
+  'AL': ['Jefferson', 'Mobile', 'Madison', 'Montgomery', 'Shelby', 'Baldwin', 'Tuscaloosa', 'Lee', 'Morgan', 'Calhoun'],
+  'AK': ['Anchorage', 'Fairbanks North Star', 'Matanuska-Susitna', 'Kenai Peninsula', 'Juneau'],
+  'AZ': ['Maricopa', 'Pima', 'Pinal', 'Yavapai', 'Mohave', 'Yuma', 'Coconino', 'Cochise', 'Navajo', 'Apache'],
+  'AR': ['Pulaski', 'Benton', 'Washington', 'Sebastian', 'Faulkner', 'Saline', 'Craighead', 'Garland', 'White', 'Jefferson'],
+  'CA': ['Los Angeles', 'San Diego', 'Orange', 'Riverside', 'San Bernardino', 'Santa Clara', 'Alameda', 'Sacramento', 'Contra Costa', 'Fresno', 'Kern', 'San Francisco', 'Ventura', 'San Mateo', 'San Joaquin'],
+  'CO': ['El Paso', 'Denver', 'Arapahoe', 'Jefferson', 'Adams', 'Larimer', 'Boulder', 'Douglas', 'Weld', 'Pueblo'],
+  'CT': ['Fairfield', 'Hartford', 'New Haven', 'New London', 'Litchfield', 'Middlesex', 'Tolland', 'Windham'],
   'DE': ['New Castle', 'Sussex', 'Kent'],
-  'FL': ['Miami-Dade', 'Broward', 'Palm Beach', 'Hillsborough', 'Orange', 'Duval', 'Pinellas', 'Polk', 'Brevard', 'Volusia', 'Lee', 'Pasco', 'Seminole', 'Sarasota', 'Manatee'],
-  'GA': ['Fulton', 'Gwinnett', 'Cobb', 'DeKalb', 'Chatham', 'Cherokee', 'Richmond', 'Forsyth', 'Muscogee', 'Clayton', 'Henry', 'Hall'],
+  'FL': ['Miami-Dade', 'Broward', 'Palm Beach', 'Hillsborough', 'Orange', 'Duval', 'Pinellas', 'Polk', 'Brevard', 'Volusia', 'Lee', 'Pasco', 'Seminole', 'Sarasota', 'Manatee', 'Marion', 'Osceola', 'Lake', 'Escambia', 'St. Lucie'],
+  'GA': ['Fulton', 'Gwinnett', 'Cobb', 'DeKalb', 'Chatham', 'Cherokee', 'Forsyth', 'Henry', 'Clayton', 'Richmond', 'Muscogee', 'Hall', 'Paulding', 'Douglas', 'Coweta'],
   'HI': ['Honolulu', 'Hawaii', 'Maui', 'Kauai'],
-  'ID': ['Ada', 'Canyon', 'Kootenai', 'Bonneville', 'Bannock', 'Twin Falls', 'Bingham'],
+  'ID': ['Ada', 'Canyon', 'Kootenai', 'Bonneville', 'Bannock', 'Twin Falls', 'Bingham', 'Bonner', 'Nez Perce', 'Latah'],
   'IL': ['Cook', 'DuPage', 'Lake', 'Will', 'Kane', 'McHenry', 'Winnebago', 'St. Clair', 'Madison', 'Sangamon'],
-  'IN': ['Marion', 'Lake', 'Allen', 'Hamilton', 'St. Joseph', 'Elkhart', 'Tippecanoe', 'Vanderburgh'],
-  'IA': ['Polk', 'Linn', 'Scott', 'Johnson', 'Black Hawk', 'Woodbury'],
-  'KS': ['Johnson', 'Sedgwick', 'Shawnee', 'Wyandotte', 'Douglas', 'Leavenworth'],
-  'KY': ['Jefferson', 'Fayette', 'Kenton', 'Boone', 'Warren', 'Hardin', 'Daviess'],
-  'LA': ['East Baton Rouge', 'Jefferson', 'Orleans', 'St. Tammany', 'Lafayette', 'Caddo', 'Calcasieu'],
-  'ME': ['Cumberland', 'York', 'Penobscot', 'Kennebec', 'Androscoggin'],
-  'MD': ['Montgomery', 'Prince Georges', 'Baltimore City', 'Baltimore County', 'Anne Arundel', 'Howard', 'Harford', 'Frederick'],
-  'MA': ['Middlesex', 'Worcester', 'Essex', 'Suffolk', 'Norfolk', 'Bristol', 'Plymouth', 'Hampden'],
-  'MI': ['Wayne', 'Oakland', 'Macomb', 'Kent', 'Genesee', 'Washtenaw', 'Ottawa', 'Ingham'],
-  'MN': ['Hennepin', 'Ramsey', 'Dakota', 'Anoka', 'Washington', 'St. Louis', 'Stearns'],
-  'MS': ['Hinds', 'Harrison', 'DeSoto', 'Rankin', 'Jackson', 'Madison'],
-  'MO': ['St. Louis County', 'Jackson', 'St. Charles', 'St. Louis City', 'Greene', 'Clay', 'Jefferson'],
-  'MT': ['Yellowstone', 'Missoula', 'Gallatin', 'Flathead'],
-  'NE': ['Douglas', 'Lancaster', 'Sarpy', 'Hall', 'Buffalo'],
-  'NV': ['Clark', 'Washoe', 'Lyon', 'Elko', 'Carson City', 'Douglas'],
-  'NH': ['Hillsborough', 'Rockingham', 'Merrimack', 'Strafford', 'Grafton'],
-  'NJ': ['Bergen', 'Essex', 'Middlesex', 'Hudson', 'Monmouth', 'Ocean', 'Union', 'Camden', 'Passaic', 'Morris'],
-  'NM': ['Bernalillo', 'Doña Ana', 'Santa Fe', 'Sandoval', 'San Juan'],
+  'IN': ['Marion', 'Lake', 'Allen', 'Hamilton', 'St. Joseph', 'Elkhart', 'Tippecanoe', 'Vanderburgh', 'Hendricks', 'Johnson'],
+  'IA': ['Polk', 'Linn', 'Scott', 'Johnson', 'Black Hawk', 'Woodbury', 'Dubuque', 'Story', 'Pottawattamie', 'Dallas'],
+  'KS': ['Johnson', 'Sedgwick', 'Shawnee', 'Wyandotte', 'Douglas', 'Leavenworth', 'Riley', 'Butler', 'Reno', 'Saline'],
+  'KY': ['Jefferson', 'Fayette', 'Kenton', 'Boone', 'Warren', 'Hardin', 'Daviess', 'Madison', 'Campbell', 'Bullitt'],
+  'LA': ['East Baton Rouge', 'Jefferson', 'Orleans', 'St. Tammany', 'Lafayette', 'Caddo', 'Calcasieu', 'Ouachita', 'Rapides', 'Livingston'],
+  'ME': ['Cumberland', 'York', 'Penobscot', 'Kennebec', 'Androscoggin', 'Aroostook', 'Oxford', 'Hancock', 'Somerset', 'Knox'],
+  'MD': ['Montgomery', 'Prince Georges', 'Baltimore City', 'Baltimore County', 'Anne Arundel', 'Howard', 'Harford', 'Frederick', 'Carroll', 'Charles'],
+  'MA': ['Middlesex', 'Worcester', 'Essex', 'Suffolk', 'Norfolk', 'Bristol', 'Plymouth', 'Hampden', 'Barnstable', 'Hampshire'],
+  'MI': ['Wayne', 'Oakland', 'Macomb', 'Kent', 'Genesee', 'Washtenaw', 'Ottawa', 'Ingham', 'Livingston', 'Saginaw'],
+  'MN': ['Hennepin', 'Ramsey', 'Dakota', 'Anoka', 'Washington', 'St. Louis', 'Stearns', 'Olmsted', 'Scott', 'Wright'],
+  'MS': ['Hinds', 'Harrison', 'DeSoto', 'Rankin', 'Jackson', 'Madison', 'Lee', 'Lauderdale', 'Forrest', 'Jones'],
+  'MO': ['St. Louis County', 'Jackson', 'St. Charles', 'St. Louis City', 'Greene', 'Clay', 'Jefferson', 'Boone', 'Jasper', 'Franklin'],
+  'MT': ['Yellowstone', 'Missoula', 'Gallatin', 'Flathead', 'Cascade', 'Lewis and Clark', 'Ravalli', 'Silver Bow', 'Lake'],
+  'NE': ['Douglas', 'Lancaster', 'Sarpy', 'Hall', 'Buffalo', 'Scotts Bluff', 'Dodge', 'Lincoln', 'Madison', 'Platte'],
+  'NV': ['Clark', 'Washoe', 'Lyon', 'Elko', 'Douglas', 'Nye', 'Carson City', 'Churchill', 'Humboldt', 'White Pine'],
+  'NH': ['Hillsborough', 'Rockingham', 'Merrimack', 'Strafford', 'Grafton', 'Cheshire', 'Belknap', 'Carroll', 'Sullivan', 'Coos'],
+  'NJ': ['Bergen', 'Essex', 'Middlesex', 'Hudson', 'Monmouth', 'Ocean', 'Union', 'Camden', 'Passaic', 'Morris', 'Burlington'],
+  'NM': ['Bernalillo', 'Doña Ana', 'Santa Fe', 'Sandoval', 'San Juan', 'Valencia', 'McKinley', 'Lea', 'Otero', 'Chaves'],
   'NY': ['Kings', 'Queens', 'New York', 'Suffolk', 'Nassau', 'Bronx', 'Erie', 'Westchester', 'Monroe', 'Onondaga', 'Richmond'],
-  'NC': ['Mecklenburg', 'Wake', 'Guilford', 'Forsyth', 'Cumberland', 'Durham', 'Union', 'Gaston', 'New Hanover', 'Cabarrus'],
-  'ND': ['Cass', 'Burleigh', 'Grand Forks', 'Ward'],
-  'OH': ['Cuyahoga', 'Franklin', 'Hamilton', 'Summit', 'Montgomery', 'Lucas', 'Stark', 'Butler', 'Lorain'],
-  'OK': ['Oklahoma', 'Tulsa', 'Cleveland', 'Canadian', 'Comanche', 'Rogers'],
-  'OR': ['Multnomah', 'Washington', 'Clackamas', 'Lane', 'Marion', 'Jackson', 'Deschutes'],
-  'PA': ['Philadelphia', 'Allegheny', 'Montgomery', 'Bucks', 'Delaware', 'Lancaster', 'Chester', 'York', 'Berks', 'Lehigh'],
-  'RI': ['Providence', 'Kent', 'Washington'],
-  'SC': ['Greenville', 'Charleston', 'Horry', 'Richland', 'Spartanburg', 'Lexington', 'York', 'Berkeley'],
-  'SD': ['Minnehaha', 'Pennington', 'Lincoln'],
-  'TN': ['Shelby', 'Davidson', 'Knox', 'Hamilton', 'Rutherford', 'Williamson', 'Montgomery', 'Sumner'],
-  'TX': ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Travis', 'Collin', 'Hidalgo', 'El Paso', 'Denton', 'Fort Bend', 'Montgomery'],
-  'UT': ['Salt Lake', 'Utah', 'Davis', 'Weber', 'Washington', 'Cache'],
-  'VT': ['Chittenden', 'Rutland', 'Washington'],
-  'VA': ['Fairfax', 'Prince William', 'Virginia Beach', 'Loudoun', 'Chesterfield', 'Henrico', 'Norfolk', 'Chesapeake'],
-  'WA': ['King', 'Pierce', 'Snohomish', 'Spokane', 'Clark', 'Thurston', 'Kitsap', 'Yakima', 'Whatcom'],
-  'WV': ['Kanawha', 'Berkeley', 'Monongalia', 'Cabell', 'Wood'],
-  'WI': ['Milwaukee', 'Dane', 'Waukesha', 'Brown', 'Racine', 'Outagamie', 'Winnebago'],
-  'WY': ['Laramie', 'Natrona', 'Campbell', 'Sweetwater']
+  'NC': ['Mecklenburg', 'Wake', 'Guilford', 'Forsyth', 'Cumberland', 'Durham', 'Union', 'Gaston', 'New Hanover', 'Cabarrus', 'Iredell'],
+  'ND': ['Cass', 'Burleigh', 'Grand Forks', 'Ward', 'Williams', 'Stark', 'Morton', 'Richland', 'Rolette'],
+  'OH': ['Cuyahoga', 'Franklin', 'Hamilton', 'Summit', 'Montgomery', 'Lucas', 'Stark', 'Butler', 'Lorain', 'Mahoning', 'Lake'],
+  'OK': ['Oklahoma', 'Tulsa', 'Cleveland', 'Canadian', 'Comanche', 'Rogers', 'Payne', 'Wagoner', 'Muskogee', 'Creek'],
+  'OR': ['Multnomah', 'Washington', 'Clackamas', 'Lane', 'Marion', 'Jackson', 'Deschutes', 'Linn', 'Douglas', 'Benton'],
+  'PA': ['Philadelphia', 'Allegheny', 'Montgomery', 'Bucks', 'Delaware', 'Lancaster', 'Chester', 'York', 'Berks', 'Lehigh', 'Luzerne'],
+  'RI': ['Providence', 'Kent', 'Washington', 'Newport', 'Bristol'],
+  'SC': ['Greenville', 'Charleston', 'Horry', 'Richland', 'Spartanburg', 'Lexington', 'York', 'Berkeley', 'Anderson', 'Beaufort'],
+  'SD': ['Minnehaha', 'Pennington', 'Lincoln', 'Brown', 'Brookings', 'Codington', 'Meade', 'Lawrence', 'Yankton'],
+  'TN': ['Shelby', 'Davidson', 'Knox', 'Hamilton', 'Rutherford', 'Williamson', 'Montgomery', 'Sumner', 'Sullivan', 'Wilson'],
+  'TX': ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Travis', 'Collin', 'Hidalgo', 'El Paso', 'Denton', 'Fort Bend', 'Montgomery', 'Williamson', 'Cameron', 'Nueces', 'Brazoria'],
+  'UT': ['Salt Lake', 'Utah', 'Davis', 'Weber', 'Washington', 'Cache', 'Tooele', 'Box Elder', 'Iron', 'Summit'],
+  'VT': ['Chittenden', 'Rutland', 'Washington', 'Windsor', 'Franklin', 'Addison', 'Bennington', 'Caledonia', 'Orleans'],
+  'VA': ['Fairfax', 'Prince William', 'Virginia Beach', 'Loudoun', 'Chesterfield', 'Henrico', 'Norfolk', 'Chesapeake', 'Richmond City', 'Arlington'],
+  'WA': ['King', 'Pierce', 'Snohomish', 'Spokane', 'Clark', 'Thurston', 'Kitsap', 'Yakima', 'Whatcom', 'Benton', 'Skagit'],
+  'WV': ['Kanawha', 'Berkeley', 'Monongalia', 'Cabell', 'Wood', 'Raleigh', 'Harrison', 'Mercer', 'Marion', 'Jefferson'],
+  'WI': ['Milwaukee', 'Dane', 'Waukesha', 'Brown', 'Racine', 'Outagamie', 'Winnebago', 'Kenosha', 'Rock', 'Marathon'],
+  'WY': ['Laramie', 'Natrona', 'Campbell', 'Sweetwater', 'Fremont', 'Albany', 'Sheridan', 'Park', 'Teton']
 };
 
 const US_STATES = Object.keys(STATE_COUNTY_MAP).sort().map(id => {
@@ -89,7 +90,7 @@ const US_STATES = Object.keys(STATE_COUNTY_MAP).sort().map(id => {
     'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
     'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
     'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
-    'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+    'NM': 'New Mexico', 'NY': 'New NY', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
     'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
     'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
     'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
@@ -133,14 +134,15 @@ const GlobalCountyScanner: React.FC = () => {
     if (!selectedCounty) return;
     setIsScanning(true);
     setScanProgress(0);
-    setScanLogs([`INITIALIZING US NODE: ${selectedState} - ${selectedCounty} County...`]);
+    setScanLogs([`BOOTING US-DOMESTIC NODE: ${selectedState} - ${selectedCounty} County...`]);
     setActiveTab('terminal');
 
     const steps = [
       `Establishing statutory connection to ${US_STATES.find(s => s.id === selectedState)?.name} Clerk of Court...`,
       `Syncing auction results for ${selectedCounty} County dated ${new Date().toLocaleDateString()}...`,
       `Auditing PDF/HTML manifests for "Excess Proceeds" status...`,
-      `Calculating Net Delta: (Auction Price minus Debt)...`,
+      `Filtering high-intent keywords: "Surplus", "Overage", "Clerk Proceeds"...`,
+      `Calculating Net Delta: (Auction Price minus Statutory Judgments)...`,
       `Authenticating APN structure against ${selectedState} GIS protocol...`,
       `Compiling High-Fidelity Audit Grid...`
     ];
@@ -164,11 +166,23 @@ const GlobalCountyScanner: React.FC = () => {
         soldAmount: mockOverage,
         overage: Math.floor(mockOverage * 0.85),
         status: mockOverage > 80000 ? 'Hot' : 'Qualified'
+      },
+      {
+        id: `lead-${Math.random().toString(36).substr(2, 9)}`,
+        state: selectedState,
+        county: selectedCounty,
+        address: `${Math.floor(Math.random() * 900) + 10} Liberty Ave, ${selectedCounty}, ${selectedState}`,
+        parcelId: `${Math.floor(Math.random() * 99)}-${Math.floor(Math.random() * 9999)}-${Math.floor(Math.random() * 999)}`,
+        saleDate: new Date().toLocaleDateString(),
+        judgmentAmount: 12000,
+        soldAmount: 95000,
+        overage: 83000,
+        status: 'Hot'
       }
     ];
 
     setQualifiedResults(prev => [...newResults, ...prev]);
-    setScanLogs(prev => [...prev, `SCAN COMPLETE: Found ${newResults.length} Qualified Discovery Lead(s).`]);
+    setScanLogs(prev => [...prev, `SCAN COMPLETE: Found ${newResults.length} high-potential overage files.`]);
     setIsScanning(false);
     setTimeout(() => setActiveTab('results'), 1000);
   };
@@ -190,7 +204,7 @@ const GlobalCountyScanner: React.FC = () => {
             </div>
           </div>
           <p className="text-slate-600 font-bold max-w-2xl leading-relaxed text-lg italic opacity-80">
-            "Targeting the top-searched overage jurisdictions across all 50 US states."
+            "Targeting researched top-tier counties known for high overage yields."
           </p>
         </div>
         
@@ -233,7 +247,7 @@ const GlobalCountyScanner: React.FC = () => {
                </div>
 
                <div className="space-y-4">
-                  <label className="text-[11px] font-black text-slate-700 uppercase tracking-widest px-2">2. Researched County Context</label>
+                  <label className="text-[11px] font-black text-slate-700 uppercase tracking-widest px-2">2. Researched County Node</label>
                   <div className="relative">
                     <select 
                       value={selectedCounty}
@@ -253,7 +267,7 @@ const GlobalCountyScanner: React.FC = () => {
               className="w-full py-6 bg-indigo-600 text-white rounded-[1.75rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-500 transition-all flex items-center justify-center gap-4 border-2 border-white/10 shadow-3xl disabled:opacity-50"
             >
               {isScanning ? <Loader2 size={24} className="animate-spin" /> : <Play size={24} fill="white" />}
-              {isScanning ? 'Syncing...' : 'Launch Search Fleet'}
+              {isScanning ? 'Syncing...' : 'Launch Discovery Fleet'}
             </button>
           </div>
         </div>
@@ -265,8 +279,8 @@ const GlobalCountyScanner: React.FC = () => {
                    <div className="flex items-center gap-6">
                       <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner border border-indigo-100"><TrendingUp size={28} /></div>
                       <div>
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter italic">Domestic Discovery Grid</h3>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{selectedState} Analysis Matrix</p>
+                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter italic">Qualified Discovery Grid</h3>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{selectedState} High-Yield Audit Matrix</p>
                       </div>
                    </div>
                 </div>
@@ -276,10 +290,10 @@ const GlobalCountyScanner: React.FC = () => {
                     <table className="w-full text-left">
                       <thead>
                         <tr className="bg-slate-50/50 text-[9px] font-black text-slate-800 uppercase tracking-[0.2em] border-b-2 border-slate-100">
-                          <th className="px-8 py-6">State</th>
+                          <th className="px-8 py-6">Origin</th>
                           <th className="px-8 py-6">Property Context</th>
-                          <th className="px-8 py-6 text-right">Net Overage</th>
-                          <th className="px-8 py-6 text-right">Promote</th>
+                          <th className="px-8 py-6 text-right">Net Yield</th>
+                          <th className="px-8 py-6 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-[11px] font-bold">
@@ -287,17 +301,22 @@ const GlobalCountyScanner: React.FC = () => {
                           <tr key={lead.id} className="hover:bg-slate-50 transition-all group">
                             <td className="px-8 py-8"><span className="w-9 h-9 rounded-xl bg-slate-950 text-white flex items-center justify-center text-[10px] font-black shadow-lg">{lead.state}</span></td>
                             <td className="px-8 py-8">
-                               <p className="text-slate-900 uppercase italic font-black truncate max-w-[200px]">{lead.address}</p>
+                               <p className="text-slate-900 uppercase italic font-black truncate max-w-[200px] leading-tight mb-1">{lead.address}</p>
                                <p className="text-[9px] text-slate-400 uppercase tracking-widest">{lead.county} County • {lead.saleDate}</p>
                             </td>
-                            <td className="px-8 py-8 text-right text-emerald-600 text-xl font-black">${lead.overage.toLocaleString()}</td>
                             <td className="px-8 py-8 text-right">
-                               <button 
-                                 onClick={() => navigate('/properties/new', { state: { prefill: lead } })} 
-                                 className="p-4 bg-white border-2 border-slate-100 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all shadow-lg"
-                               >
-                                 <ArrowRight size={20} />
-                               </button>
+                               <p className={`text-xl font-black tracking-tighter ${lead.status === 'Hot' ? 'text-amber-500 animate-pulse' : 'text-emerald-600'}`}>${lead.overage.toLocaleString()}</p>
+                               <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">APN: {lead.parcelId}</p>
+                            </td>
+                            <td className="px-8 py-8 text-right">
+                               <Tooltip content="Promote lead to Case Pipeline.">
+                                  <button 
+                                    onClick={() => navigate('/properties/new', { state: { prefill: lead } })} 
+                                    className="p-4 bg-white border-2 border-slate-100 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all shadow-lg active:scale-90"
+                                  >
+                                    <ArrowRight size={20} />
+                                  </button>
+                               </Tooltip>
                             </td>
                           </tr>
                         ))}
@@ -313,13 +332,16 @@ const GlobalCountyScanner: React.FC = () => {
              </div>
            ) : (
              <div className="bg-slate-950 p-14 rounded-[4rem] font-mono text-[13px] text-indigo-200 border-2 border-white/5 space-y-4 min-h-[700px] overflow-y-auto shadow-inner flex flex-col">
-                <div className="flex items-center gap-4 mb-10 border-b border-white/10 pb-10">
-                   <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.6)]"></div>
-                   <span className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-400">Discovery Console Active</span>
+                <div className="flex items-center justify-between border-b border-white/10 pb-10 mb-10">
+                   <div className="flex items-center gap-4">
+                      <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.6)]"></div>
+                      <span className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-400">Discovery Console Active</span>
+                   </div>
+                   {isScanning && <span className="text-5xl font-black text-indigo-500 tracking-tighter">{Math.round(scanProgress)}%</span>}
                 </div>
                 <div className="flex-1 space-y-4">
                   {scanLogs.map((log, i) => (
-                    <div key={i} className="flex gap-6 opacity-90 animate-in fade-in slide-in-from-left-4">
+                    <div key={i} className="flex gap-6 opacity-90 animate-in fade-in slide-in-from-left-4 duration-300">
                        <span className="text-slate-700 shrink-0 font-bold">[{new Date().toLocaleTimeString()}]</span>
                        <span className="tracking-tight italic">{log}</span>
                     </div>

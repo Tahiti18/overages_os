@@ -10,34 +10,43 @@ const getAIClient = () => {
  */
 async function generateJSON(prompt: string, schema?: any, useSearch: boolean = false) {
   const ai = getAIClient();
+  
+  // Guideline check: When using googleSearch, response.text may not be in JSON format.
+  // We avoid strict responseMimeType when search is active to prevent model errors.
   const config: any = {
-    responseMimeType: "application/json",
-    responseSchema: schema,
+    ...(useSearch ? {} : { 
+      responseMimeType: "application/json",
+      responseSchema: schema 
+    }),
   };
 
   if (useSearch) {
     config.tools = [{ googleSearch: {} }];
-    // Note: Per guidelines, response.text might not be strict JSON when grounding is active.
-    // We provide a schema to nudge the model, but handle parsing with a fallback.
   }
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: prompt,
-    config: config,
-  });
-  
   try {
-    const text = response.text || '[]';
-    // Clean potential markdown wrapping often returned by grounded models
-    const cleanJson = text.includes('```json') 
-      ? text.split('```json')[1].split('```')[0] 
-      : text;
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: config,
+    });
     
-    return JSON.parse(cleanJson.trim());
+    const text = response.text || '[]';
+    
+    // Extraction logic for grounded responses which often include narrative text
+    if (useSearch) {
+      const jsonMatch = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      // If search is on but no JSON block found, attempt to parse text directly
+      try { return JSON.parse(text); } catch { return []; }
+    }
+    
+    return JSON.parse(text.trim());
   } catch (e) {
-    console.error("AI Logic Exception: JSON Parse Failure", e);
-    // Return empty array to keep UI stable during ingestion
+    console.error("AI Protocol Failure:", e);
+    // Provide non-crashing fallback
     return [];
   }
 }
@@ -53,94 +62,34 @@ export const performCountyAuctionScan = async (county: string, state: string, ur
     Source URL: ${url}
     Source Type: ${sourceType}
 
+    TASK: Locate completed tax sales with excess proceeds.
+    
     INSTRUCTIONS:
-    1. Navigate to the provided URL.
-    2. If Source Type is PDF_MANIFEST, use grounding to find the most recent PDF link and extract rows.
-    3. Scour the last 7 calendar days for COMPLETED sales.
+    1. Search for: "${county} ${state} completed tax sale results" or "${county} tax deed auction surplus list".
+    2. Identify rows with "Sold" or "Completed" status.
+    3. Calculate Overage: Sold Amount minus Final Judgment/Debt.
     
-    STRICT EXCLUSION RULES (DISCARD):
-    "Cancelled", "Bankruptcy", "Postponed", "Withdrawn", "Rescheduled", "Dismissed".
-    
-    STRICT INCLUSION RULES (ONLY PROCESS):
-    "Auction Sold", "Sold", "Completed Sale".
-    
-    FINANCIAL QUALIFICATION:
-    - Final Judgment Amount (A)
-    - Auction Sold Amount (B)
-    - Overage = B - A. DISCARD IF OVERAGE <= 0.
-
-    Return a valid JSON array of qualified objects. No markdown.
+    RETURN ONLY A VALID JSON ARRAY. NO MARKDOWN. NO INTRO TEXT.
+    SCHEMA: [{ "address": string, "parcelId": string, "status": string, "judgmentAmount": number, "soldAmount": number, "saleDate": string, "overage": number, "sourceUrl": string }]
   `;
 
-  const schema = {
-    type: Type.ARRAY,
-    items: {
-      type: Type.OBJECT,
-      properties: {
-        address: { type: Type.STRING },
-        parcelId: { type: Type.STRING },
-        status: { type: Type.STRING },
-        judgmentAmount: { type: Type.NUMBER },
-        soldAmount: { type: Type.NUMBER },
-        saleDate: { type: Type.STRING },
-        overage: { type: Type.NUMBER },
-        sourceUrl: { type: Type.STRING }
-      },
-      required: ["address", "parcelId", "status", "judgmentAmount", "soldAmount", "saleDate", "overage"]
-    }
-  };
-
-  return await generateJSON(prompt, schema, true);
+  // We pass null for schema when searching to avoid SDK validation issues with grounded text
+  return await generateJSON(prompt, null, true);
 };
 
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
   const prompt = `Analyze ${county} County, ${state} surplus list patterns. 
   Identify the DIRECT URL for "Excess Proceeds".
-  Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.`;
+  Return JSON: { "official_url": string, "access_type": string, "cadence": string }`;
 
-  const schema = {
-    type: Type.OBJECT,
-    properties: {
-      official_url: { type: Type.STRING },
-      access_type: { type: Type.STRING },
-      cadence: { type: Type.STRING },
-      last_updated: { type: Type.STRING },
-      next_expected_drop: { type: Type.STRING },
-      discovery_links: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            url: { type: Type.STRING }
-          }
-        }
-      }
-    }
-  };
-
-  return await generateJSON(prompt, schema, true);
+  return await generateJSON(prompt, null, true);
 };
 
 export const researchSpecializedCounsel = async (state: string, county: string, specialization: string = "Surplus Recovery") => {
-  const prompt = `SEARCH GROUNDING REQUIRED: Find 3 verified attorneys or firms practicing "${specialization}" in ${county}, ${state}.`;
+  const prompt = `Find 3 verified attorneys or firms practicing "${specialization}" in ${county}, ${state}.
+  Return JSON array: [{ "name": string, "firm": string, "expertise_score": number, "contact_info": string, "website": string, "rationale": string }]`;
 
-  const schema = {
-    type: Type.ARRAY,
-    items: {
-      type: Type.OBJECT,
-      properties: {
-        name: { type: Type.STRING },
-        firm: { type: Type.STRING },
-        expertise_score: { type: Type.NUMBER },
-        contact_info: { type: Type.STRING },
-        website: { type: Type.STRING },
-        rationale: { type: Type.STRING }
-      }
-    }
-  };
-
-  return await generateJSON(prompt, schema, true);
+  return await generateJSON(prompt, null, true);
 };
 
 export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
@@ -223,19 +172,7 @@ export const generateClaimPackage = async (property: any, waterfallData: any) =>
 
 export const discoverPropertyLiens = async (property: any) => {
   const prompt = `List potential senior liens for the property at ${property.address} in ${property.county}, ${property.state}.`;
-  const schema = {
-    type: Type.ARRAY,
-    items: {
-      type: Type.OBJECT,
-      properties: {
-        type: { type: Type.STRING },
-        description: { type: Type.STRING },
-        amount: { type: Type.NUMBER },
-        priority: { type: Type.NUMBER }
-      }
-    }
-  };
-  return await generateJSON(prompt, schema, true);
+  return await generateJSON(prompt, null, true);
 };
 
 export const generateVoiceGuide = async (text: string) => {

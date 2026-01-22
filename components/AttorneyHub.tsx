@@ -14,7 +14,12 @@ import {
   SparklesIcon,
   RefreshCwIcon,
   CheckIcon,
-  SendIcon
+  SendIcon,
+  BriefcaseIcon,
+  HomeIcon,
+  UsersIcon,
+  FileSearchIcon,
+  FilterIcon
 } from 'lucide-react';
 import { researchSpecializedCounsel } from '../lib/gemini';
 import Tooltip from './Tooltip';
@@ -24,16 +29,29 @@ interface AttorneyHubProps {
   county: string;
 }
 
+const SPECIALIZATIONS = [
+  { id: 'surplus', label: 'Surplus Recovery', icon: ScaleIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  { id: 'probate', label: 'Probate Law', icon: UsersIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
+  { id: 'tax', label: 'Tax Law', icon: FileSearchIcon, color: 'text-rose-600', bg: 'bg-rose-50' },
+  { id: 'litigation', label: 'Real Estate Litigation', icon: HomeIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' }
+];
+
 const AttorneyHub: React.FC<AttorneyHubProps> = ({ state, county }) => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [retaining, setRetaining] = useState<string | null>(null);
+  const [activeSpecialization, setActiveSpecialization] = useState(SPECIALIZATIONS[0].label);
 
   const handleResearch = async () => {
     setLoading(true);
+    setResults([]); 
     try {
-      const data = await researchSpecializedCounsel(state, county);
-      setResults(data);
+      const data = await researchSpecializedCounsel(state, county, activeSpecialization);
+      if (Array.isArray(data)) {
+        setResults(data);
+      } else {
+        setResults([]);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -43,109 +61,147 @@ const AttorneyHub: React.FC<AttorneyHubProps> = ({ state, county }) => {
 
   const handleRetain = (id: string) => {
     setRetaining(id);
-    setTimeout(() => setRetaining(null), 2000); // Simulate retention
+    setTimeout(() => setRetaining(null), 2000); 
   };
 
   const handleContact = (attorney: any) => {
-    const subject = `Case Referral: Property Tax Surplus Recovery - ${county}, ${state}`;
+    const subject = `New Case Referral: ${activeSpecialization} - ${county}, ${state}`;
     const body = `Hello ${attorney.name},
 
-I am contacting you regarding a potential property tax surplus recovery case in ${county}, ${state}. 
+I am contacting you regarding a potential ${activeSpecialization} matter in ${county}, ${state}. 
 
-Our platform has identified significant excess proceeds associated with a recent tax sale, and we are looking for specialized legal counsel with expertise in this jurisdiction to assist with the motion for distribution and judicial oversight.
+Our platform has identified a case requiring specialized legal oversight in your domain. We are impressed with your firm's credentials and would like to discuss a potential referral.
 
-Could you please confirm your current capacity for new case referrals and your standard fee structure for surplus recovery litigation?
+Could you please confirm your current availability for new cases in this jurisdiction?
 
 Best regards,
-Prospector AI Platform Agent`;
+Prospector AI Platform Operations`;
 
     const mailtoUrl = `mailto:${attorney.contact_info}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoUrl;
+    window.open(mailtoUrl, '_blank');
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl border border-white/5">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-indigo-600 rounded-2xl">
-                <GavelIcon size={24} />
+    <div className="space-y-10 animate-in fade-in duration-500">
+      <div className="bg-slate-900 rounded-[3rem] p-12 text-white relative overflow-hidden group shadow-2xl border-2 border-white/5">
+        <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-12">
+          <div className="max-w-3xl space-y-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-indigo-600 rounded-[1.5rem] shadow-2xl shadow-indigo-950/40">
+                  <GavelIcon size={32} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h3 className="text-4xl font-black tracking-tight uppercase italic leading-none">Counsel Terminal</h3>
+                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mt-2">Jurisdiction: {county}, {state}</p>
+                </div>
               </div>
-              <h3 className="text-3xl font-black tracking-tight uppercase italic">Counsel Terminal</h3>
+              <p className="text-indigo-100 font-bold text-xl leading-relaxed italic opacity-90">
+                Identify specialized legal partners. Use the filters below to find probate experts for heir-based cases or tax specialists for complex priority audits.
+              </p>
             </div>
-            <p className="text-indigo-200 font-bold text-lg leading-relaxed mb-8">
-              Analyze specialized legal networks for <span className="text-white underline decoration-indigo-500 underline-offset-4">{county}, {state}</span>. AI scours local filings to find high-conversion surplus counsel.
-            </p>
-            <Tooltip content="Launch a deep scan of local legal registries and judicial filings for surplus experts.">
+
+            {/* Enhanced Specialization Filter Bar */}
+            <div className="space-y-4">
+               <div className="flex items-center gap-3">
+                  <FilterIcon size={14} className="text-indigo-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Target Legal Domain</span>
+               </div>
+               <div className="flex flex-wrap gap-3">
+                  {SPECIALIZATIONS.map((spec) => (
+                    <button
+                      key={spec.id}
+                      onClick={() => setActiveSpecialization(spec.label)}
+                      className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all border-2 shadow-xl ${
+                        activeSpecialization === spec.label 
+                          ? 'bg-white text-indigo-950 border-indigo-500 scale-105 shadow-indigo-500/20' 
+                          : 'bg-white/5 text-indigo-200 border-white/10 hover:bg-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      <spec.icon size={16} className={activeSpecialization === spec.label ? spec.color : 'text-indigo-400'} />
+                      {spec.label}
+                    </button>
+                  ))}
+               </div>
+            </div>
+
+            <Tooltip content={`Research the legal registry specifically for ${activeSpecialization} attorneys in this area.`}>
               <button 
                 onClick={handleResearch} 
                 disabled={loading}
-                className="px-10 py-5 bg-white text-indigo-900 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-950/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                className="px-12 py-6 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-3xl shadow-indigo-950/40 hover:bg-indigo-500 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 border-2 border-white/10 w-full md:w-auto"
               >
-                {loading ? <Loader2Icon size={20} className="animate-spin" /> : <SparklesIcon size={20} className="text-indigo-600" />}
-                {loading ? 'Analyzing Legal Networks...' : 'Discover Specialized Counsel'}
+                {loading ? <Loader2Icon size={24} className="animate-spin" /> : <SparklesIcon size={24} className="text-amber-400" />}
+                {loading ? 'Consulting Registry...' : `Scan for ${activeSpecialization} Experts`}
               </button>
             </Tooltip>
           </div>
-          <div className="hidden lg:block opacity-20 group-hover:opacity-30 transition-opacity">
-             <ScaleIcon size={180} />
+          <div className="hidden xl:block opacity-10 group-hover:opacity-20 transition-all duration-1000 rotate-12 group-hover:rotate-0">
+             <ScaleIcon size={260} />
           </div>
         </div>
-        <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]"></div>
+        <div className="absolute -right-40 -bottom-40 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[160px]"></div>
       </div>
 
       {results.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-8 duration-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8 duration-700">
           {results.map((attorney, idx) => (
-            <div key={idx} className="bg-white border-2 border-slate-100 rounded-[2.5rem] p-8 hover:border-indigo-400 hover:shadow-2xl transition-all group flex flex-col h-full shadow-sm">
-              <div className="flex items-start justify-between mb-6">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border transition-all ${attorney.expertise_score > 85 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+            <div key={idx} className="bg-white border-2 border-slate-100 rounded-[3.5rem] p-10 hover:border-indigo-400 hover:shadow-3xl transition-all group flex flex-col h-full shadow-2xl relative overflow-hidden ring-1 ring-slate-100">
+              <div className="flex items-start justify-between mb-8">
+                <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center font-black text-2xl border-2 transition-all group-hover:rotate-3 ${attorney.expertise_score > 85 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'}`}>
                   {attorney.name[0]}
                 </div>
-                <div className="px-3 py-1 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
-                  {attorney.expertise_score} XP
+                <div className="flex flex-col items-end">
+                   <div className="px-4 py-1.5 bg-slate-950 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl border border-white/10 mb-2">
+                     {attorney.expertise_score} RANK
+                   </div>
+                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{activeSpecialization}</span>
                 </div>
               </div>
 
-              <div className="flex-1">
-                <h4 className="text-xl font-black text-slate-900 leading-tight mb-1">{attorney.name}</h4>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{attorney.firm}</p>
+              <div className="flex-1 space-y-6">
+                <div>
+                  <h4 className="text-2xl font-black text-slate-900 tracking-tight leading-tight mb-1">{attorney.name}</h4>
+                  <p className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.15em] italic">{attorney.firm}</p>
+                </div>
                 
-                <div className="space-y-4 mb-8">
-                   <div className="flex items-center gap-3 text-slate-600">
-                      <MailIcon size={14} className="text-indigo-500" />
-                      <span className="text-xs font-bold truncate">{attorney.contact_info}</span>
+                <div className="space-y-4">
+                   <div className="flex items-center gap-4 text-slate-600 p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner group-hover:bg-white transition-colors">
+                      <MailIcon size={16} className="text-indigo-500" />
+                      <span className="text-xs font-bold truncate tracking-tight">{attorney.contact_info}</span>
                    </div>
-                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 italic text-xs text-slate-500 leading-relaxed font-medium">
+                   <div className="p-6 bg-indigo-50/30 rounded-[2rem] border-2 border-indigo-100/50 italic text-[13px] text-slate-600 leading-relaxed font-bold shadow-sm relative">
+                      <div className="absolute -top-3 -left-2 bg-white p-1.5 rounded-lg border border-indigo-100">
+                         <SparklesIcon size={14} className="text-indigo-500" />
+                      </div>
                       "{attorney.rationale}"
                    </div>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-slate-100 space-y-3">
-                 <div className="flex items-center gap-3">
-                    <Tooltip content="Initiate a case referral and propose a fee-sharing agreement.">
+              <div className="pt-10 mt-8 border-t-2 border-slate-50 space-y-4">
+                 <div className="flex items-center gap-4">
+                    <Tooltip content="Formally assign this counsel to the active case file in your CRM.">
                         <button 
                           onClick={() => handleRetain(attorney.name)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${retaining === attorney.name ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl shadow-indigo-100'}`}
+                          className={`flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl ${retaining === attorney.name ? 'bg-emerald-600 text-white' : 'bg-slate-950 text-white hover:bg-indigo-600 shadow-indigo-950/20'}`}
                         >
-                          {retaining === attorney.name ? <CheckIcon size={14} /> : <UserPlusIcon size={14} />}
-                          {retaining === attorney.name ? 'Referral Sent' : 'Assign Counsel'}
+                          {retaining === attorney.name ? <CheckIcon size={20} strokeWidth={3} /> : <UserPlusIcon size={20} />}
+                          {retaining === attorney.name ? 'Assigned' : 'Retain Counsel'}
                         </button>
                     </Tooltip>
-                    <a href={attorney.website} target="_blank" rel="noreferrer" className="p-4 bg-white border-2 border-slate-200 text-slate-400 rounded-xl hover:text-indigo-600 hover:border-indigo-200 transition-all">
-                        <ExternalLinkIcon size={16} />
+                    <a href={attorney.website} target="_blank" rel="noreferrer" className="p-5 bg-white border-2 border-slate-100 text-slate-400 rounded-2xl hover:text-indigo-600 hover:border-indigo-400 transition-all shadow-lg hover:scale-110 active:scale-95">
+                        <ExternalLinkIcon size={22} />
                     </a>
                  </div>
                  
-                 <Tooltip content="Open an email draft with pre-filled case data for this attorney.">
+                 <Tooltip content={`Open an email draft to ${attorney.name} for a case referral.`}>
                     <button 
                       onClick={() => handleContact(attorney)}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-xl font-black text-[9px] uppercase tracking-[0.15em] transition-all border border-slate-100"
+                      className="w-full flex items-center justify-center gap-3 py-4 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border-2 border-transparent hover:border-indigo-400 shadow-sm"
                     >
-                      <SendIcon size={12} />
-                      Direct Outreach
+                      <SendIcon size={14} />
+                      Contact Attorney
                     </button>
                  </Tooltip>
               </div>
@@ -155,12 +211,16 @@ Prospector AI Platform Agent`;
       )}
 
       {results.length === 0 && !loading && (
-        <div className="py-24 text-center border-4 border-dashed border-slate-100 rounded-[4rem] bg-slate-50/30">
-           <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl border border-slate-50 text-slate-200">
-              <ScaleIcon size={48} />
+        <div className="py-40 text-center border-4 border-dashed border-slate-100 rounded-[4rem] bg-slate-50/20 shadow-inner flex flex-col items-center justify-center space-y-10 group hover:bg-white hover:border-indigo-200 transition-all duration-700">
+           <div className="w-32 h-32 bg-white rounded-[2.5rem] flex items-center justify-center shadow-3xl border-2 border-slate-50 text-slate-100 group-hover:text-indigo-600 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+              <ScaleIcon size={64} />
            </div>
-           <p className="text-slate-400 font-black uppercase tracking-[0.2em] mb-2">Registry Idle</p>
-           <p className="text-xs text-slate-400 font-bold">Initiate search to identify specialized counsel for this jurisdiction.</p>
+           <div className="space-y-4">
+              <p className="text-slate-400 font-black uppercase text-xl tracking-[0.2em] italic">Registry Standing By</p>
+              <p className="text-sm text-slate-500 font-bold max-w-sm mx-auto leading-relaxed">
+                Select a legal specialization and launch the <span className="text-indigo-600">Scan Engine</span> to identify authorized legal partners in this jurisdiction.
+              </p>
+           </div>
         </div>
       )}
     </div>

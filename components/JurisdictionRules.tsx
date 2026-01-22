@@ -21,6 +21,7 @@ import { useOutletContext } from 'react-router-dom';
 import { JurisdictionRule, User } from '../types';
 import Tooltip from './Tooltip';
 
+// Strict US National Dataset
 const ALL_50_STATES = [
   { id: 'AL', name: 'Alabama', region: 'South', tier: 1, moat: 'TIDAL_FLATS' },
   { id: 'AK', name: 'Alaska', region: 'West', tier: 2, moat: 'FORTIFIED_MOAT' },

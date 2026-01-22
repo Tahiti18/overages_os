@@ -90,7 +90,7 @@ const PropertyForm: React.FC = () => {
              </div>
              <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Discovery Intake</h2>
           </div>
-          <p className="text-slate-700 font-bold text-xl leading-relaxed italic opacity-80">"Synchronizing US discovery leads with active production pipeline."</p>
+          <p className="text-slate-700 font-bold text-xl leading-relaxed italic opacity-80">"Promoting researched discovery leads to active production pipeline."</p>
         </div>
         <Tooltip content="Cancel and return to dashboard.">
           <button 
@@ -104,13 +104,14 @@ const PropertyForm: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="bg-white border-2 border-slate-100 rounded-[4rem] shadow-[0_60px_120px_-30px_rgba(0,0,0,0.12)] overflow-hidden ring-1 ring-slate-100 ring-inset">
         <div className="p-16 space-y-16">
+          {/* Section 1: Jurisdiction Identity */}
           <section className="space-y-10">
             <div className="flex items-center justify-between border-b-2 border-slate-50 pb-6">
               <h3 className="text-[13px] font-black text-indigo-600 uppercase tracking-[0.3em] flex items-center gap-4 italic">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-inner"><Globe size={22} /></div>
                 Domestic Origin Mapping
               </h3>
-              {formData.surplus_amount > 100000 && <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-amber-200 shadow-sm"><Zap size={12} fill="currentColor" /> High Yield Potential</span>}
+              {formData.surplus_amount > 100000 && <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-amber-200 shadow-sm"><Zap size={12} fill="currentColor" /> High Yield Profile</span>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -173,6 +174,7 @@ const PropertyForm: React.FC = () => {
             </div>
           </section>
 
+          {/* Section 2: Financial Balance */}
           <section className="space-y-10 pt-16 border-t-2 border-slate-50">
             <h3 className="text-[13px] font-black text-emerald-600 uppercase tracking-[0.3em] flex items-center gap-4 italic">
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100 shadow-inner"><DollarSignIcon size={22} /></div>
@@ -215,14 +217,15 @@ const PropertyForm: React.FC = () => {
             </div>
           </section>
 
+          {/* Section 3: Timeline */}
           <section className="space-y-10 pt-16 border-t-2 border-slate-50">
             <h3 className="text-[13px] font-black text-amber-600 uppercase tracking-[0.3em] flex items-center gap-4 italic">
               <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center border border-amber-100 shadow-inner"><CalendarIcon size={22} /></div>
-              US Statutory Timeline
+              Statutory Deadline Protocol
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="space-y-4 group">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-amber-600 transition-colors">Date of Tax Auction / Sale</label>
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] px-3 group-focus-within:text-amber-600 transition-colors">Date of Tax Sale / Deed Auction</label>
                 <input 
                   type="date" 
                   value={formData.tax_sale_date}
@@ -233,7 +236,7 @@ const PropertyForm: React.FC = () => {
               <div className="p-10 bg-slate-50 border-2 border-slate-100 rounded-[3rem] flex gap-8 shadow-inner items-start group hover:bg-white hover:border-indigo-100 transition-all duration-500">
                 <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100 shrink-0 group-hover:rotate-6 transition-transform"><InfoIcon size={28} /></div>
                 <p className="text-sm text-slate-700 font-bold leading-relaxed italic group-hover:text-slate-900 transition-colors">
-                  AI Compliance Pulse: Your selection of <span className="text-indigo-600 font-black">{US_STATES.find(s => s.id === formData.state)?.name || 'Target State'}</span> triggers automatic lookup of redemption periods and US escheatment rules.
+                  AI Compliance Engine: Based on your selection of <span className="text-indigo-600 font-black">{US_STATES.find(s => s.id === formData.state)?.name || 'Target State'}</span>, our engine will automatically sync redemption and escheatment windows.
                 </p>
               </div>
             </div>
@@ -248,7 +251,7 @@ const PropertyForm: React.FC = () => {
           >
             Discard Protocol
           </button>
-          <Tooltip content="Ingest this domestic discovery into the production management grid.">
+          <Tooltip content="Ingest this discovery into the production case management grid.">
             <button 
               type="submit"
               className="bg-indigo-600 text-white px-20 py-7 rounded-[2rem] font-black text-xs uppercase tracking-[0.25em] hover:bg-indigo-700 transition-all shadow-3xl shadow-indigo-900/40 flex items-center gap-5 active:scale-[0.98] hover:-translate-y-2 border-2 border-white/10"

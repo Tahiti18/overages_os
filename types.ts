@@ -60,14 +60,15 @@ export interface VaultArtifact {
   is_verified: boolean;
 }
 
-export enum LienType {
-  GOVERNMENT = 'GOVERNMENT',
-  MORTGAGE_1 = 'MORTGAGE_1',
-  MORTGAGE_2 = 'MORTGAGE_2',
-  HOA = 'HOA',
-  JUDGMENT = 'JUDGMENT',
-  MECHANIC = 'MECHANIC',
-  OTHER = 'OTHER'
+export interface SystemNotification {
+  id: string;
+  type: 'DROP_ALERT' | 'DEADLINE' | 'SYSTEM' | 'INTEGRITY';
+  title: string;
+  message: string;
+  timestamp: string;
+  is_read: boolean;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  metadata?: any;
 }
 
 export interface WatchedJurisdiction {
@@ -77,7 +78,18 @@ export interface WatchedJurisdiction {
   cadence: string;
   last_updated: string;
   next_expected: string;
-  status: 'FRESH' | 'APPROACHING' | 'STALE' | 'UNKNOWN';
+  status: 'FRESH' | 'APPROACHING' | 'IMMINENT' | 'STALE' | 'UNKNOWN';
+  alerts_enabled: boolean;
+}
+
+export enum LienType {
+  GOVERNMENT = 'GOVERNMENT',
+  MORTGAGE_1 = 'MORTGAGE_1',
+  MORTGAGE_2 = 'MORTGAGE_2',
+  HOA = 'HOA',
+  JUDGMENT = 'JUDGMENT',
+  MECHANIC = 'MECHANIC',
+  OTHER = 'OTHER'
 }
 
 export interface Attorney {

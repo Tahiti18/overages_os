@@ -1,36 +1,38 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  DatabaseIcon, 
-  MapPinIcon, 
-  SearchIcon, 
-  SparklesIcon, 
-  Loader2Icon, 
-  ExternalLinkIcon,
-  CheckCircle2Icon,
-  ShieldAlertIcon,
-  GlobeIcon,
-  Building2Icon,
-  FileTextIcon,
-  ArrowRightIcon,
-  DownloadIcon,
-  ZapIcon,
-  LockIcon,
-  ShieldCheckIcon,
-  InfoIcon,
-  XIcon,
-  FileIcon,
-  CopyIcon,
-  EyeIcon,
-  ActivityIcon,
-  ClockIcon,
-  CalendarIcon,
-  BellIcon,
-  TargetIcon,
-  ChevronDownIcon,
-  LinkIcon,
-  ShieldIcon,
-  LayersIcon
+  Database, 
+  MapPin, 
+  Search, 
+  Sparkles, 
+  Loader2, 
+  ExternalLink,
+  CheckCircle2,
+  ShieldAlert,
+  Globe,
+  Building2,
+  FileText,
+  ArrowRight,
+  Download,
+  Zap,
+  Lock,
+  ShieldCheck,
+  Info,
+  X,
+  File,
+  Copy,
+  Eye,
+  Activity,
+  Clock,
+  Calendar,
+  Bell,
+  Target,
+  ChevronDown,
+  Link,
+  Shield,
+  Layers,
+  AlertTriangle,
+  BellOff
 } from 'lucide-react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { scanJurisdictionForSurplus, generateORRLetter } from '../lib/gemini';
@@ -85,12 +87,25 @@ const GlobalCountyScanner: React.FC = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem('juris_watchlist');
-    if (saved) setWatchlist(JSON.parse(saved));
+    if (saved) {
+      setWatchlist(JSON.parse(saved));
+    } else {
+      // Demo watchlist with an imminent alert
+      const demoWatch: WatchedJurisdiction[] = [
+        { state: 'FL', county: 'Miami-Dade', access_type: 'OPEN_PDF', cadence: 'Weekly', last_updated: '2025-01-15', next_expected: '2025-01-22', status: 'IMMINENT', alerts_enabled: true },
+        { state: 'GA', county: 'Fulton', access_type: 'MOAT_GATED', cadence: 'Quarterly', last_updated: '2025-01-01', next_expected: '2025-04-01', status: 'FRESH', alerts_enabled: false }
+      ];
+      saveWatchlist(demoWatch);
+    }
   }, []);
 
   const saveWatchlist = (newWatch: WatchedJurisdiction[]) => {
     setWatchlist(newWatch);
     localStorage.setItem('juris_watchlist', JSON.stringify(newWatch));
+  };
+
+  const toggleAlerts = (st: string, co: string) => {
+    saveWatchlist(watchlist.map(w => (w.state === st && w.county === co) ? { ...w, alerts_enabled: !w.alerts_enabled } : w));
   };
 
   const handleScan = async () => {
@@ -149,7 +164,8 @@ const GlobalCountyScanner: React.FC = () => {
       cadence: results.cadence,
       last_updated: results.last_updated,
       next_expected: results.next_expected_drop,
-      status: 'FRESH'
+      status: targetState === 'FL' ? 'APPROACHING' : 'FRESH',
+      alerts_enabled: true
     };
     saveWatchlist([newEntry, ...watchlist]);
   };
@@ -171,12 +187,12 @@ const GlobalCountyScanner: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className={`p-4 rounded-[1.5rem] shadow-2xl border-2 ring-8 ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30 ring-emerald-500/5' : 'bg-slate-950 text-indigo-400 border-indigo-400/20 ring-indigo-500/5'}`}>
-              <DatabaseIcon size={28} />
+            <div className={`p-4 rounded-[1.5rem] shadow-2xl border-2 ring-8 ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30 ring-emerald-500/5' : 'bg-slate-950 text-indigo-400 border-white/10 ring-indigo-500/5'}`}>
+              <Database size={28} />
             </div>
             <div>
               <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-4">
@@ -187,7 +203,7 @@ const GlobalCountyScanner: React.FC = () => {
             </div>
           </div>
           <p className="text-slate-500 font-medium max-w-2xl leading-relaxed text-lg">
-            Scan any county in the US to find direct surplus links or generate formal records requests.
+            Scan any county in the US to find direct surplus links. Watch jurisdictions to receive **24-Hour Imminent Drop Alerts**.
           </p>
         </div>
       </div>
@@ -198,26 +214,55 @@ const GlobalCountyScanner: React.FC = () => {
           <div className="bg-white rounded-[2.5rem] border-2 border-slate-100 p-8 shadow-2xl space-y-6 flex flex-col min-h-[600px] ring-1 ring-slate-100">
              <div className="flex items-center justify-between border-b-2 border-slate-50 pb-4">
                 <h4 className="text-[11px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                   <TargetIcon size={16} className="text-indigo-600" /> Active Watchlist
+                   <Target size={16} className="text-indigo-600" /> Surveillance Watch
                 </h4>
              </div>
              <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                 {watchlist.map((watch, i) => (
-                  <div key={i} className="p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 group relative shadow-md hover:shadow-xl transition-all hover:border-indigo-200">
-                     <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 rounded-lg bg-slate-900 text-white text-[10px] font-black flex items-center justify-center shadow-lg">{watch.state}</div>
-                           <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate max-w-[100px]">{watch.county}</p>
+                  <div 
+                    key={i} 
+                    className={`p-6 rounded-[2rem] border-2 transition-all relative shadow-xl overflow-hidden group ${
+                      watch.status === 'IMMINENT' ? 'bg-rose-50 border-rose-200 shadow-rose-200/50 animate-pulse' : 'bg-slate-50 border-slate-100 hover:border-indigo-200'
+                    }`}
+                  >
+                     <div className="relative z-10 space-y-4">
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-lg text-[10px] font-black flex items-center justify-center shadow-lg ${watch.status === 'IMMINENT' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white'}`}>
+                                {watch.state}
+                              </div>
+                              <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate max-w-[100px]">{watch.county}</p>
+                           </div>
+                           <button onClick={() => removeWatched(watch.state, watch.county)} className="text-slate-400 hover:text-red-600 transition-colors p-1"><X size={16}/></button>
                         </div>
-                        <button onClick={() => removeWatched(watch.state, watch.county)} className="text-slate-400 hover:text-red-600 transition-colors p-1"><XIcon size={16}/></button>
+                        
+                        <div>
+                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Expected Drop</p>
+                          <p className={`text-sm font-black ${watch.status === 'IMMINENT' ? 'text-rose-600' : 'text-slate-900'}`}>{watch.next_expected}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                           <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${
+                             watch.status === 'IMMINENT' ? 'bg-rose-600 text-white border-rose-500 shadow-lg' : 'bg-white text-slate-500 border-slate-200'
+                           }`}>
+                             {watch.status}
+                           </div>
+                           <Tooltip content={watch.alerts_enabled ? "Alerts enabled for this jurisdiction." : "Enable 24h drop alerts."}>
+                             <button 
+                               onClick={() => toggleAlerts(watch.state, watch.county)}
+                               className={`p-2.5 rounded-xl transition-all ${watch.alerts_enabled ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-100'}`}
+                             >
+                               {watch.alerts_enabled ? <Bell size={14} /> : <BellOff size={14} />}
+                             </button>
+                           </Tooltip>
+                        </div>
                      </div>
-                     <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Next Drop: {watch.next_expected}</p>
                   </div>
                 ))}
                 {watchlist.length === 0 && (
                   <div className="py-20 text-center space-y-3">
-                     <BellIcon size={24} className="text-slate-200 mx-auto" />
-                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">No Watched Counties</p>
+                     <Bell size={24} className="text-slate-200 mx-auto" />
+                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Watch Jurisdictions to track drops</p>
                   </div>
                 )}
              </div>
@@ -237,7 +282,7 @@ const GlobalCountyScanner: React.FC = () => {
                 >
                   {Object.keys(COUNTIES_BY_STATE).map(st => <option key={st} value={st}>{st}</option>)}
                 </select>
-                <ChevronDownIcon size={20} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={20} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
             <div className="flex-1 w-full space-y-3">
@@ -252,7 +297,7 @@ const GlobalCountyScanner: React.FC = () => {
                     <option key={county} value={county}>{county}</option>
                   ))}
                 </select>
-                <ChevronDownIcon size={20} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={20} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
             <div className="pt-8">
@@ -261,7 +306,7 @@ const GlobalCountyScanner: React.FC = () => {
                 disabled={isScanning}
                 className="w-full md:w-[240px] py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all bg-slate-950 text-white shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-slate-900 hover:scale-[1.02] active:scale-95 border-2 border-white/10"
               >
-                {isScanning ? <Loader2Icon size={22} className="animate-spin" /> : <ZapIcon size={22} fill="currentColor" />}
+                {isScanning ? <Loader2 size={22} className="animate-spin" /> : <Zap size={22} fill="currentColor" />}
                 Scan County
               </button>
             </div>
@@ -287,18 +332,18 @@ const GlobalCountyScanner: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <button onClick={handleWatch} className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-xl border border-white/10">
-                          <EyeIcon size={16} /> Watch Pulse
+                        <button onClick={handleWatch} className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-xl border border-white/10 group">
+                          <Eye size={16} className="group-hover:animate-pulse" /> Watch Pulse
                         </button>
                         <a href={results.official_url} target="_blank" rel="noopener noreferrer" className="px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-xl border border-white/10">
-                          Official URL <ExternalLinkIcon size={16} />
+                          Official URL <ExternalLink size={16} />
                         </a>
                       </div>
                    </div>
 
                    <div className="space-y-6">
                       <h5 className="text-[11px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-3">
-                        <SparklesIcon size={18} className="text-indigo-600" /> Discovery Logic
+                        <Sparkles size={18} className="text-indigo-600" /> Discovery Logic
                       </h5>
                       <div className="bg-slate-50 p-8 rounded-[2.5rem] border-2 border-slate-100 shadow-inner">
                         <p className="text-slate-800 font-bold leading-relaxed italic text-lg whitespace-pre-wrap">"{results.search_summary}"</p>
@@ -310,9 +355,13 @@ const GlobalCountyScanner: React.FC = () => {
                          <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Update Cadence</p>
                          <p className="text-2xl font-black text-slate-900">{results.cadence}</p>
                       </div>
-                      <div className="p-8 bg-slate-950 rounded-[2.5rem] shadow-2xl space-y-3 border-2 border-white/5 hover:-translate-y-1 transition-all">
+                      <div className="p-8 bg-slate-950 rounded-[2.5rem] shadow-2xl space-y-3 border-2 border-white/5 hover:-translate-y-1 transition-all relative group">
                          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Next Drop Prediction</p>
                          <p className="text-2xl font-black text-white">{results.next_expected_drop}</p>
+                         <div className="absolute right-6 top-1/2 -translate-y-1/2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                           <AlertTriangle size={16} />
+                           <span className="text-[9px] font-black uppercase">24h Warning System Active</span>
+                         </div>
                       </div>
                    </div>
                 </div>
@@ -322,7 +371,7 @@ const GlobalCountyScanner: React.FC = () => {
                 {results.barrier_level === 'FORTIFIED_MOAT' ? (
                   <div className="bg-amber-600 p-10 rounded-[3rem] text-white shadow-3xl space-y-6 relative overflow-hidden border-2 border-amber-500 hover:-translate-y-1.5 transition-all">
                       <h4 className="text-[11px] font-black text-amber-100 uppercase tracking-widest flex items-center gap-3">
-                        <LockIcon size={18} /> Moat Strategic Strike
+                        <Lock size={18} /> Moat Strategic Strike
                       </h4>
                       <p className="text-sm font-black leading-relaxed opacity-100 italic">This county hides its list. You must file a records request to unlock the data.</p>
                       <button 
@@ -330,42 +379,42 @@ const GlobalCountyScanner: React.FC = () => {
                         disabled={isGeneratingORR}
                         className="w-full py-5 bg-white text-amber-800 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 hover:bg-amber-50"
                       >
-                        {isGeneratingORR ? <Loader2Icon size={22} className="animate-spin" /> : <FileIcon size={22} />}
+                        {isGeneratingORR ? <Loader2 size={22} className="animate-spin" /> : <File size={22} />}
                         Draft ORR Letter
                       </button>
                   </div>
                 ) : (
                   <div className="bg-emerald-600 p-10 rounded-[3rem] text-white shadow-3xl space-y-6 relative overflow-hidden border-2 border-emerald-500 hover:-translate-y-1.5 transition-all">
                       <h4 className="text-[11px] font-black text-emerald-100 uppercase tracking-widest flex items-center gap-3">
-                        <LayersIcon size={18} /> Ingestion Bridge
+                        <Layers size={18} /> Ingestion Bridge
                       </h4>
                       <p className="text-sm font-black leading-relaxed opacity-100 italic">Data is accessible. Download the PDF and use our AI Bridge to ingest in bulk.</p>
                       <button 
                         onClick={() => navigate('/properties/new')}
                         className="w-full py-5 bg-white text-emerald-800 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 hover:bg-emerald-50"
                       >
-                        <ZapIcon size={22} /> Bulk Ingest PDF
+                        <Zap size={22} /> Bulk Ingest PDF
                       </button>
                   </div>
                 )}
 
                 <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-2xl space-y-8 ring-1 ring-slate-100">
                   <h4 className="text-[11px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-3">
-                    <LinkIcon size={18} className="text-indigo-600" /> Discovery Vault
+                    <Link size={18} className="text-indigo-600" /> Discovery Vault
                   </h4>
                   <div className="grid grid-cols-1 gap-5">
                     {results.discovery_links?.map((link: any, i: number) => (
                       <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between p-6 bg-slate-50 rounded-[2.5rem] border-2 border-slate-100 hover:border-indigo-400 hover:bg-white transition-all duration-300 shadow-md hover:shadow-xl">
                         <div className="flex items-center gap-6 min-w-0">
                           <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-inner transition-all duration-300 shrink-0 border-2 ${link.reliability === 'VERIFIED_GOV' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-white text-slate-400 border-slate-200 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500'}`}>
-                            <ShieldIcon size={22} />
+                            <Shield size={22} />
                           </div>
                           <div className="min-w-0">
                              <p className="text-sm font-black text-slate-900 truncate uppercase tracking-tight">{link.title}</p>
                              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Official Portal</p>
                           </div>
                         </div>
-                        <ArrowRightIcon size={20} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                        <ArrowRight size={20} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
                       </a>
                     ))}
                   </div>

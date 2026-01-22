@@ -2,33 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { 
-  ZapIcon,
-  MicIcon,
-  CalculatorIcon,
-  ArchiveIcon,
-  GlobeIcon,
-  CalendarIcon,
-  LayersIcon,
-  LayoutDashboardIcon,
-  BarChartIcon,
-  ScaleIcon,
-  UsersIcon,
-  CreditCardIcon,
-  GiftIcon,
-  DatabaseIcon,
-  SearchIcon,
-  ChevronLeftIcon,
-  MenuIcon,
-  ChevronRightIcon,
-  ShieldCheckIcon,
-  UnplugIcon,
-  ActivityIcon,
-  HardDriveIcon
+  Zap,
+  Mic,
+  Calculator,
+  Archive,
+  Globe,
+  Calendar,
+  Layers,
+  LayoutDashboard,
+  BarChart,
+  Scale,
+  Users,
+  CreditCard,
+  Gift,
+  Database,
+  Search,
+  ChevronLeft,
+  Menu,
+  ChevronRight,
+  ShieldCheck,
+  Unplug,
+  Activity,
+  HardDrive,
+  Bell
 } from 'lucide-react';
-import { User, UserRole } from '../types';
+import { User, UserRole, SystemNotification } from '../types';
 import LiveAgent from './LiveAgent';
 import UserGuide from './UserGuide';
 import Tooltip from './Tooltip';
+import NotificationHub from './NotificationHub';
 
 interface LayoutProps {
   user: User;
@@ -36,15 +38,36 @@ interface LayoutProps {
   setIsLiveMode: (val: boolean) => void;
 }
 
+const SIMULATION_NOTIFICATIONS: SystemNotification[] = [
+  {
+    id: 'n1',
+    type: 'DROP_ALERT',
+    title: '[SIMULATION] Imminent PDF Drop: Miami-Dade',
+    message: 'Predictive Sync indicates a surplus list release in 22 hours. Example behavior of Open Plains alerts.',
+    timestamp: '1h ago',
+    is_read: false,
+    priority: 'URGENT'
+  },
+  {
+    id: 'n2',
+    type: 'DEADLINE',
+    title: '[SIMULATION] Compliance Window Closing',
+    message: 'Filing for Case #14-02 expires in 48 hours. Example of deadline tracking behavior.',
+    timestamp: '4h ago',
+    is_read: false,
+    priority: 'HIGH'
+  }
+];
+
 const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const location = useLocation();
   const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAiConnected, setIsAiConnected] = useState(false);
 
   useEffect(() => {
-    // Check if API key is present in environment
     setIsAiConnected(!!process.env.API_KEY);
   }, []);
 
@@ -53,27 +76,29 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   );
 
   const mainNav = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboardIcon, tip: 'Overview of all active surplus recovery cases.' },
-    { label: 'Artifact Vault', path: '/vault', icon: HardDriveIcon, tip: 'Centralized repository for all extracted data and generated forms.' },
-    { label: 'Market Intelligence', path: '/intelligence', icon: BarChartIcon, tip: 'Analyze national trends and find high-yield jurisdictions.' },
-    { label: 'Workflow Protocol', path: '/workflow', icon: LayersIcon, tip: 'Detailed view of the 5-stage automated recovery pipeline.' },
-    { label: 'Rules Engine', path: '/admin/rules', icon: ScaleIcon, roles: [UserRole.ADMIN], tip: 'Configure jurisdiction-specific deadlines and requirements.' },
-    { label: 'Team', path: '/admin/users', icon: UsersIcon, roles: [UserRole.ADMIN], tip: 'Manage team access levels and review performance metrics.' },
+    { label: 'Dashboard', path: '/', icon: LayoutDashboard, tip: 'Overview of all active surplus recovery cases.' },
+    { label: 'Artifact Vault', path: '/vault', icon: HardDrive, tip: 'Centralized repository for all extracted data and generated forms.' },
+    { label: 'Market Intelligence', path: '/intelligence', icon: BarChart, tip: 'Analyze national trends and find high-yield jurisdictions.' },
+    { label: 'Workflow Protocol', path: '/workflow', icon: Layers, tip: 'Detailed view of the 5-stage automated recovery pipeline.' },
+    { label: 'Rules Engine', path: '/admin/rules', icon: Scale, roles: [UserRole.ADMIN], tip: 'Configure jurisdiction-specific deadlines and requirements.' },
+    { label: 'Team', path: '/admin/users', icon: Users, roles: [UserRole.ADMIN], tip: 'Manage team access levels and review performance metrics.' },
   ];
 
   const adminNav = [
-    { label: 'Billing & Tiers', path: '/billing', icon: CreditCardIcon, tip: 'Manage your platform subscription and AI credits.' },
-    { label: 'Affiliate Portal', path: '/affiliate', icon: GiftIcon, tip: 'Earn recurring commission by referring other recovery agents.' },
+    { label: 'Billing & Tiers', path: '/billing', icon: CreditCard, tip: 'Manage your platform subscription and AI credits.' },
+    { label: 'Affiliate Portal', path: '/affiliate', icon: Gift, tip: 'Earn recurring commission by referring other recovery agents.' },
   ];
 
   const intelligenceSuite = [
-    { label: 'County Scanner', path: '/scanner', icon: DatabaseIcon, color: 'text-emerald-400', desc: 'Raw List Discovery', tip: 'Scan entire counties for buried surplus and excess proceeds lists.' },
-    { label: 'Skip-Trace Hub', path: '/research', icon: GlobeIcon, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
-    { label: 'Waterfall Engine', path: '/waterfall', icon: CalculatorIcon, color: 'text-emerald-400', desc: 'Financial Logic', tip: 'Simulate lien priority and final recovery amounts.' },
+    { label: 'County Scanner', path: '/scanner', icon: Database, color: 'text-emerald-400', desc: 'Raw List Discovery', tip: 'Scan entire counties for buried surplus and excess proceeds lists.' },
+    { label: 'Skip-Trace Hub', path: '/research', icon: Globe, color: 'text-amber-400', desc: 'Grounding Search', tip: 'Advanced AI-powered claimant locating engine.' },
+    { label: 'Waterfall Engine', path: '/waterfall', icon: Calculator, color: 'text-emerald-400', desc: 'Financial Logic', tip: 'Simulate lien priority and final recovery amounts.' },
     { label: 'Counsel Hub', path: '/counsel', icon: GavelIcon, color: 'text-purple-400', desc: 'Legal Network', tip: 'Research and engage specialized surplus attorneys.' },
-    { label: 'Smart Packager', path: '/packager', icon: ArchiveIcon, color: 'text-blue-400', desc: 'Auto-Assembly', tip: 'Generate court-ready claim artifacts and demand letters.' },
-    { label: 'Compliance Calendar', path: '/calendar', icon: CalendarIcon, color: 'text-rose-400', desc: 'Legal Deadlines', tip: 'Track critical filing windows across all jurisdictions.' },
+    { label: 'Smart Packager', path: '/packager', icon: Archive, color: 'text-blue-400', desc: 'Auto-Assembly', tip: 'Generate court-ready claim artifacts and demand letters.' },
+    { label: 'Compliance Calendar', path: '/calendar', icon: Calendar, color: 'text-rose-400', desc: 'Legal Deadlines', tip: 'Track critical filing windows across all jurisdictions.' },
   ];
+
+  const currentNotifications = isLiveMode ? [] : SIMULATION_NOTIFICATIONS;
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-hidden">
@@ -82,8 +107,8 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
       >
         <div className="p-8 flex items-center justify-between">
           <div className={`flex items-center gap-3 transition-all duration-500 ${isCollapsed ? 'opacity-0 scale-0 w-0 overflow-hidden' : 'opacity-100 scale-100'}`}>
-            <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/40 rotate-3 shrink-0 border-2 border-white/20">
-              <ZapIcon size={20} fill="white" />
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl rotate-3 shrink-0 border-2 border-white/20 transition-colors ${isLiveMode ? 'bg-emerald-600 shadow-emerald-500/40' : 'bg-indigo-600 shadow-indigo-500/40'}`}>
+              <Zap size={20} fill="white" />
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-tight text-white">PROSPECTOR</h1>
@@ -94,12 +119,11 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={`p-2.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all shadow-lg ${isCollapsed ? 'mx-auto' : ''}`}
           >
-            {isCollapsed ? <ChevronRightIcon size={24} /> : <ChevronLeftIcon size={24} />}
+            {isCollapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 space-y-8 py-4 custom-scrollbar overflow-x-hidden">
-          {/* Integrity Pulse Indicator - Fixed boolean className error on line 103 by using template literal */}
           <div className={`p-4 rounded-2xl border-2 mb-8 flex items-center justify-between transition-all duration-700 ${isLiveMode ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-slate-900 border-white/5'}`}>
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -117,7 +141,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                  onClick={() => setIsLiveMode(!isLiveMode)}
                  className={`p-1.5 rounded-lg transition-all ${isLiveMode ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
                >
-                 <ActivityIcon size={14} />
+                 <Activity size={14} />
                </button>
             )}
           </div>
@@ -129,7 +153,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                   to={item.path}
                   className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
                     location.pathname === item.path 
-                      ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' 
+                      ? (isLiveMode ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20' : 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20')
                       : 'text-slate-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
@@ -173,7 +197,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
                   to={item.path}
                   className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
                     location.pathname === item.path 
-                      ? 'bg-indigo-600 text-white shadow-xl' 
+                      ? (isLiveMode ? 'bg-emerald-600 text-white shadow-xl' : 'bg-indigo-600 text-white shadow-xl')
                       : 'text-slate-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
@@ -187,7 +211,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
 
         <div className="p-4 mt-auto">
           <div className={`bg-slate-900 rounded-[2rem] p-4 border border-white/5 flex items-center transition-all ${isCollapsed ? 'justify-center' : 'gap-4'}`}>
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white shrink-0 shadow-lg border-2 border-white/10">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-white shrink-0 shadow-lg border-2 border-white/10 ${isLiveMode ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
               {user.email[0].toUpperCase()}
             </div>
             {!isCollapsed && (
@@ -198,7 +222,7 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
             )}
             {!isCollapsed && (
                <button className="p-2 text-slate-600 hover:text-white transition-colors">
-                  <MenuIcon size={18} />
+                  <Menu size={18} />
                </button>
             )}
           </div>
@@ -209,41 +233,56 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
         <header className="h-24 bg-white border-b-2 border-slate-100 flex items-center justify-between px-10 shrink-0 z-20">
            <div className="flex items-center gap-6">
               <div className="hidden lg:flex items-center gap-3">
-                 <div className={`w-3 h-3 rounded-full ${isAiConnected ? 'bg-emerald-500' : 'bg-rose-500'} shadow-lg animate-pulse`}></div>
+                 <div className={`w-3 h-3 rounded-full ${isAiConnected ? (isLiveMode ? 'bg-emerald-500' : 'bg-indigo-500') : 'bg-rose-500'} shadow-lg animate-pulse`}></div>
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">AI Protocol: {isAiConnected ? 'Secure' : 'Disconnected'}</span>
               </div>
            </div>
 
            <div className="flex items-center gap-4">
+              <Tooltip content="Predictive Drop Alerts & Statutory Deadlines.">
+                <button 
+                  onClick={() => setIsNotifOpen(true)}
+                  className="relative p-3 bg-white text-slate-400 border-2 border-slate-100 rounded-2xl hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-md active:scale-90"
+                >
+                   <Bell size={20} />
+                   {currentNotifications.length > 0 && (
+                     <span className="absolute top-0 right-0 w-5 h-5 bg-rose-600 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-bounce">
+                       {currentNotifications.length}
+                     </span>
+                   )}
+                </button>
+              </Tooltip>
+
               <Tooltip content="Open the AI voice channel for real-time case consultation.">
                 <button 
                   onClick={() => setIsAgentOpen(true)}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center gap-3 hover:bg-indigo-700 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/10"
+                  className={`${isLiveMode ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center gap-3 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/10`}
                 >
-                   <MicIcon size={16} /> Live Agent
+                   <Mic size={16} /> Live Agent
                 </button>
               </Tooltip>
+              
               <Tooltip content="View the comprehensive user manual and system logic guides.">
                 <button 
                   onClick={() => setIsGuideOpen(true)}
                   className="p-3 bg-white text-slate-400 border-2 border-slate-100 rounded-2xl hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-md active:scale-90"
                 >
-                   <SearchIcon size={20} />
+                   <Search size={20} />
                 </button>
               </Tooltip>
            </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/50">
-           <Outlet />
+           <Outlet context={{ user, isLiveMode, setIsLiveMode }} />
         </div>
       </main>
 
       <LiveAgent isOpen={isAgentOpen} onClose={() => setIsAgentOpen(false)} />
       <UserGuide isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+      <NotificationHub isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} notifications={currentNotifications} />
     </div>
   );
 };
 
-// Fixed export default issue to resolve App.tsx import error
 export default Layout;

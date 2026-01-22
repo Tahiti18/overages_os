@@ -1,25 +1,27 @@
 
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { 
-  DatabaseIcon, 
-  SearchIcon, 
-  FileTextIcon, 
-  ShieldCheckIcon, 
-  FilterIcon, 
-  DownloadIcon, 
-  EyeIcon, 
-  ArchiveIcon, 
-  FingerprintIcon,
-  ClockIcon,
-  RefreshCwIcon,
-  LockIcon,
-  FileSearchIcon,
-  Trash2Icon,
-  ChevronRightIcon,
-  HardDriveIcon,
-  ShieldIcon,
-  ActivityIcon,
-  InfoIcon
+  Database, 
+  Search, 
+  FileText, 
+  ShieldCheck, 
+  Filter, 
+  Download, 
+  Eye, 
+  Archive, 
+  Fingerprint,
+  Clock,
+  RefreshCw,
+  Lock,
+  FileSearch,
+  Trash2,
+  ChevronRight,
+  HardDrive,
+  Shield,
+  Activity,
+  Info,
+  Unplug
 } from 'lucide-react';
 import { ArtifactType, VaultArtifact } from '../types';
 import Tooltip from './Tooltip';
@@ -74,10 +76,14 @@ const MOCK_ARTIFACTS: VaultArtifact[] = [
 ];
 
 const DatabaseVault: React.FC = () => {
+  const { isLiveMode } = useOutletContext<{ isLiveMode: boolean }>();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ArtifactType | 'ALL'>('ALL');
 
-  const filtered = MOCK_ARTIFACTS.filter(a => {
+  // CRITICAL: In Live Production, we start with a clean slate.
+  const artifacts = isLiveMode ? [] : MOCK_ARTIFACTS;
+
+  const filtered = artifacts.filter(a => {
     const matchesSearch = a.filename.toLowerCase().includes(search.toLowerCase()) || 
                           a.property_id.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = activeFilter === 'ALL' || a.type === activeFilter;
@@ -86,12 +92,12 @@ const DatabaseVault: React.FC = () => {
 
   const getIcon = (type: ArtifactType) => {
     switch (type) {
-      case ArtifactType.LEGAL_FORM: return <ArchiveIcon size={20} className="text-blue-500" />;
-      case ArtifactType.RESEARCH_DOSSIER: return <FileSearchIcon size={20} className="text-amber-500" />;
-      case ArtifactType.EXTRACTED_DATA: return <DatabaseIcon size={20} className="text-emerald-500" />;
-      case ArtifactType.WATERFALL_MODEL: return <RefreshCwIcon size={20} className="text-indigo-500" />;
-      case ArtifactType.ORR_LETTER: return <FileTextIcon size={20} className="text-rose-500" />;
-      default: return <FileTextIcon size={20} className="text-slate-400" />;
+      case ArtifactType.LEGAL_FORM: return <Archive size={20} className="text-blue-500" />;
+      case ArtifactType.RESEARCH_DOSSIER: return <FileSearch size={20} className="text-amber-500" />;
+      case ArtifactType.EXTRACTED_DATA: return <Database size={20} className="text-emerald-500" />;
+      case ArtifactType.WATERFALL_MODEL: return <RefreshCw size={20} className="text-indigo-500" />;
+      case ArtifactType.ORR_LETTER: return <FileText size={20} className="text-rose-500" />;
+      default: return <FileText size={20} className="text-slate-400" />;
     }
   };
 
@@ -101,33 +107,35 @@ const DatabaseVault: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-slate-950 rounded-[1.5rem] shadow-2xl border-2 border-white/10 ring-8 ring-indigo-500/5 text-indigo-400">
-              <HardDriveIcon size={28} />
+            <div className={`p-4 rounded-[1.5rem] shadow-2xl border-2 ring-8 ${isLiveMode ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30 ring-emerald-500/5' : 'bg-slate-950 text-indigo-400 border-white/10 ring-indigo-500/5'}`}>
+              <HardDrive size={28} />
             </div>
             <div>
               <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-4">
                 Artifact Vault
-                <span className="text-indigo-600 animate-pulse">●</span>
+                <span className={isLiveMode ? "text-emerald-500 animate-pulse" : "text-indigo-600 animate-pulse"}>●</span>
               </h2>
               <p className="text-slate-700 font-black uppercase tracking-widest text-[11px]">
-                Central Enterprise Database
+                {isLiveMode ? 'Production Storage Grid' : 'Simulated Record Repository'}
               </p>
             </div>
           </div>
           <p className="text-slate-600 font-bold max-w-2xl leading-relaxed text-lg">
-            Automatic Archival Protocol. Every case artifact is committed to this vault with a unique SHA-256 hash to ensure legal chain-of-custody.
+            {isLiveMode 
+              ? 'Standby Mode. All ingested evidence, extracted deeds, and generated demand letters will be cryptographically locked in this production vault.' 
+              : 'Protocol Visualization. Browse mock recovery artifacts to understand how the system manages jurisdictional chain-of-custody.'}
           </p>
         </div>
         <div className="flex items-center gap-6 bg-white p-6 rounded-[2rem] border-2 border-slate-100 shadow-xl">
            <div className="flex flex-col items-end">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Database Health</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Database Sync</p>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                <p className="text-xs font-black text-slate-900 uppercase">Synchronized</p>
+                <div className={`w-2 h-2 rounded-full animate-pulse ${isLiveMode ? 'bg-emerald-500' : 'bg-indigo-500'}`}></div>
+                <p className="text-xs font-black text-slate-900 uppercase">{isLiveMode ? 'Production' : 'Demo'}</p>
               </div>
            </div>
            <div className="w-px h-10 bg-slate-100"></div>
-           <ShieldIcon size={28} className="text-indigo-600" />
+           <Shield size={28} className={isLiveMode ? 'text-emerald-600' : 'text-indigo-600'} />
         </div>
       </div>
 
@@ -135,7 +143,7 @@ const DatabaseVault: React.FC = () => {
       <div className="bg-white rounded-[3.5rem] border-2 border-slate-100 shadow-2xl overflow-hidden p-2 ring-1 ring-slate-100/50">
         <div className="bg-slate-50/50 rounded-[3.25rem] p-10 flex flex-col lg:flex-row items-center gap-8 shadow-inner">
           <div className="relative w-full lg:flex-1 group">
-            <SearchIcon size={22} className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+            <Search size={22} className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
             <input 
               type="text" 
               placeholder="Query Vault by filename, hash, or property context..." 
@@ -162,84 +170,94 @@ const DatabaseVault: React.FC = () => {
 
       {/* Artifact Inventory */}
       <div className="bg-white rounded-[4rem] border-2 border-slate-100 shadow-2xl overflow-hidden ring-1 ring-slate-100/50">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/80 text-indigo-900 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 border-slate-100">
-                <th className="px-12 py-8">Artifact Metadata</th>
-                <th className="px-12 py-8">System Commit</th>
-                <th className="px-12 py-8">Integrity Status</th>
-                <th className="px-12 py-8 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((art) => (
-                <tr key={art.id} className="hover:bg-slate-50/50 transition-all group cursor-default">
-                  <td className="px-12 py-10">
-                    <div className="flex items-center gap-8">
-                      <div className={`w-16 h-16 rounded-[1.5rem] bg-white border-2 flex items-center justify-center shadow-xl group-hover:rotate-3 transition-transform ${art.is_verified ? 'border-emerald-200' : 'border-slate-100'}`}>
-                        {getIcon(art.type)}
-                      </div>
-                      <div>
-                        <p className="text-xl font-black text-slate-900 tracking-tight uppercase italic mb-2">{art.filename}</p>
-                        <div className="flex items-center gap-4">
-                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                              <ClockIcon size={12} /> {art.created_at}
-                           </span>
-                           <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100 shadow-sm">
-                              <FingerprintIcon size={12} /> {art.hash}
-                           </span>
+        {filtered.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/80 text-indigo-900 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 border-slate-100">
+                  <th className="px-12 py-8">Artifact Metadata</th>
+                  <th className="px-12 py-8">System Commit</th>
+                  <th className="px-12 py-8">Integrity Status</th>
+                  <th className="px-12 py-8 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((art) => (
+                  <tr key={art.id} className="hover:bg-slate-50/50 transition-all group cursor-default">
+                    <td className="px-12 py-10">
+                      <div className="flex items-center gap-8">
+                        <div className={`w-16 h-16 rounded-[1.5rem] bg-white border-2 flex items-center justify-center shadow-xl group-hover:rotate-3 transition-transform ${art.is_verified ? 'border-emerald-200' : 'border-slate-100'}`}>
+                          {getIcon(art.type)}
+                        </div>
+                        <div>
+                          <p className="text-xl font-black text-slate-900 tracking-tight uppercase italic mb-2">{art.filename}</p>
+                          <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Clock size={12} /> {art.created_at}
+                            </span>
+                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100 shadow-sm">
+                                <Fingerprint size={12} /> {art.hash}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-12 py-10">
-                     <p className="text-base font-black text-slate-800 uppercase leading-none mb-2">{art.created_by}</p>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                        <ActivityIcon size={12} /> Revision {art.version}
-                     </p>
-                  </td>
-                  <td className="px-12 py-10">
-                    {art.is_verified ? (
-                       <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 w-fit shadow-md">
-                          <ShieldCheckIcon size={18} />
-                          <span className="text-[11px] font-black uppercase tracking-widest italic">Immutable Lock</span>
-                       </div>
-                    ) : (
-                       <div className="flex items-center gap-3 text-amber-600 bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 w-fit shadow-md animate-pulse">
-                          <ClockIcon size={18} />
-                          <span className="text-[11px] font-black uppercase tracking-widest">Awaiting Review</span>
-                       </div>
-                    )}
-                  </td>
-                  <td className="px-12 py-10 text-right">
-                    <div className="flex items-center justify-end gap-4">
-                      <Tooltip content="Open secure preview of artifact content.">
-                        <button className="p-5 bg-white border-2 border-slate-100 rounded-2xl text-slate-400 hover:text-indigo-600 hover:border-indigo-300 hover:shadow-2xl hover:-translate-y-1 transition-all">
-                          <EyeIcon size={22} />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content="Export physical copy of legal artifact.">
-                        <button className="p-5 bg-white border-2 border-slate-100 rounded-2xl text-slate-400 hover:text-emerald-600 hover:border-emerald-300 hover:shadow-2xl hover:-translate-y-1 transition-all">
-                          <DownloadIcon size={22} />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {filtered.length === 0 && (
+                    </td>
+                    <td className="px-12 py-10">
+                      <p className="text-base font-black text-slate-800 uppercase leading-none mb-2">{art.created_by}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                          <Activity size={12} /> Revision {art.version}
+                      </p>
+                    </td>
+                    <td className="px-12 py-10">
+                      {art.is_verified ? (
+                        <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 w-fit shadow-md">
+                            <ShieldCheck size={18} />
+                            <span className="text-[11px] font-black uppercase tracking-widest italic">Immutable Lock</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 text-amber-600 bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 w-fit shadow-md animate-pulse">
+                            <Clock size={18} />
+                            <span className="text-[11px] font-black uppercase tracking-widest">Awaiting Review</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-12 py-10 text-right">
+                      <div className="flex items-center justify-end gap-4">
+                        <Tooltip content="Open secure preview of artifact content.">
+                          <button className="p-5 bg-white border-2 border-slate-100 rounded-2xl text-slate-400 hover:text-indigo-600 hover:border-indigo-300 hover:shadow-2xl hover:-translate-y-1 transition-all">
+                            <Eye size={22} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Export physical copy of legal artifact.">
+                          <button className="p-5 bg-white border-2 border-slate-100 rounded-2xl text-slate-400 hover:text-emerald-600 hover:border-emerald-300 hover:shadow-2xl hover:-translate-y-1 transition-all">
+                            <Download size={22} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
           <div className="p-48 text-center space-y-12 shadow-inner bg-slate-50/20">
              <div className="w-36 h-36 bg-white rounded-[3.5rem] flex items-center justify-center mx-auto shadow-2xl border-2 border-slate-50 group transition-all hover:scale-110">
-                <DatabaseIcon size={72} className="text-slate-100 group-hover:text-indigo-600 transition-colors duration-500" />
+                {isLiveMode ? (
+                  <Unplug size={72} className="text-slate-100 group-hover:text-emerald-600 transition-colors duration-500" />
+                ) : (
+                  <Database size={72} className="text-slate-100 group-hover:text-indigo-600 transition-colors duration-500" />
+                )}
              </div>
              <div className="space-y-4">
-                <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">Vault Inventory Dormant</h3>
-                <p className="text-slate-600 font-bold max-w-sm mx-auto text-lg leading-relaxed">No records match your query. Launch an <span className="text-indigo-600">Intake Process</span> to commit new artifacts.</p>
+                <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">
+                  {isLiveMode ? 'Secure Cache Standing By' : 'Vault Inventory Dormant'}
+                </h3>
+                <p className="text-slate-600 font-bold max-w-sm mx-auto text-lg leading-relaxed">
+                  {isLiveMode 
+                    ? 'Your production database is synchronized. Launch a case from the intake wizard to begin populating this vault.' 
+                    : 'No records match your query. Adjust filters to reveal historical simulation artifacts.'}
+                </p>
              </div>
           </div>
         )}
@@ -251,7 +269,7 @@ const DatabaseVault: React.FC = () => {
             <div className="relative z-10 space-y-8">
                <div className="flex items-center gap-5">
                   <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl">
-                    <LockIcon size={24} />
+                    <Lock size={24} />
                   </div>
                   <h4 className="text-2xl font-black uppercase tracking-tight italic">Cryptographic Security</h4>
                </div>
@@ -260,12 +278,12 @@ const DatabaseVault: React.FC = () => {
                </p>
             </div>
             <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:scale-150 transition-transform duration-1000 rotate-12">
-               <FingerprintIcon size={180} fill="white" />
+               <Fingerprint size={180} fill="white" />
             </div>
          </div>
          <div className="bg-white p-12 rounded-[3.5rem] border-2 border-slate-100 shadow-2xl flex items-start gap-8 hover:-translate-y-2 transition-all duration-500 ring-1 ring-slate-100/50">
             <div className="w-20 h-20 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner shrink-0 border border-indigo-100">
-               <InfoIcon size={40} />
+               <Info size={40} />
             </div>
             <div className="space-y-4">
                <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tight italic">Retention & Compliance</h4>

@@ -19,7 +19,8 @@ import {
   Home, 
   Users, 
   FileSearch, 
-  Filter
+  Filter,
+  AlertCircle
 } from 'lucide-react';
 import { researchSpecializedCounsel } from '../lib/gemini';
 import Tooltip from './Tooltip';
@@ -39,21 +40,28 @@ const SPECIALIZATIONS = [
 const AttorneyHub: React.FC<AttorneyHubProps> = ({ state, county }) => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [retaining, setRetaining] = useState<string | null>(null);
   const [activeSpecialization, setActiveSpecialization] = useState(SPECIALIZATIONS[0].label);
 
   const handleResearch = async () => {
     setLoading(true);
+    setError(null);
     setResults([]); 
     try {
       const data = await researchSpecializedCounsel(state, county, activeSpecialization);
-      if (Array.isArray(data)) {
+      if (Array.isArray(data) && data.length > 0) {
         setResults(data);
+      } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // Handle case where model might return a single object instead of array
+        setResults([data]);
       } else {
+        setError(`The discovery engine could not find verified ${activeSpecialization} practitioners in ${county}. Try broadening your search or checking the regional Bar association.`);
         setResults([]);
       }
     } catch (err) {
       console.error(err);
+      setError("AI Intelligence Hub Timeout. Please ensure your API Key is active and authorized for search grounding.");
     } finally {
       setLoading(false);
     }
@@ -143,6 +151,18 @@ Prospector AI Platform`;
         <div className="absolute -right-40 -bottom-40 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[160px]"></div>
       </div>
 
+      {error && (
+        <div className="p-8 bg-rose-50 border-2 border-rose-100 rounded-[2.5rem] flex items-start gap-6 animate-in slide-in-from-top-4">
+           <div className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl">
+             <AlertCircle size={28} />
+           </div>
+           <div className="space-y-1">
+             <p className="text-lg font-black text-rose-900 uppercase tracking-tight italic">Discovery Friction Detected</p>
+             <p className="text-sm text-rose-800 font-bold leading-relaxed">{error}</p>
+           </div>
+        </div>
+      )}
+
       {results.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8 duration-700">
           {results.map((attorney, idx) => (
@@ -172,6 +192,7 @@ Prospector AI Platform`;
                    </div>
                    <div className="p-6 bg-indigo-50/30 rounded-[2rem] border-2 border-indigo-100/50 italic text-[13px] text-slate-600 leading-relaxed font-bold shadow-sm relative">
                       <div className="absolute -top-3 -left-2 bg-white p-1.5 rounded-lg border border-indigo-100">
+                         {/* Fix: Replaced undefined SparklesIcon with imported Sparkles component */}
                          <Sparkles size={14} className="text-indigo-500" />
                       </div>
                       "{attorney.rationale}"
@@ -210,7 +231,7 @@ Prospector AI Platform`;
         </div>
       )}
 
-      {results.length === 0 && !loading && (
+      {results.length === 0 && !loading && !error && (
         <div className="py-40 text-center border-4 border-dashed border-slate-100 rounded-[4rem] bg-slate-50/20 shadow-inner flex flex-col items-center justify-center space-y-10 group hover:bg-white hover:border-indigo-200 transition-all duration-700">
            <div className="w-32 h-32 bg-white rounded-[2.5rem] flex items-center justify-center shadow-3xl border-2 border-slate-50 text-slate-100 group-hover:text-indigo-600 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
               <Scale size={64} />

@@ -2,7 +2,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Strictly adhering to Google GenAI SDK Coding Guidelines
-// Using a getter to ensure the most stable reference to the shimmed process.env
 const getAIClient = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 };
@@ -10,21 +9,33 @@ const getAIClient = () => {
 /**
  * Standard content generation wrapper
  */
-async function generateJSON(prompt: string, schema?: any) {
+async function generateJSON(prompt: string, schema?: any, useSearch: boolean = false) {
   const ai = getAIClient();
+  const config: any = {
+    responseMimeType: "application/json",
+    responseSchema: schema,
+  };
+
+  if (useSearch) {
+    config.tools = [{ googleSearch: {} }];
+  }
+
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: schema,
-    },
+    config: config,
   });
   
   try {
-    return JSON.parse(response.text || '{}');
+    const text = response.text || '{}';
+    // Sometimes search grounding can wrap JSON or add text, we try to clean it
+    const cleanJson = text.includes('```json') 
+      ? text.split('```json')[1].split('```')[0] 
+      : text;
+    
+    return JSON.parse(cleanJson.trim());
   } catch (e) {
-    console.error("JSON Parse Error", e);
+    console.error("AI Logic Exception: JSON Parse Failure", e);
     return null;
   }
 }
@@ -60,12 +71,14 @@ export const scanJurisdictionForSurplus = async (state: string, county: string) 
     }
   };
 
-  return await generateJSON(prompt, schema);
+  return await generateJSON(prompt, schema, true);
 };
 
 export const researchSpecializedCounsel = async (state: string, county: string, specialization: string = "Surplus Recovery") => {
-  const prompt = `Find 3 specialized attorneys for "${specialization}" in ${county}, ${state}.
-  Ensure the results have proven experience in ${specialization}.`;
+  const prompt = `SEARCH GROUNDING REQUIRED: Find 3 real-world attorneys or law firms currently practicing "${specialization}" in ${county}, ${state}.
+  You MUST return valid JSON. Do not return placeholders.
+  Include their actual firm name, expertise score (80-100), verified contact email or phone, and website URL.
+  Rationale should explain why they are a good fit for ${specialization} in this specific county.`;
 
   const schema = {
     type: Type.ARRAY,
@@ -83,7 +96,7 @@ export const researchSpecializedCounsel = async (state: string, county: string, 
     }
   };
 
-  return await generateJSON(prompt, schema);
+  return await generateJSON(prompt, schema, true);
 };
 
 export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
@@ -199,7 +212,7 @@ export const discoverPropertyLiens = async (property: any) => {
     }
   };
 
-  return await generateJSON(prompt, schema);
+  return await generateJSON(prompt, schema, true);
 };
 
 export const generateORRLetter = async (state: string, county: string, treasurerContact: string) => {
@@ -217,7 +230,26 @@ export const generateORRLetter = async (state: string, county: string, treasurer
   return await generateJSON(prompt, schema);
 };
 
+/**
+ * Generates speech audio for a given text using the specialized TTS model.
+ * Adheres to the Google GenAI SDK guidelines for modality and speech configuration.
+ */
 export const generateVoiceGuide = async (text: string) => {
-  console.warn("TTS functionality requires gemini-2.5-flash-preview-tts.");
-  return null;
+  const ai = getAIClient();
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash-preview-tts",
+    contents: [{ parts: [{ text: `Narrate the following system documentation professionally: ${text}` }] }],
+    config: {
+      responseModalities: ['AUDIO'],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: 'Kore' },
+        },
+      },
+    },
+  });
+  
+  // Extracting raw PCM data from the first candidate's first part
+  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  return base64Audio || null;
 };

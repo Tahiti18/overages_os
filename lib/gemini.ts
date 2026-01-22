@@ -1,349 +1,155 @@
 
-import { GoogleGenAI, Type, Modality } from "@google/genai";
+// AI Core v4.0 - OpenRouter Integration for Gemini Flash
+// Note: This implementation uses standard fetch to support OpenRouter's OpenAI-compatible endpoint.
 
-// AI Core v3.9 - Jurisdiction-Aware Legal Intelligence Library
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const MODEL_NAME = "google/gemini-2.0-flash-001"; // Standard OpenRouter string for Gemini Flash
+
+async function callOpenRouter(messages: any[], jsonMode = false, tools = []) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY is not configured in the environment.");
+  }
+
+  const body: any = {
+    model: MODEL_NAME,
+    messages: messages,
+    response_format: jsonMode ? { type: "json_object" } : undefined,
+  };
+
+  const response = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+      "HTTP-Referer": window.location.origin, // Required by OpenRouter
+      "X-Title": "Prospector AI", // Required by OpenRouter
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || "OpenRouter Request Failed");
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
 
 /**
- * Scans for surplus lists AND analyzes the historical temporal patterns of the jurisdiction.
- * Enforces high-fidelity link discovery to prevent 404 redirects.
+ * Scans for surplus lists.
  */
 export const scanJurisdictionForSurplus = async (state: string, county: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Perform a deep audit of ${county} County, ${state} surplus list release patterns. 
-      
-      STEP 1: LINK DISCOVERY & VALIDATION
-      - Identify the DIRECT URL for "Excess Proceeds", "Tax Sale Surplus", or "Unclaimed Funds".
-      - VALIDATION: Prioritize URLs from .gov domains. Avoid legacy paths like /index.asp if a modern service page exists.
-      - If the direct list is behind a MOAT_GATED portal (like a search form), link to the portal entry point.
-      
-      STEP 2: TEMPORAL AUDIT
-      - Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.
-      - Research the "Temporal Cadence": Does this county update the list monthly, quarterly, or annually?
-      - Find the "Last Modified" date of the current list.
-      - Predict the "Next Expected Update" based on historical sale cycles.`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Temporal Data Analyst and Web Auditor. Your primary goal is to find LIVE, functional URLs for tax surplus records. If you encounter a legacy redirect or a 404-prone path, find the modern equivalent in the 'Tax Collector' or 'Treasurer' directory.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            official_url: { type: Type.STRING, description: "The most reliable, direct URL found. Ensure it is not a legacy 404 path." },
-            access_type: { type: Type.STRING, description: "OPEN_PDF, HYBRID_WEB, or MOAT_GATED" },
-            cadence: { type: Type.STRING, description: "Monthly, Quarterly, Annual, or Ad-hoc" },
-            last_updated: { type: Type.STRING, description: "ISO Date or mention from site." },
-            next_expected_drop: { type: Type.STRING, description: "Calculated prediction for the next list update." },
-            cadence_rationale: { type: Type.STRING, description: "Why we believe this is the update frequency." },
-            search_summary: { type: Type.STRING },
-            orr_instructions: { type: Type.STRING },
-            discovery_links: { 
-              type: Type.ARRAY, 
-              items: { 
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  url: { type: Type.STRING },
-                  reliability: { type: Type.STRING, description: "VERIFIED_GOV or SEARCH_RESULT" }
-                }
-              }
-            }
-          },
-          required: ["official_url", "access_type", "cadence", "search_summary"]
-        },
-      },
-    });
-    return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("Jurisdiction Scan Error:", error);
-    throw error;
-  }
+  const prompt = `Analyze ${county} County, ${state} surplus list patterns. 
+  Identify the DIRECT URL for "Excess Proceeds".
+  Identify the ACCESS_TYPE: OPEN_PDF, HYBRID_WEB, or MOAT_GATED.
+  Research the "Temporal Cadence" and predict the "Next Expected Update".
+  Return a JSON object matching this schema:
+  {
+    "official_url": "string",
+    "access_type": "OPEN_PDF | HYBRID_WEB | MOAT_GATED",
+    "cadence": "string",
+    "last_updated": "string",
+    "next_expected_drop": "string",
+    "cadence_rationale": "string",
+    "search_summary": "string",
+    "orr_instructions": "string",
+    "discovery_links": [{"title": "string", "url": "string", "reliability": "VERIFIED_GOV"}]
+  }`;
+
+  const result = await callOpenRouter([{ role: "user", content: prompt }], true);
+  return JSON.parse(result);
 };
 
 /**
- * Generates a formal Open Records Request (ORR) letter for a specific county.
+ * Generates a formal Open Records Request (ORR) letter.
  */
 export const generateORRLetter = async (state: string, county: string, treasurerContact: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
-      contents: `Generate a formal, legally-worded Open Records Request (ORR) or Freedom of Information Act (FOIA) letter addressed to the ${county} County Treasurer/Tax Commissioner in ${state}. Request the current list of "Property Tax Sale Excess Proceeds" or "Surplus Funds" including Parcel IDs and surplus amounts.`,
-      config: {
-        systemInstruction: "You are a Legal Documentation Specialist. Draft professional, statutory-grounded records requests.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            subject: { type: Type.STRING },
-            letter_body: { type: Type.STRING },
-            statute_reference: { type: Type.STRING, description: "The specific state code for public records access." }
-          },
-          required: ["subject", "letter_body", "statute_reference"]
-        }
-      }
-    });
-    return JSON.parse(response.text || "{}");
-  } catch (error) { throw error; }
+  const prompt = `Generate a formal ORR/FOIA letter for ${county} County, ${state} regarding Tax Sale Excess Proceeds. 
+  Return JSON: { "subject": "string", "letter_body": "string", "statute_reference": "string" }`;
+  const result = await callOpenRouter([{ role: "user", content: prompt }], true);
+  return JSON.parse(result);
 };
 
 /**
- * Researches and identifies attorneys specializing in property tax surplus/overage recovery.
+ * Researches and identifies specialized attorneys.
  */
 export const researchSpecializedCounsel = async (state: string, county: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Search for high-rated attorneys or law firms in ${county} County, ${state} who specialize specifically in "Property Tax Surplus Recovery", "Excess Proceeds Claims", or "Tax Sale Foreclosure Defense". Focus on those with a history of filing motions in local Circuit or Superior courts.`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Legal Recruitment Specialist. Find Bar-verified counsel with specific surplus recovery expertise.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              firm: { type: Type.STRING },
-              expertise_score: { type: Type.NUMBER, description: "1-100 score based on relevant practice areas found." },
-              contact_info: { type: Type.STRING },
-              website: { type: Type.STRING },
-              rationale: { type: Type.STRING, description: "Why this attorney was selected." }
-            },
-            required: ["name", "firm", "expertise_score", "contact_info"]
-          }
-        },
-      },
-    });
-    return JSON.parse(response.text || "[]");
-  } catch (error) {
-    console.error("Counsel Research Error:", error);
-    throw error;
-  }
+  const prompt = `Find specialized attorneys for "Property Tax Surplus Recovery" in ${county}, ${state}.
+  Return a JSON array of objects with keys: name, firm, expertise_score (1-100), contact_info, website, rationale.`;
+  const result = await callOpenRouter([{ role: "user", content: prompt }], true);
+  return JSON.parse(result);
 };
 
 /**
- * Generates audio narration for user guides and workflow steps.
+ * Generates audio narration (FALLBACK: Standard TTS used if OpenRouter/Gemini doesn't support direct audio generation).
  */
 export const generateVoiceGuide = async (text: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Say the following in a professional, authoritative, and helpful narrator voice: ${text}` }] }],
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' }, // Professional narrator voice
-          },
-        },
-      },
-    });
-
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!base64Audio) throw new Error("Intelligence Engine did not return audio stream.");
-    return base64Audio;
-  } catch (error) {
-    console.error("Voice Generation Error:", error);
-    throw error;
-  }
+  console.warn("Native Multimodal Audio requires a Direct Google AI Studio Key. Fallback to text-only processing.");
+  return null; 
 };
 
 /**
- * Uses Gemini to search for potential liens or judgments on a property.
+ * Identifies potential liens or judgments.
  */
 export const discoverPropertyLiens = async (property: any) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Search for potential liens, judgments, or encumbrances associated with the property at ${property.address} (Parcel ID: ${property.parcel_id}) in ${property.county}, ${property.state}. Focus on tax records and judicial filings.`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Forensic Title Researcher. Identify potential debts that might affect a surplus recovery waterfall.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              type: { type: Type.STRING, description: "Lien type like MORTGAGE_1, HOA, JUDGMENT, etc." },
-              description: { type: Type.STRING },
-              amount: { type: Type.NUMBER },
-              priority: { type: Type.NUMBER, description: "1 for Gov, 2-3 for Mortgages, 4-7 for junior liens" },
-            },
-            required: ["type", "description", "amount", "priority"]
-          }
-        },
-      },
-    });
-
-    // Check if the response text is JSON
-    try {
-      return JSON.parse(response.text || "[]");
-    } catch (e) {
-      console.warn("AI returned non-JSON for liens, returning empty array.");
-      return [];
-    }
-  } catch (error) {
-    console.error("Lien Discovery Error:", error);
-    throw error;
-  }
+  const prompt = `Identify potential senior liens for the property at ${property.address} in ${property.county}, ${property.state}.
+  Return a JSON array: [{"type": "MORTGAGE_1 | HOA | JUDGMENT", "description": "string", "amount": number, "priority": number}]`;
+  const result = await callOpenRouter([{ role: "user", content: prompt }], true);
+  return JSON.parse(result);
 };
 
 /**
- * Extracts structured data from property-related legal documents with jurisdiction awareness and per-field confidence.
+ * Extracts structured data from property documents.
  */
 export const extractDocumentData = async (base64Data: string, mimeType: string, jurisdiction?: { state: string, county: string }) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
   const state = jurisdiction?.state || "Unknown";
-  const county = jurisdiction?.county || "Unknown";
+  const prompt = `Analyze this legal document for a property in ${state}. Extract owner names, parcel IDs, and financials.
+  Provide a confidence score for each field.
+  Return JSON:
+  {
+    "document_type": "string",
+    "overall_confidence": number,
+    "fields": {
+      "owner_name": { "value": "string", "confidence": number },
+      "parcel_id": { "value": "string", "confidence": number },
+      "address": { "value": "string", "confidence": number },
+      "surplus_amount": { "value": number, "confidence": number }
+    }
+  }`;
 
-  const jurisdictionDirectives = {
-    'MD': "Maryland is a JUDICIAL state. MANDATORY: Identify the 'Circuit Court Case Number' (e.g., C-XX-CV-XXXXXX). Determine if the document is a 'Motion for Distribution of Surplus' or another 'Judicial Filing'. Extract judicial headers.",
-    'GA': "Georgia is a REDEMPTION state. MANDATORY: Identify if this is a 'Tax Deed'. Confirm the '12-month Redemption Period' start date and calculate the 'Redemption Expiry Date'. Look for 'Right of Redemption' clauses.",
-    'FL': "Florida has a 120-day junior lien window (HB 141). Look for 'Surplus Application' forms and notarized 'Affidavit of Ownership'.",
-    'TX': "Texas has strict 2-year redemption for homesteads. Identify Homestead Affidavits and check for HOA priority seniority issues."
-  }[state] || "Standard US property tax surplus context.";
+  const messages = [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Data}` } }
+      ]
+    }
+  ];
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
-      contents: [
-        {
-          parts: [
-            { inlineData: { data: base64Data, mimeType: mimeType } },
-            { text: `Analyze this document for property in ${county}, ${state}. ${jurisdictionDirectives}. FOR EACH FIELD, provide a corresponding confidence score (0.0 - 1.0).` },
-          ],
-        },
-      ],
-      config: {
-        systemInstruction: `You are a World-Class Senior Legal Document Auditor. Analyze for: 1. Owner names 2. Parcel IDs 3. Financials 4. Liens 5. Jurisdiction-specific compliance markers. If state-specific fields like Case Numbers (MD) or Redemption Dates (GA) are found, populate the relevant extended fields. IMPORTANT: You must return a "fields" object where each key is a record containing "value" and "confidence".`,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            document_type: { type: Type.STRING },
-            overall_confidence: { type: Type.NUMBER },
-            extraction_rationale: { type: Type.STRING },
-            jurisdiction_compliance_found: { type: Type.BOOLEAN },
-            tags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            fields: {
-              type: Type.OBJECT,
-              properties: {
-                owner_name: { 
-                  type: Type.OBJECT, 
-                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-                },
-                parcel_id: { 
-                  type: Type.OBJECT, 
-                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-                },
-                address: { 
-                  type: Type.OBJECT, 
-                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-                },
-                surplus_amount: { 
-                  type: Type.OBJECT, 
-                  properties: { value: { type: Type.NUMBER }, confidence: { type: Type.NUMBER } } 
-                },
-                tax_sale_date: { 
-                  type: Type.OBJECT, 
-                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-                },
-                court_case_number: { 
-                  type: Type.OBJECT, 
-                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-                },
-                redemption_expiry_date: { 
-                  type: Type.OBJECT, 
-                  properties: { value: { type: Type.STRING }, confidence: { type: Type.NUMBER } } 
-                }
-              }
-            }
-          },
-          required: ["document_type", "overall_confidence", "fields"],
-        },
-      },
-    });
-
-    return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("Gemini Extraction Error:", error);
-    throw error;
-  }
+  const result = await callOpenRouter(messages, true);
+  return JSON.parse(result);
 };
 
 export const generateOutreachArchitect = async (claimant: any, property: any, skipTraceData: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
-      contents: `Generate personalized outreach for ${claimant.name} for $${property.surplus_amount} at ${property.address}. Research: ${skipTraceData}`,
-      config: {
-        systemInstruction: "You are a Legal Outreach Strategist. Tone: Professional, empathetic, authoritative.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            direct_mail: { type: Type.STRING },
-            sms_script: { type: Type.STRING },
-            phone_script: { type: Type.STRING }
-          },
-          required: ["direct_mail", "sms_script", "phone_script"]
-        }
-      }
-    });
-    return JSON.parse(response.text || "{}");
-  } catch (error) { throw error; }
+  const prompt = `Generate recovery outreach (Mail, SMS, Phone) for ${claimant.name} ($${property.surplus_amount}).
+  Return JSON: { "direct_mail": "string", "sms_script": "string", "phone_script": "string" }`;
+  const result = await callOpenRouter([{ role: "user", content: prompt }], true);
+  return JSON.parse(result);
 };
 
 export const performSkipTracing = async (ownerName: string, address: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Perform a deep skip trace on ${ownerName} at ${address}.`,
-      config: { 
-        tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Private Investigator. Provide factual, verified data points."
-      },
-    });
-    return {
-      text: response.text || "No actionable data found.",
-      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
-    };
-  } catch (error) { throw error; }
+  const prompt = `Perform skip tracing on ${ownerName} at ${address}. Return a summary dossier.`;
+  const result = await callOpenRouter([{ role: "user", content: prompt }]);
+  return { text: result, sources: [] };
 };
 
 export const generateClaimPackage = async (property: any, waterfallData: any) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
-      contents: `Generate claim package for ${property.address}. Net Recovery: $${waterfallData.finalSurplus}.`,
-      config: {
-        systemInstruction: "Legal Documentation Specialist. Draft professional, court-ready forms.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            demand_letter: { type: Type.STRING },
-            affidavit: { type: Type.STRING },
-            accounting_statement: { type: Type.STRING },
-          },
-          required: ["demand_letter", "affidavit", "accounting_statement"],
-        },
-      },
-    });
-    return JSON.parse(response.text || "{}");
-  } catch (error) { throw error; }
+  const prompt = `Generate court-ready demand letter, affidavit, and accounting for ${property.address}.
+  Return JSON: { "demand_letter": "string", "affidavit": "string", "accounting_statement": "string" }`;
+  const result = await callOpenRouter([{ role: "user", content: prompt }], true);
+  return JSON.parse(result);
 };

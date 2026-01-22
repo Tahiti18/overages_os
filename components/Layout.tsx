@@ -68,7 +68,8 @@ const Layout: React.FC<LayoutProps> = ({ user, isLiveMode, setIsLiveMode }) => {
   const [isAiConnected, setIsAiConnected] = useState(false);
 
   useEffect(() => {
-    setIsAiConnected(!!process.env.API_KEY);
+    // Look for the specific OpenRouter Key name
+    setIsAiConnected(!!process.env.OPENROUTER_API_KEY);
   }, []);
 
   const GavelIcon = (props: any) => (
